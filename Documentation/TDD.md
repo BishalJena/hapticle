@@ -155,8 +155,8 @@ To ensure fidgeting feels tactile and realistic, we implement numerical physics 
 
 ### 2.1 The Dial (Rotary Friction & Leverage)
 
-The dial rotates about a center point `` $`\mathbf{C} = (x_c, y_c)`$ ``. 
-When a drag gesture is detected at point `` $`\mathbf{P} = (x, y)`$ ``, we calculate:
+The dial rotates about a center point $\mathbf{C} = (x\_c, y\_c)$. 
+When a drag gesture is detected at point $\mathbf{P} = (x, y)$, we calculate:
 
 1.  **Radius / Leverage Vector:**
 ```math
@@ -166,14 +166,14 @@ When a drag gesture is detected at point `` $`\mathbf{P} = (x, y)`$ ``, we calcu
 r = \|\mathbf{r}\| = \sqrt{(x - x_c)^2 + (y - y_c)^2}
 ```
 
-2.  **Torque Multiplier (`` $`M_t`$ ``):**
+2.  **Torque Multiplier ($M\_t$):**
     If the drag occurs too close to the center, leverage is zero:
 ```math
 M_t = \begin{cases} 0 & \text{if } r < R_{min} \\ \frac{r - R_{min}}{R_{max} - R_{min}} & \text{if } R_{min} \le r \le R_{max} \\ 1 & \text{if } r > R_{max} \end{cases}
 ```
 
 3.  **Angular Momentum & Friction Decay:**
-    When the finger is released, we model rotation using angular inertia `` $`I`$ `` and friction coefficient `` $`\mu`$ ``:
+    When the finger is released, we model rotation using angular inertia $I$ and friction coefficient $\mu$:
 ```math
 \theta_{t+1} = \theta_t + \omega_t \Delta t
 ```
@@ -182,14 +182,14 @@ M_t = \begin{cases} 0 & \text{if } r < R_{min} \\ \frac{r - R_{min}}{R_{max} - R
 ```
 
 4.  **Detent Calculation:**
-    Vibrations are triggered when the angle crosses steps of size `` $`\Delta\theta_{detent}`$ ``:
+    Vibrations are triggered when the angle crosses steps of size $\Delta\theta\_{detent}$:
 ```math
 k = \lfloor \frac{\theta}{\Delta\theta_{detent}} \rfloor
 ```
-    If `` $`k_t \neq k_{t-1}`$ ``, trigger a haptic tick.
+    If $k\_t \neq k\_{t-1}$, trigger a haptic tick.
 
 5.  **Audio Pitch Modulation:**
-    Sound frequency `` $`f`$ `` is proportional to current RPM (angular velocity `` $`\omega`$ ``):
+    Sound frequency $f$ is proportional to current RPM (angular velocity $\omega$):
 ```math
 f(\omega) = f_{base} + k_{rpm} \cdot |\omega|
 ```
@@ -198,27 +198,27 @@ f(\omega) = f_{base} + k_{rpm} \cdot |\omega|
 
 ### 2.2 The Ticket (Perforation Shear Force)
 
-The ticket is pulled down along the `` $`y`$ ``-axis. The tear resistance is modeled as a series of physical fiber thresholds.
+The ticket is pulled down along the $y$-axis. The tear resistance is modeled as a series of physical fiber thresholds.
 
-1.  **Elastic Resistance Force (`` $`F_{res}`$ ``):**
-    As the ticket is pulled downwards by displacement `` $`y`$ ``, we model the tension force:
+1.  **Elastic Resistance Force ($F\_{res}$):**
+    As the ticket is pulled downwards by displacement $y$, we model the tension force:
 ```math
 F_{res} = k_{elastic} \cdot y
 ```
 
 2.  **Perforation Micro-snaps:**
-    Let `` $`N`$ `` be the number of perforations spaced at interval `` $`d`$ ``. As `` $`y`$ `` increases:
-    *   Whenever `` $`y`$ `` crosses `` $`m \cdot d`$ `` (where `` $`m = 1 \dots N`$ ``):
-        *   Instantly drop `` $`F_{res}`$ `` by a fraction to simulate a fiber snapping.
+    Let $N$ be the number of perforations spaced at interval $d$. As $y$ increases:
+    *   Whenever $y$ crosses $m \cdot d$ (where $m = 1 \dots N$):
+        *   Instantly drop $F\_{res}$ by a fraction to simulate a fiber snapping.
         *   Trigger a sharp, low-intensity transient haptic: "dud".
 3.  **Tear Completion:**
-    When `` $`y > Y_{tear\_threshold}`$ ``, the ticket breaks free. The force drops to zero, a strong release haptic is triggered, and a layout offset animation triggers to feed the next ticket.
+    When $y > Y\_{tear\_threshold}$, the ticket breaks free. The force drops to zero, a strong release haptic is triggered, and a layout offset animation triggers to feed the next ticket.
 
 ---
 
 ### 2.3 The Magnet (Coulomb's Law & MagSafe Orbitals)
 
-The system models a free magnet at `` $`\mathbf{P}_m = (x_m, y_m)`$ `` and `` $`K`$ `` fixed magnetic poles arranged in a circle of radius `` $`R_{ring}`$ `` at coordinates `` $`\mathbf{P}_{fixed, i}`$ ``.
+The system models a free magnet at $\mathbf{P}\_m = (x\_m, y\_m)$ and $K$ fixed magnetic poles arranged in a circle of radius $R\_{ring}$ at coordinates $\mathbf{P}\_{fixed, i}$.
 
 1.  **Finger Elastic Connection (Spring Force):**
 ```math
@@ -226,7 +226,7 @@ The system models a free magnet at `` $`\mathbf{P}_m = (x_m, y_m)`$ `` and `` $`
 ```
 
 2.  **Magnetic Forces (Coulomb's Law Approximation):**
-    Each pole `` $`i`$ `` has charge `` $`q_i \in \{-1, 1\}`$ `` representing Alternating North/South poles:
+    Each pole $i$ has charge $q\_i \in \{-1, 1\}$ representing Alternating North/South poles:
 ```math
 \mathbf{F}_{mag, i} = C_{coulomb} \cdot \frac{q_{free} \cdot q_i}{\|\mathbf{P}_m - \mathbf{P}_{fixed, i}\|^2 + \epsilon} \cdot \frac{\mathbf{P}_{fixed, i} - \mathbf{P}_m}{\|\mathbf{P}_{fixed, i} - \mathbf{P}_m\|}
 ```
@@ -235,7 +235,7 @@ The system models a free magnet at `` $`\mathbf{P}_m = (x_m, y_m)`$ `` and `` $`
 ```
 
 3.  **Lock & Escape States:**
-    *   **Snap (Orbit Lock):** If distance `` $`d_i = \|\mathbf{P}_m - \mathbf{P}_{fixed, i}\| < D_{snap}`$ ``, the free magnet is locked to node `` $`i`$ ``.
+    *   **Snap (Orbit Lock):** If distance $d\_i = \|\mathbf{P}\_m - \mathbf{P}\_{fixed, i}\| < D_{snap}$, the free magnet is locked to node $i$.
     *   **Breakaway:** The user must pull their finger away until the spring tension exceeds the magnetic pull:
 ```math
 \|\mathbf{F}_{spring}\| > \|\mathbf{F}_{mag, i}\|
@@ -247,13 +247,13 @@ The system models a free magnet at `` $`\mathbf{P}_m = (x_m, y_m)`$ `` and `` $`
 
 A soft-body representation is simulated using simple radial points or center-of-mass stretching.
 
-1.  **Tension Metric (`` $`T`$ ``):**
+1.  **Tension Metric ($T$):**
 ```math
 T = \|\mathbf{P}_{finger} - \mathbf{P}_{anchor}\|
 ```
 
 2.  **Mitosis Trigger:**
-    *   If `` $`T > T_{max}`$ ``, split the blob into two blobs at centroids:
+    *   If $T > T\_{max}$, split the blob into two blobs at centroids:
 ```math
 \mathbf{C}_1 = \mathbf{P}_{anchor} + \frac{\mathbf{r}}{4}, \quad \mathbf{C}_2 = \mathbf{P}_{finger} - \frac{\mathbf{r}}{4}
 ```
