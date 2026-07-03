@@ -159,40 +159,40 @@ The dial rotates about a center point $\mathbf{C} = (x_c, y_c)$.
 When a drag gesture is detected at point $\mathbf{P} = (x, y)$, we calculate:
 
 1.  **Radius / Leverage Vector:**
-    $$
-    \mathbf{r} = \mathbf{P} - \mathbf{C}
-    $$
-    $$
-    r = \|\mathbf{r}\| = \sqrt{(x - x_c)^2 + (y - y_c)^2}
-    $$
+$$
+\mathbf{r} = \mathbf{P} - \mathbf{C}
+$$
+$$
+r = \|\mathbf{r}\| = \sqrt{(x - x_c)^2 + (y - y_c)^2}
+$$
 
 2.  **Torque Multiplier ($M_t$):**
     If the drag occurs too close to the center, leverage is zero:
-    $$
-    M_t = \begin{cases} 0 & \text{if } r < R_{min} \\ \frac{r - R_{min}}{R_{max} - R_{min}} & \text{if } R_{min} \le r \le R_{max} \\ 1 & \text{if } r > R_{max} \end{cases}
-    $$
+$$
+M_t = \begin{cases} 0 & \text{if } r < R_{min} \\ \frac{r - R_{min}}{R_{max} - R_{min}} & \text{if } R_{min} \le r \le R_{max} \\ 1 & \text{if } r > R_{max} \end{cases}
+$$
 
 3.  **Angular Momentum & Friction Decay:**
     When the finger is released, we model rotation using angular inertia $I$ and friction coefficient $\mu$:
-    $$
-    \theta_{t+1} = \theta_t + \omega_t \Delta t
-    $$
-    $$
-    \omega_{t+1} = \omega_t \cdot (1 - \mu M_t)
-    $$
+$$
+\theta_{t+1} = \theta_t + \omega_t \Delta t
+$$
+$$
+\omega_{t+1} = \omega_t \cdot (1 - \mu M_t)
+$$
 
 4.  **Detent Calculation:**
     Vibrations are triggered when the angle crosses steps of size $\Delta\theta_{detent}$:
-    $$
-    k = \lfloor \frac{\theta}{\Delta\theta_{detent}} \rfloor
-    $$
+$$
+k = \lfloor \frac{\theta}{\Delta\theta_{detent}} \rfloor
+$$
     If $k_t \neq k_{t-1}$, trigger a haptic tick.
 
 5.  **Audio Pitch Modulation:**
     Sound frequency $f$ is proportional to current RPM (angular velocity $\omega$):
-    $$
-    f(\omega) = f_{base} + k_{rpm} \cdot |\omega|
-    $$
+$$
+f(\omega) = f_{base} + k_{rpm} \cdot |\omega|
+$$
 
 ---
 
@@ -202,9 +202,9 @@ The ticket is pulled down along the $y$-axis. The tear resistance is modeled as 
 
 1.  **Elastic Resistance Force ($F_{res}$):**
     As the ticket is pulled downwards by displacement $y$, we model the tension force:
-    $$
-    F_{res} = k_{elastic} \cdot y
-    $$
+$$
+F_{res} = k_{elastic} \cdot y
+$$
 
 2.  **Perforation Micro-snaps:**
     Let $N$ be the number of perforations spaced at interval $d$. As $y$ increases:
@@ -218,28 +218,28 @@ The ticket is pulled down along the $y$-axis. The tear resistance is modeled as 
 
 ### 2.3 The Magnet (Coulomb's Law & MagSafe Orbitals)
 
-The system models a free magnet at $\mathbf{P}_m = (x_m, y_m)$ and $K$ fixed magnetic poles arranged in a circle of radius $R_{ring}$ at coordinates $\mathbf{P}_{fixed, i}$.
+The system models a free magnet at **P**<sub>m</sub> = (*x*<sub>m</sub>, *y*<sub>m</sub>) and *K* fixed magnetic poles arranged in a circle of radius *R*<sub>ring</sub> at coordinates **P**<sub>fixed, i</sub>.
 
 1.  **Finger Elastic Connection (Spring Force):**
-    $$
-    \mathbf{F}_{spring} = -k_{spring} \cdot (\mathbf{P}_m - \mathbf{P}_{finger})
-    $$
+$$
+\mathbf{F}_{spring} = -k_{spring} \cdot (\mathbf{P}_m - \mathbf{P}_{finger})
+$$
 
 2.  **Magnetic Forces (Coulomb's Law Approximation):**
     Each pole $i$ has charge $q_i \in \{-1, 1\}$ representing Alternating North/South poles:
-    $$
-    \mathbf{F}_{mag, i} = C_{coulomb} \cdot \frac{q_{free} \cdot q_i}{\|\mathbf{P}_m - \mathbf{P}_{fixed, i}\|^2 + \epsilon} \cdot \frac{\mathbf{P}_{fixed, i} - \mathbf{P}_m}{\|\mathbf{P}_{fixed, i} - \mathbf{P}_m\|}
-    $$
-    $$
-    \mathbf{F}_{net} = \mathbf{F}_{spring} + \sum_{i=1}^K \mathbf{F}_{mag, i} - c_{damping} \cdot \mathbf{v}_m
-    $$
+$$
+\mathbf{F}_{mag, i} = C_{coulomb} \cdot \frac{q_{free} \cdot q_i}{\|\mathbf{P}_m - \mathbf{P}_{fixed, i}\|^2 + \epsilon} \cdot \frac{\mathbf{P}_{fixed, i} - \mathbf{P}_m}{\|\mathbf{P}_{fixed, i} - \mathbf{P}_m\|}
+$$
+$$
+\mathbf{F}_{net} = \mathbf{F}_{spring} + \sum_{i=1}^K \mathbf{F}_{mag, i} - c_{damping} \cdot \mathbf{v}_m
+$$
 
 3.  **Lock & Escape States:**
-    *   **Snap (Orbit Lock):** If distance $d_i = \|\mathbf{P}_m - \mathbf{P}_{fixed, i}\| < D_{snap}$, the free magnet is locked to node $i$.
+    *   **Snap (Orbit Lock):** If distance *d*<sub>i</sub> = ||**P**<sub>m</sub> - **P**<sub>fixed, i</sub>|| < *D*<sub>snap</sub>, the free magnet is locked to node *i*.
     *   **Breakaway:** The user must pull their finger away until the spring tension exceeds the magnetic pull:
-        $$
-        \|\mathbf{F}_{spring}\| > \|\mathbf{F}_{mag, i}\|
-        $$
+$$
+\|\mathbf{F}_{spring}\| > \|\mathbf{F}_{mag, i}\|
+$$
 
 ---
 
@@ -248,15 +248,15 @@ The system models a free magnet at $\mathbf{P}_m = (x_m, y_m)$ and $K$ fixed mag
 A soft-body representation is simulated using simple radial points or center-of-mass stretching.
 
 1.  **Tension Metric ($T$):**
-    $$
-    T = \|\mathbf{P}_{finger} - \mathbf{P}_{anchor}\|
-    $$
+$$
+T = \|\mathbf{P}_{finger} - \mathbf{P}_{anchor}\|
+$$
 
 2.  **Mitosis Trigger:**
-    *   If $T > T_{max}$, split the blob into two blobs at centroids:
-        $$
-        \mathbf{C}_1 = \mathbf{P}_{anchor} + \frac{\mathbf{r}}{4}, \quad \mathbf{C}_2 = \mathbf{P}_{finger} - \frac{\mathbf{r}}{4}
-        $$
+    *   If *T* > *T*<sub>max</sub>, split the blob into two blobs at centroids:
+$$
+\mathbf{C}_1 = \mathbf{P}_{anchor} + \frac{\mathbf{r}}{4}, \quad \mathbf{C}_2 = \mathbf{P}_{finger} - \frac{\mathbf{r}}{4}
+$$
     *   Trigger high-energy, low-sharpness haptic (viscous pop).
 
 ---
