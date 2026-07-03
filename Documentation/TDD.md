@@ -49,7 +49,7 @@ graph TD
 The code is organized into two primary layers under the main `Hapticle/` directory:
 
 1.  **`Fidgets/` Directory:** Contains feature-specific folders (e.g., `Pen/`, `Dial/`, `Magnet/`, `Ticket/`, `Blob/`).
-    *   **`<FidgetName>View.swift`**: Responsible solely for UI rendering and layout. It handles neumorphic styling, displays visual sprites, and intercepts user gesture inputs (such as `DragGesture`, `LongPressGesture`, `TapGesture`).
+    *   **`<FidgetName>View.swift`**: Responsible solely for UI rendering and layout. It handles neumorphic styling, renders neumorphic vector shapes, and intercepts user gesture inputs (such as `DragGesture`, `LongPressGesture`, `TapGesture`).
     *   **`<FidgetName>Model.swift`**: Serves as the state manager (ViewModel). It conforms to `ObservableObject` (or `@Observable` in Swift 5.9+) and tracks the physical quantities (coordinates, velocity, angular momentum, spring tension). It calculates the math behind the movement, checks bounds, and detects threshold triggers (such as crossing a dial tick or breaking a ticket perforation).
 2.  **`Managers/` Directory:** System-wide services providing unified hardware access.
     *   **`HapticsManager.swift`**: Manages the lifecycle of `CHHapticEngine`. It abstracts high-level haptic behaviors (like transients, continuous rumbles, and custom patterns) so that individual Fidget Models do not interface with CoreHaptics directly.
@@ -119,7 +119,7 @@ struct DialView: View {
             let center = CGPoint(x: geometry.size.width / 2, y: geometry.size.height / 2)
             
             VStack {
-                // Render neumorphic Dial image/vector
+                // Render neumorphic Dial vector
                 Circle()
                     .modifier(NeumorphicExtrusionModifier(isPressed: model.isDragging))
                     .rotationEffect(.degrees(model.rotationAngle))
@@ -502,6 +502,6 @@ type/name/short-description
 *   `feat/reno/core-haptics-engine`
 *   `ui/cho/pen-view-mockup`
 *   `fix/reno/dial-inertial-decay`
-*   `chore/cho/add-arcade-ticket-assets`
+*   `chore/cho/update-ticket-styles`
 *   `testing/reno/blob-mitosis-tests`
 

@@ -1,12 +1,12 @@
 # Hapticle - Design Document (DD)
 
-Hapticle is a mixed-media fidget application built for **Challenge 4 of the Apple Developer Academy (ADA)**. The core objective of the challenge is to explore, learn, and implement native iOS frameworks. Hapticle specifically focuses on **CoreHaptics** (vibrations and haptic feedback) and **AudioToolbox** (audio feedback and sound synthesis) to create a highly tactile, playful, and responsive fidget experience.
+Hapticle is a neumorphic fidget application built for **Challenge 4 of the Apple Developer Academy (ADA)**. The core objective of the challenge is to explore, learn, and implement native iOS frameworks. Hapticle specifically focuses on **CoreHaptics** (vibrations and haptic feedback) and **AudioToolbox** (audio feedback and sound synthesis) to create a highly tactile, playful, and responsive fidget experience.
 
 ---
 
-## 1. Visual & Interaction Style (Neumorphism & Mixed Media)
+## 1. Visual & Interaction Style (Neumorphism)
 
-Hapticle blends playful, photorealistic mixed-media elements (such as scanned or hand-drawn textures) with a modern **Neumorphic (soft 3D)** user interface. The UI elements appear to be extruded from or recessed into the background, simulating real-world plastic, rubber, and metal surfaces.
+Hapticle implements a modern **Neumorphic (soft 3D)** user interface. The UI elements appear to be extruded from or recessed into the background, simulating real-world plastic, rubber, and metal surfaces, utilizing soft shadows and highlights instead of flat elements or mixed-media textures.
 
 ### Color Palette & Design Tokens
 
@@ -23,16 +23,15 @@ Hapticle blends playful, photorealistic mixed-media elements (such as scanned or
 
 ### 2.1 The Pen (Retractable Ballpoint Fidget)
 
-The Pen fidget simulates the tactile pleasure of clicking a real retractable ballpoint pen. It uses a combination of cropped photo assets, keyframe-based sprite animations, and custom haptic transients.
+The Pen fidget simulates the tactile pleasure of clicking a real retractable ballpoint pen. It uses neumorphically rendered vector shapes (using extrusion and recess shadows) and depth-based movement animations combined with custom haptic transients.
 
-*   **Visual Assets:** Uses three cropped photo states:
-    1.  **Full Up:** The pen in its unclicked/extended state.
-    2.  **Half (Latched):** The intermediate state before clicking or when latched.
-    3.  **Full Down:** The fully depressed state when clicked.
+*   **Visual Representation:** Rendered programmatically using Neumorphic styling:
+    1.  **Outer Barrel:** An extruded vertical capsule blending into the background.
+    2.  **Inner Well:** A recessed circular area at the top of the barrel representing the button track.
+    3.  **Interactive Button:** A small circular button that sits inside the well, appearing extruded in its unclicked/extended state and recessed in its clicked/depressed state.
 *   **Animations:**
-    *   Sprite frame switching based on interaction state.
-    *   Animated motion lines appearing on click events.
-    *   Subtle spring-back motion on release.
+    *   Smooth depth transitions (shifting shadow offsets and blur radii) based on interaction state.
+    *   Subtle vertical offset displacement (spring-back motion) on release.
 *   **Interaction Model:**
     *   **Physical Buttons:** Can be interacted with via the iPhone's physical Volume buttons.
     *   **On-Screen Interaction:** Playable by tapping/pressing the pen sprite on-screen.
@@ -69,9 +68,10 @@ The Dial simulates a heavy, physical rotary dial (like a safe dial or volume kno
 
 The Ticket simulates the satisfying feeling of tearing a perforated cardboard arcade ticket.
 
-*   **Visual Assets:**
-    *   Drawn and scanned textures of a classic arcade ticket.
-    *   Animated tear lines and falling paper fragments.
+*   **Visual Representation:**
+    *   A neumorphic card that appears extruded from the background canvas.
+    *   Perforation lines represented by a series of small, evenly-spaced recessed circular slots.
+    *   Tear-off animation separating the bottom ticket from the top sheet using physical distance offset.
 *   **Interaction Model:**
     *   The user drags the ticket downward to rip it along a perforated line.
     *   As the ticket is pulled, the tension increases.
@@ -90,8 +90,8 @@ The Ticket simulates the satisfying feeling of tearing a perforated cardboard ar
 
 The Magnet simulates playing with magnets, mimicking the MagSafe ring on the back of an iPhone. It features a ring of fixed magnets and a free-floating magnet that follows the finger.
 
-*   **Visual Assets:**
-    *   Playful mixed-media magnet sprites.
+*   **Visual Representation:**
+    *   A neumorphically styled circular puck (free magnet) and a series of recessed/extruded circular nodes arranged in a ring (fixed poles) to simulate polarity.
     *   Visual field lines or ripple effects showing magnetic pull.
 *   **Interaction Model:**
     *   The user drags a free magnet near a fixed circular ring of magnets.
@@ -114,8 +114,8 @@ The Magnet simulates playing with magnets, mimicking the MagSafe ring on the bac
 
 The Blob is a squishy, jelly-like creature centered on a grid background.
 
-*   **Visual Assets:**
-    *   Deformable vector blob or organic soft-body sprite.
+*   **Visual Representation:**
+    *   A deformable vector blob rendered with soft neumorphic highlights and shadows to give it a 3D organic quality.
     *   Grid background that warps slightly to show gravitational/viscous pull.
 *   **Interaction Model:**
     *   The user drags any part of the blob to stretch it.
