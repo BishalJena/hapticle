@@ -182,11 +182,12 @@ M_t = \begin{cases} 0 & \text{if } r < R_{min} \\ \frac{r - R_{min}}{R_{max} - R
 ```
 
 4.  **Detent Calculation:**
+    If $k\_t \neq k\_{t-1}$, trigger a haptic tick.
     Vibrations are triggered when the angle crosses steps of size $\Delta\theta\_{detent}$:
 ```math
 k = \lfloor \frac{\theta}{\Delta\theta_{detent}} \rfloor
 ```
-    If $k\_t \neq k\_{t-1}$, trigger a haptic tick.
+
 
 5.  **Audio Pitch Modulation:**
     Sound frequency $f$ is proportional to current RPM (angular velocity $\omega$):
@@ -253,11 +254,12 @@ T = \|\mathbf{P}_{finger} - \mathbf{P}_{anchor}\|
 ```
 
 2.  **Mitosis Trigger:**
+    *   Trigger high-energy, low-sharpness haptic (viscous pop).
     *   If $T > T\_{max}$, split the blob into two blobs at centroids:
 ```math
 \mathbf{C}_1 = \mathbf{P}_{anchor} + \frac{\mathbf{r}}{4}, \quad \mathbf{C}_2 = \mathbf{P}_{finger} - \frac{\mathbf{r}}{4}
 ```
-    *   Trigger high-energy, low-sharpness haptic (viscous pop).
+
 
 ---
 
