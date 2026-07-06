@@ -143,18 +143,13 @@ This section maps the Figma designs to mathematical layouts, gesture bindings, a
 *   **Visual Layout Details:**
     - **Safe Dial Plate:** Centered `Circle()`, `Diameter: 240pt`.
     - **Physical Detents:** Circular recesses (`Circle()`), `Diameter: 12pt`, placed uniformly at radius `r = 100pt` from center.
-*   **Physics Formulas:**
-    - Let center of dial be $\mathbf{C} = (x_c, y_c)$, and touch point be $\mathbf{P} = (x, y)$.
-    - **Torque Lever Radius:** $r = \|\mathbf{P} - \mathbf{C}\| = \sqrt{(x - x_c)^2 + (y - y_c)^2}$
-    - **Torque Multiplier ($M_t$):** Limit spin leverage if finger is too close to center:
-      $$M_t = \begin{cases} 0 & \text{if } r < 20pt \\ \frac{r - 20}{100} & \text{if } 20 \le r \le 120pt \\ 1 & \text{if } r > 120pt \end{cases}$$
-    - **Inertial Momentum Decay (Friction):**
-      $$\theta_{t+1} = \theta_t + \omega_t \Delta t, \quad \omega_{t+1} = \omega_t \cdot (1 - \mu M_t) \quad \text{where } \mu = 0.05$$
-    - **Detent Crossings:** Check angle $\theta$ modulo $15^\circ$. If crossed, fire detent.
+*   **Interaction & Feel:**
+    - **Rotational Inertial Decay:** The dial acts like a heavy mechanical safe dial. Once the user lets go after a flick, it continues spinning and slowly decelerates due to simulated friction, giving the knob a physical weight.
+    - **Fulcrum Leverage:** The rotational torque varies depending on where the user grabs the dial. Spinnings initiated close to the center feel stiff with zero leverage. Spinnings from the outer edge feel highly responsive and fluid.
+    - **Detent Ticks:** Ticks are felt as the dial crosses $15^\circ$ angular intervals. As the speed increases, the detents should feel less like distinct knocks and more like a continuous vibration.
 *   **Sensory Blueprint:**
-    - **Detent Tick:** Haptic transient `intensity = 0.5 * (|\omega| / \omega_{max})`, `sharpness = 0.7`.
-    - **Audio Loop:** Continuous sound pitched proportional to RPM:
-      $$f(\omega) = f_{base} + (k_{rpm} \cdot |\omega|)$$
+    - **Detent Tick:** Haptic transient whose intensity scales with the spin speed (faster spin = slightly stronger click), `sharpness = 0.7`.
+    - **Audio Loop:** Continuous sound pitched and amplified dynamically based on RPM (faster RPM = higher frequency mechanical whirr).
 *   **Implementation Skeleton:**
     - View: `hapticle/Hapticle/Fidgets/Dial/DialView.swift`
     - Model: `hapticle/Hapticle/Fidgets/Dial/DialModel.swift`
@@ -166,14 +161,13 @@ This section maps the Figma designs to mathematical layouts, gesture bindings, a
 *   **Visual Layout Details:**
     - **Card Shell:** Extruded rectangular ticket (`RoundedRectangle(cornerRadius: 12)`), `Width: 280pt`, `Height: 420pt`.
     - **Perforation Line:** Horizontal series of small recessed circles (`Circle()`), `Diameter: 8pt`, spaced every `16pt` across width.
-*   **Physics Formulas:**
-    - **Elastic Spring Tension Force:** As user drags ticket down by displacement $y$:
-      $$F_{res} = k_{elastic} \cdot y \quad \text{where } k_{elastic} = 2.0$$
-    - **Perforation Snap Event:** Split line occurs at intervals of `12pt` displacement. Upon crossing each interval, momentarily drop $F_{res}$ by $40\%$ and snap a virtual fiber.
-    - **Tear Threshold:** Final separation occurs at $y \ge 120pt$.
+*   **Interaction & Feel:**
+    - **Elastic Resistance:** Pulling the ticket down should feel like stretching a heavy rubber band—resistance builds up smoothly as displacement increases.
+    - **Perforation Snaps:** During the pull, the user passes perforation line segments (spaced every `12pt` of displacement). Each boundary crossing should generate a distinct micro-snap, briefly dropping resistance to simulate paper fibers tearing.
+    - **Separation Limit:** When pulled past `120pt`, the ticket breaks free with a complete drop in force, prompting the sheet to slide back.
 *   **Sensory Blueprint:**
-    - **Fiber Snap:** Micro-transient haptic `intensity = 0.3`, `sharpness = 0.4`.
-    - **Separation Snap:** Strong impact transient `intensity = 1.0`, `sharpness = 0.8` + Audio tear sound file.
+    - **Fiber Snap:** Micro-transient haptic `intensity = 0.3`, `sharpness = 0.4` to simulate paper popping.
+    - **Separation Snap:** Strong impact transient `intensity = 1.0`, `sharpness = 0.8` + Audio tearing sound.
 *   **Implementation Skeleton:**
     - View: `hapticle/Hapticle/Fidgets/Ticket/TicketView.swift`
     - Model: `hapticle/Hapticle/Fidgets/Ticket/TicketModel.swift`
@@ -186,14 +180,12 @@ This section maps the Figma designs to mathematical layouts, gesture bindings, a
     - **Magnet Ring:** Circular track, `Diameter: 260pt`.
     - **Fixed Nodes:** 8 circular nodes, `Diameter: 24pt`, placed every $45^\circ$ along the ring. Alternating colors indicate polar charges.
     - **Free Puck:** Extruded circular puck, `Diameter: 48pt`, following the drag gesture with elastic lag.
-*   **Physics Formulas:**
-    - **Puck Lag (Spring Force):**
-      $$\mathbf{F}_{spring} = -k_{spring} \cdot (\mathbf{P}_{puck} - \mathbf{P}_{finger})$$
-    - **Magnetic Forces (Coulomb Attraction/Repulsion):** Alternating charges $q_i \in \{-1, 1\}$:
-      $$\mathbf{F}_{mag, i} = C_{coulomb} \cdot \frac{q_{free} \cdot q_i}{\|\mathbf{P}_{puck} - \mathbf{P}_{fixed, i}\|^2 + \epsilon} \cdot \hat{\mathbf{u}}_i$$
-      $$\mathbf{F}_{net} = \mathbf{F}_{spring} + \sum \mathbf{F}_{mag, i} - c_{damping} \cdot \mathbf{v}$$
+*   **Interaction & Feel:**
+    - **Elastic Spring Lag:** The puck does not lock directly to the finger coordinate; it lags behind with a springy, weighted connection, creating a sense of mass and drag.
+    - **Push-Pull Fields:** Moving around the ring, the puck experiences alternating attractive and repulsive forces from the poles. Moving near a node snaps the puck into place, while moving past opposite poles creates small bounces.
+    - **Tug Breakaway:** To break the orbital snap, the user must pull their finger away until the elastic tension overcomes the magnetic attraction, triggering a quick breakaway release.
 *   **Sensory Blueprint:**
-    - **Orbit Hum:** Continuous continuous haptic. Intensity scaled by $\|\mathbf{F}_{net}\|$.
+    - **Orbit Hum:** Continuous continuous haptic. Intensity scales with magnetic force/tension.
     - **Node Lock-on Snap:** Sharp transient haptic `intensity = 0.8`, `sharpness = 0.6`.
 *   **Implementation Skeleton:**
     - View: `hapticle/Hapticle/Fidgets/Magnet/ MagnetView.swift`
@@ -201,19 +193,17 @@ This section maps the Figma designs to mathematical layouts, gesture bindings, a
 
 ---
 
-### 3.5 The Blob (viscous Mitosis Fidget)
+### 3.5 The Blob (Viscous Mitosis Fidget)
 
 *   **Visual Layout Details:**
     - **Soft Body Shape:** Deformable vector path built using 8 radial control points, dynamically recalculating curves based on stretch vector.
     - **Background Grid:** Grid lines warp slightly toward the center-mass coordinates of the blob.
-*   **Physics Formulas:**
-    - **Viscous Stretch Metric ($T$):**
-      $$T = \|\mathbf{P}_{finger} - \mathbf{P}_{anchor}\|$$
-    - **Mitosis centrifugal centroids:** Split happens when $T > 180pt$. Centroids shift:
-      $$\mathbf{C}_1 = \mathbf{P}_{anchor} + \frac{\mathbf{r}}{4}, \quad \mathbf{C}_2 = \mathbf{P}_{finger} - \frac{\mathbf{r}}{4}$$
+*   **Interaction & Feel:**
+    - **Viscous Fluid Friction:** Dragging the blob should feel like stretching sticky jelly or slime—there is a thick, slow resistance that increases the faster or further it is stretched.
+    - **Elongated Mitosis:** As the user stretches the shape past `180pt`, the blob thins out at the center and splits into two independent blobs with spring-back recoil centroid shifts.
 *   **Sensory Blueprint:**
-    - **Stretch Resistance:** Continuous rumble. Intensity increases linearly with tension $T$.
-    - **Mitosis Pop:** Custom transient `intensity = 0.9`, `sharpness = 0.2` (dull, organic pop) + Audio pop sound.
+    - **Stretch Resistance:** Continuous rumble. Intensity scales with the stretch tension.
+    - **Mitosis Pop:** Custom transient `intensity = 0.9`, `sharpness = 0.2` (dull, organic pop/suction sound) + Audio pop.
 *   **Implementation Skeleton:**
     - View: `hapticle/Hapticle/Fidgets/Blob/BlobView.swift`
     - Model: `hapticle/Hapticle/Fidgets/Blob/BlobModel.swift`
@@ -227,6 +217,37 @@ Due to the absence of `CoreHaptics` on Apple Watch, developers must replicate th
 *   **Rotary detents:** Map crown rotation updates (`digitalCrownRotation`) to `WKInterfaceDevice.current().play(.click)`.
 *   **Impact transients:** Replicate snaps (Pen click, Ticket break, Magnet lock) with `WKInterfaceDevice.current().play(.directionUp)` or `WKInterfaceDevice.current().play(.failure)`.
 *   **Continuous rumbles:** Map stretching actions to repeated pulses using `.retry` or `.directionDown`.
+
+---
+
+## 5. Appendix: Physics Simulation References (Optional / Non-1:1)
+
+For developers looking to implement numerical approximations of the physical sensations, refer to the formulas below. Note that these are reference models and do not need to be modeled 1:1; coding the "feel" and interactive timing is the priority.
+
+### 5.1 Dial Physics (Momentum & Leverage)
+*   **Leverage Torque ($M_t$):** For dial center $\mathbf{C} = (x_c, y_c)$ and touch $\mathbf{P} = (x, y)$:
+    $$r = \|\mathbf{P} - \mathbf{C}\|$$
+    $$M_t = \begin{cases} 0 & \text{if } r < 20pt \\ \frac{r - 20}{100} & \text{if } 20 \le r \le 120pt \\ 1 & \text{if } r > 120pt \end{cases}$$
+*   **Decay & Detents:**
+    $$\theta_{t+1} = \theta_t + \omega_t \Delta t, \quad \omega_{t+1} = \omega_t \cdot (1 - \mu M_t) \quad (\mu \approx 0.05)$$
+    $$k = \lfloor \theta / 15^\circ \rfloor \quad (\text{Fire transient when } k_{t} \neq k_{t-1})$$
+
+### 5.2 Ticket Physics (Spring Tension)
+*   **Elastic Resistance Force ($F_{res}$):** For displacement $y$:
+    $$F_{res} = k_{elastic} \cdot y \quad (k_{elastic} \approx 2.0)$$
+*   **Perforation Snaps:** Dropping resistance by $40\%$ at intervals of $12pt$.
+
+### 5.3 Magnet Physics (Coulomb Fields)
+*   **Puck Lagrangian Spring:**
+    $$\mathbf{F}_{spring} = -k_{spring} \cdot (\mathbf{P}_{puck} - \mathbf{P}_{finger})$$
+*   **Magnetic Forces (Coulomb Attraction/Repulsion):** Alternating charges $q_i \in \{-1, 1\}$:
+    $$\mathbf{F}_{mag, i} = C_{coulomb} \cdot \frac{q_{free} \cdot q_i}{\|\mathbf{P}_{puck} - \mathbf{P}_{fixed, i}\|^2 + \epsilon} \cdot \hat{\mathbf{u}}_i$$
+
+### 5.4 Blob Physics (Tension & Centroids)
+*   **Stretch Metric ($T$):**
+    $$T = \|\mathbf{P}_{finger} - \mathbf{P}_{anchor}\|$$
+*   **Mitosis Centroids (Split at $T > 180pt$):**
+    $$\mathbf{C}_1 = \mathbf{P}_{anchor} + \frac{\mathbf{r}}{4}, \quad \mathbf{C}_2 = \mathbf{P}_{finger} - \frac{\mathbf{r}}{4}$$
 
 ---
 *Developers should refer directly to [hapticle/Documentation/TDD.md](file:///Users/moreno_m5/Projects/hapticle/Documentation/TDD.md) for full manager implementations, and execute layout alignments in accordance with the [Figma design specs](https://www.figma.com/design/cRjdjva7DCcEfmy2M9u2My/Hapticle-Mid-fi?node-id=1-4&t=pTGScvGNydCUxVjF-1).*
