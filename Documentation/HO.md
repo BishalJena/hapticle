@@ -15,10 +15,10 @@ All color variables should be registered in assets and mapped via `Color` extens
 
 | Color Name | Preview | HEX | RGBA | HSL | Neumorphic Role |
 | :--- | :---: | :--- | :--- | :--- | :--- |
-| **PrimaryLight** | ![#E0E5EC](Colors/primary_light.svg) | `#E0E5EC` | `rgba(224, 229, 236, 1.00)` | `hsl(215, 24%, 90%)` | Light Theme Background |
+| **FidgetPrimaryLight** | ![#E0E5EC](Colors/fidget_primary_light.svg) | `#E0E5EC` | `rgba(224, 229, 236, 1.00)` | `hsl(215, 24%, 90%)` | Light Theme Background |
 | **HighlightLight** | ![#FFFFFF](Colors/highlight_light.svg) | `#FFFFFF` | `rgba(255, 255, 255, 1.00)` | `hsl(0, 0%, 100%)` | Light Theme Highlight |
 | **ShadowLight** | ![#A3B1C6](Colors/shadow_light.svg) | `#A3B1C6` | `rgba(163, 177, 198, 1.00)` | `hsl(216, 23%, 71%)` | Light Theme Shadow |
-| **PrimaryDark** | ![#454545](Colors/primary_dark.svg) | `#454545` | `rgba(69, 69, 69, 1.00)` | `hsl(0, 0%, 27%)` | Dark Theme Background |
+| **FidgetPrimaryDark** | ![#454545](Colors/fidget_primary_dark.svg) | `#454545` | `rgba(69, 69, 69, 1.00)` | `hsl(0, 0%, 27%)` | Dark Theme Background |
 | **HighlightDark** | ![#D9D9D9](Colors/highlight_dark.svg) | `#D9D9D9` | `rgba(217, 217, 217, 1.00)` | `hsl(0, 0%, 85%)` | Dark Theme Highlight |
 | **ShadowDark** | ![#000000](Colors/shadow_dark.svg) | `#000000` | `rgba(0, 0, 0, 1.00)` | `hsl(0, 0%, 0%)` | Dark Theme Shadow |
 | **Accent** | ![#C73535](Colors/accent.svg) | `#C73535` | `rgba(199, 53, 53, 1.00)` | `hsl(0, 58%, 49%)` | Accent Theme Background |
@@ -27,7 +27,7 @@ All color variables should be registered in assets and mapped via `Color` extens
 
 > [!TIP]
 > **Implementation Note (Xcode Assets Consolidation):**
-> In the codebase asset catalog (`Assets.xcassets`), the separate Light and Dark color sets are consolidated into single dual-appearance color sets (`Primary`, `Highlight`, and `Shadow`). Xcode automatically resolves these to their respective Light (`PrimaryLight`, `HighlightLight`, `ShadowLight`) or Dark (`PrimaryDark`, `HighlightDark`, `ShadowDark`) values based on system appearance context. The three active accent colors (`Accent`, `AccentHighlight`, and `AccentShadow`) are kept as three separate static assets.
+> In the codebase asset catalog (`Assets.xcassets`), the separate Light and Dark color sets are consolidated into single dual-appearance color sets (`FidgetPrimary`, `Highlight`, and `Shadow`). Xcode automatically resolves these to their respective Light (`FidgetPrimaryLight`, `HighlightLight`, `ShadowLight`) or Dark (`FidgetPrimaryDark`, `HighlightDark`, `ShadowDark`) values based on system appearance context. The three active accent colors (`Accent`, `AccentHighlight`, and `AccentShadow`) are kept as three separate static assets.
 
 ---
 

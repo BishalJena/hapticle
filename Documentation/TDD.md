@@ -432,24 +432,14 @@ To construct the light and dark visual framework specified in the DD:
 ```swift
 import SwiftUI
 
-extension Color {
-    static let neumorphicLightBackground = Color(hex: "#E0E5EC")
-    static let neumorphicLightHighlight = Color(hex: "#FFFFFF")
-    static let neumorphicLightShadow = Color(hex: "#A3B1C6")
-    
-    static let neumorphicDarkBackground = Color(hex: "#454545")
-    static let neumorphicDarkHighlight = Color(hex: "#D9D9D9")
-    static let neumorphicDarkShadow = Color(hex: "#2B2B2B")
-}
-
+// Example of clean Neumorphic modifier using consolidated assets
 struct NeumorphicExtrusionModifier: ViewModifier {
-    @Environment(\.colorScheme) var colorScheme
     var isPressed: Bool = false
     
     func body(content: Content) -> some View {
-        let background = colorScheme == .dark ? Color.neumorphicDarkBackground : Color.neumorphicLightBackground
-        let highlight = colorScheme == .dark ? Color.neumorphicDarkHighlight : Color.neumorphicLightHighlight
-        let shadow = colorScheme == .dark ? Color.neumorphicDarkShadow : Color.neumorphicLightShadow
+        let background = Color.fidgetPrimary
+        let highlight = Color.highlight
+        let shadow = Color.shadow
         
         if isPressed {
             content
