@@ -131,10 +131,7 @@ struct DialView_Previews: PreviewProvider {
 #Preview {
     DialView()
         .preferredColorScheme(.dark)
-        .previewDisplayName("Dark Mode")
-}
-#Preview{
+
     DialView()
         .preferredColorScheme(.light)
-        .previewDisplayName("Light Mode")
 }
