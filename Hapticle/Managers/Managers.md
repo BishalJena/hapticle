@@ -101,3 +101,124 @@ enum FidgetMaterial {
 }
 ```
 Expanding the managers with this enum allows the audio oscillators and LRA haptic players to scale their base frequencies and decay envelopes ($f_0$, $\lambda$, $t_{decay}$) dynamically—ensuring a unique, physically cohesive identity for each of the five fidgets.
+
+---
+
+## 5. Developer Integration Guide (For Coders)
+
+This section provides a concrete, step-by-step integration guide for coders implementing new fidget elements (Pen, Ticket, Magnet, Blob) to connect them to the shared haptic and audio pipelines.
+
+### 5.1 Step 1: Declare the State Model
+In your fidget’s physics model (e.g. `PenModel.swift`), declare the mechanical properties needed to track motion. Ensure you publish states to SwiftUI views and maintain internal variables for speed calculations:
+
+```swift
+class PenModel: ObservableObject {
+    @Published var dragOffset: CGFloat = 0.0      // Current finger position along track
+    @Published var isPressed: Bool = false        // Button touch state
+    
+    // Physical simulation states
+    var velocity: Double = 0.0
+    var isLatched: Bool = false
+    
+    // Core parameters (Exposed to Debug Control Panel)
+    var springConstant: Double = 120.0
+    var frictionCoefficient: Double = 2.5
+    var mass: Double = 0.15
+}
+```
+
+### 5.2 Step 2: Formulate the Physics Frame Update
+Initialize a frame-synchronous loop (such as `CADisplayLink` or a high-frequency `Timer`). On each physics tick ($dt$):
+1.  Calculate total net force $\Sigma F$ acting on the fidget (incorporating touch elastic springs, friction damping, detent blocks, and collisions).
+2.  Compute acceleration $a = \frac{\Sigma F}{m}$.
+3.  Integrate velocity and position: $v_{t+1} = v_t + a \cdot dt$ and $x_{t+1} = x_t + v_{t+1} \cdot dt$.
+4.  Package these physical variables into the shared `FidgetPhysicsState` struct and notify the managers.
+
+Here is a standard update block:
+
+```swift
+func stepPhysics(dt: Double) {
+    // 1. Calculate physical forces
+    let springForce = isPressed ? springConstant * Double(15.0 - dragOffset) : 0.0
+    let dampingForce = -frictionCoefficient * velocity
+    let netForce = springForce + dampingForce
+    
+    // 2. Integrate motion equations
+    let acceleration = netForce / mass
+    velocity += acceleration * dt
+    dragOffset += CGFloat(velocity * dt)
+    
+    // 3. Detect discrete click collisions (e.g. hitting the bottom cap boundary at y = 8.0)
+    var crossedBoundary = false
+    if dragOffset >= 8.0 && !isLatched {
+        isLatched = true
+        crossedBoundary = true
+        velocity = 0.0 // Hard collision stop
+    }
+    
+    // 4. Pack and actuate
+    let state = FidgetPhysicsState(
+        position: Double(dragOffset),
+        velocity: velocity,
+        torque: netForce,
+        crossedDetent: crossedBoundary,
+        detentIndex: isLatched ? 1 : 0
+    )
+    
+    // Notify sensory renderers
+    actuateSensoryOutputs(with: state)
+}
+```
+
+### 5.3 Step 3: Actuate Haptic and Sound Managers
+In your actuation handler, calculate the frequency equivalent of the movement ($f_{rep}$) to determine the cross-fade factor ($\alpha$). Trigger transients and Continuous rumbles:
+
+```swift
+private func actuateSensoryOutputs(with state: FidgetPhysicsState) {
+    let speed = abs(state.velocity)
+    
+    // 1. Translate velocity into an equivalent repetition frequency
+    // (e.g. for Pen slide, 100pt per second = 10Hz crossing frequency)
+    let f_rep = speed * 0.10
+    
+    // Calculate cross-fade parameter alpha
+    let alpha = min(max((f_rep - 10.0) / 10.0, 0.0), 1.0)
+    
+    // 2. Handle Discrete Click Collisions (Discrete & Cross-Fade Domains)
+    if alpha < 1.0 && state.crossedDetent {
+        // High-velocity clicks feel sharper and stronger
+        let intensity = 0.7 * (1.0 - alpha)
+        let sharpness = 0.6 + 0.3 * (speed / 10.0)
+        
+        // Haptics Manager handles device transients or UIKit fallback
+        HapticsManager.shared.playClick(intensity: intensity, sharpness: sharpness)
+        
+        // Sound Manager plays the low-latency crown tick click
+        SoundManager.shared.playSystemClick()
+    }
+    
+    // 3. Handle Continuous Sliding Friction (Cross-Fade & Continuous Domains)
+    if alpha > 0.0 && speed > 0.05 {
+        // Modulate continuous LRA rumble
+        let intensity = min((speed / 12.0) * alpha * 0.35, 1.0)
+        let sharpness = min(0.4 + 0.3 * alpha, 1.0)
+        
+        HapticsManager.shared.startContinuousFeedback(intensity: intensity, sharpness: sharpness)
+        
+        // Modulate procedural audio whirr/hum node
+        let volume = Float(alpha * min(speed / 12.0, 1.0) * 0.06)
+        let frequency = Float(f_rep * 3.0) // Scale frequency for the sliding pitch
+        
+        SoundManager.shared.startOscillator(frequency: frequency, volume: volume)
+    } else {
+        HapticsManager.shared.stopContinuousFeedback()
+        SoundManager.shared.stopOscillator()
+    }
+}
+```
+
+### 5.4 Best Practices for Developers
+*   **Decouple the view:** Never call `HapticsManager` or `SoundManager` from a SwiftUI View gesture closure. Keep them inside the physics loop of the `Model` to guarantee frame synchronization.
+*   **Coordinate system consistency:** Ensure all speeds ($\omega$ or $v$) and forces ($\tau$ or $F$) mapped to haptic parameters are passed as **absolute values** (`abs()`). Actuators do not care about vector direction, only magnitude.
+*   **Conservation of resources:** Always call `HapticsManager.shared.stopContinuousFeedback()` and `SoundManager.shared.stopOscillator()` when the fidget is static (`velocity == 0`), and invalidate your `CADisplayLink` loop to save battery.
+
