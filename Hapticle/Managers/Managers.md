@@ -1,6 +1,6 @@
 # Hapticle Sensory Managers Specification (Managers.md)
 
-This log documents the technical architecture and implementation details of the shared sensory feedback managers: **HapticsManager** and **SoundManager** located under [Hapticle/Managers/](file:///Users/moreno_m5/Projects/hapticle/Hapticle/Managers/).
+This log documents the technical architecture and implementation details of the shared sensory feedback managers: **HapticsManager** and **SoundManager** located under [Hapticle/Managers/](/hapticle/Hapticle/Managers/).
 
 These managers act as **actuators/renderers** (similar to a GPU rendering vertex streams). They hold zero physical state, perform no mechanical simulation, and carry no view references. Instead, they receive a unified physical state snapshot at each frame step and translate the raw numbers into low-latency hardware outputs.
 
@@ -8,7 +8,7 @@ These managers act as **actuators/renderers** (similar to a GPU rendering vertex
 
 ## 1. Haptics Actuator System (HapticsManager.swift)
 
-[HapticsManager.swift](file:///Users/moreno_m5/Projects/hapticle/Hapticle/Managers/HapticsManager.swift) implements a dual-engine architecture to ensure crisp feedback on physical iOS devices while maintaining compatibility inside Xcode Simulators.
+[HapticsManager.swift](/hapticle/Hapticle/Managers/HapticsManager.swift) implements a dual-engine architecture to ensure crisp feedback on physical iOS devices while maintaining compatibility inside Xcode Simulators.
 
 ### 1.1 CoreHaptics Engine (Physical Devices)
 For devices supporting the Taptic Engine, the manager initializes a `CHHapticEngine` and coordinates two types of events:
@@ -32,7 +32,7 @@ Since the Xcode iOS Simulator and some older devices do not support custom `CHHa
 
 ## 2. Low-Latency Audio Synthesizer (SoundManager.swift)
 
-[SoundManager.swift](file:///Users/moreno_m5/Projects/hapticle/Hapticle/Managers/SoundManager.swift) provides dual audio pipelines to support discrete impact clicks and continuous rotational whirrs.
+[SoundManager.swift](/hapticle/Hapticle/Managers/SoundManager.swift) provides dual audio pipelines to support discrete impact clicks and continuous rotational whirrs.
 
 ### 2.1 Low-Latency Mechanical Clicks
 For discrete clicks, rather than playing static wav/mp3 files (which require file decoding and introduce buffer-loading latency):
