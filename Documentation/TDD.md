@@ -478,9 +478,64 @@ struct NeumorphicExtrusionModifier: ViewModifier {
 }
 ```
 
+## 6. Developer & Debug Tooling (Debug Control Panel)
+
+To facilitate immediate feedback and prevent repeated compile/rebuild cycles, we integrate a float-over **Debug Control Panel** in the app's main root layout.
+
+### 6.1 Architectural Hook (`HapticleApp.swift`)
+The debug overlay is managed globally inside the root application shell. It uses a floating `@State` property to overlay the settings view on top of the active fidget screens.
+
+```swift
+// Example architectural hook in HapticleApp.swift
+import SwiftUI
+
+@main
+struct HapticleApp: App {
+    @State private var isDebugModeActive = false
+    @StateObject private var debugSettings = DebugSettingsManager()
+
+    var body: some Scene {
+        WindowGroup {
+            ZStack {
+                ContentView()
+                    .environmentObject(debugSettings)
+                
+                if isDebugModeActive {
+                    DebugControlPanelView(settings: debugSettings, isActive: $isDebugModeActive)
+                        .transition(.move(edge: .bottom))
+                }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .triggerDebugMode)) { _ in
+                withAnimation { isDebugModeActive.toggle() }
+            }
+        }
+    }
+}
+```
+
+### 6.2 Settings Clipboard Serialization
+The debug panel gathers all active parameters from state managers and exposes a copy pipeline:
+*   **DebugSettingsManager:** An environment object (`ObservableObject`) holding active tuning sliders.
+*   **Clipboard Exporter:** A method that serializes variables into a copy-pasteable Swift constructor block:
+    ```swift
+    func copySettingsToClipboard() {
+        let configurationString = """
+        // Tuned configuration: \(Date().description)
+        struct TunedParameters {
+            static let dialFriction: Double = \(self.dialFriction)
+            static let magnetSpringK: Double = \(self.magnetSpringK)
+            static let blobMitosisThreshold: Double = \(self.blobMitosisThreshold)
+            static let clickHapticIntensity: Float = \(self.clickHapticIntensity)
+        }
+        """
+        UIPasteboard.general.string = configurationString
+    }
+    ```
+This allows developers to modify spring stiffness, damping, friction decay, and haptic parameters in real time on physical hardware, click "Copy Settings," and directly paste the generated Swift code back into the codebase.
+
 ---
 
-## 6. Git & Branch Naming Conventions
+## 7. Git & Branch Naming Conventions
 
 To maintain a clean and structured commit history, all team members must adhere to the following branch naming conventions:
 

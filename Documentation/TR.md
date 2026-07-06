@@ -105,6 +105,11 @@ Our team adopted a strict minimalist approach to frameworks. We stripped our dep
 ### watchOS Stack
 *   **WatchKit:** Handles the watch app interface and triggers basic Apple Watch Taptic Engine patterns.
 
+### 7.3 Developer Tooling: Parameter Tuning Overlay
+To solve the issue of slow iteration cycles during physical testing, we implemented a custom float-over **Debug Control Panel** in the app's root view structure (`HapticleApp.swift`).
+*   **Why We Need It:** Physical constants (e.g. spring stiffness, friction coefficients, and haptic transient levels) require extensive physical testing to "feel" right. Re-compiling and deploying to physical devices for every parameter adjustment is highly inefficient.
+*   **Real-time Tuning & Copy Pipeline:** The panel includes interactive sliders representing active fidget properties. Once a developer achieves the desired tactile sensation, they can tap **"Copy Settings as Text"** to serialize the configurations directly to their device clipboard. This block can be pasted directly into code configuration models, completely eliminating manual transcription and transcription errors.
+
 ---
 
 ## 8. Accessibility, Localization, & Privacy

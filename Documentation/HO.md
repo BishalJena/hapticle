@@ -135,6 +135,24 @@ Handles ultra-low latency system sound triggers and real-time frequency modulati
     }
     ```
 
+### 2.3 Debug Control Panel Specifications
+
+The Debug panel provides a floating configuration overlay for parameters tuning.
+*   **Activation Gesture:** A secret developer touch—triple-tapping the screen with two fingers simultaneously.
+*   **Controls Layout:**
+    - Sliders and numeric text fields for each physical/haptic parameter.
+    - An action button: **"Copy Settings as Text"** (`Width: 200pt`, `Height: 44pt`, neumorphic styling).
+*   **Clipboard Output Format:** Clicking the button formats current settings as a Swift structure block:
+    ```swift
+    struct TunedParameters {
+        static let dialFriction = 0.05
+        static let magnetSpringK = 1.8
+        static let blobMitosisThreshold = 180.0
+        static let clickHapticIntensity = 0.8
+    }
+    ```
+This copied block is designed to be pasted directly into code configuration files to immediately freeze parameter values.
+
 ---
 
 ## 3. Fidget Blueprints (SOT for Coders)

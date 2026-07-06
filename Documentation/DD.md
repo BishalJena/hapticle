@@ -172,3 +172,12 @@ The Blob is a squishy, jelly-like creature centered on a grid background.
     *   A satisfying "pop" sound effect upon division.
 
 ![Blob Lo-Fi Sketch](Blob_lofi.jpeg)
+
+---
+
+## 3. Developer Tooling & Parameter Tuning (Debug Control Panel)
+
+To speed up the visual and physical tuning of interactive values, we introduce a dedicated developer overlay in the application interface:
+
+*   **Interactive Parameter Toggles & Sliders:** Floating panel providing sliders for adjusting physics variables (spring stiffness, friction decay, torque leverage, and stretch thresholds) and haptic/audio settings (transient intensity, sharpness, and audio base pitch) in real time.
+*   **Rapid Tuning Flow:** Rather than forcing developers to manually transcribe tuned parameters from the device screen to their codebase—which introduces typos and slow compile cycles—the panel includes a **"Copy Settings as Text"** button. This serializes all adjusted parameters into a structured text format (e.g., Swift Dictionary or JSON) and copies it directly to the system clipboard for immediate pasting into model source configurations.
