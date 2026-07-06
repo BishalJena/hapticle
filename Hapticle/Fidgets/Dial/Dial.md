@@ -56,3 +56,42 @@ We deliberated on where the physics computations (momentum, leverage torque, det
     - Monitors when the angle crosses $15^\circ$ detent ticks and commands `HapticsManager` and `SoundManager` to fire click transients.
 
 This keeps our logic clean, highly performant, and 100% testable.
+
+---
+
+## 4. Implementation Plan
+
+To implement the physics and interactive behaviors of the safe dial, we will execute a 4-phase plan in accordance with [DD.md](file:///Users/moreno_m5/Projects/hapticle/Documentation/DD.md) and [TDD.md](file:///Users/moreno_m5/Projects/hapticle/Documentation/TDD.md):
+
+### Phase 1: Touch Angle & Leverage Coordinate Mapping
+*   **Coordinate Translation:** In `DialView`, translate the drag coordinates relative to the dial center $(155, 155)$.
+*   **Angle Wrapping:** Convert the coordinates to radians using `atan2(y, x)`. Track full multi-rotation accumulation (unwrapped angle) to ensure the angle does not jump from $+\pi$ to $-\pi$ on boundary crossings.
+*   **Leverage Factor Computation:** On every drag update, calculate the distance $r = \sqrt{x^2 + y^2}$ from the center and evaluate the torque leverage $M_{leverage}$ defined in the specifications:
+    *   $r < 20\text{ pt} \implies M_{leverage} = 0.0$ (no rotational leverage in the dead-zone).
+    *   $20 \le r \le 120\text{ pt} \implies M_{leverage} = \frac{r - 20}{100}$ (linear ramp).
+    *   $r > 120\text{ pt} \implies M_{leverage} = 1.0$ (maximum leverage).
+
+### Phase 2: Momentum Simulation & Decay Loop
+*   **Trailing Velocity Capture:** Track the timestamped historical drag angles during the drag gesture to calculate a moving average of the angular velocity $\omega$ at release.
+*   **Display Synchronization Loop:** Upon gesture release, start a frame-synchronized `CADisplayLink` (on the main thread, or using an active Timer loop) to run the simulation:
+    *   Update the angle: $\theta_{t+1} = \theta_t + \omega_t \cdot dt$.
+    *   Apply friction decay: $\omega_{t+1} = \omega_t \cdot (1 - \mu \cdot M_{leverage} \cdot dt)$, where the default friction coefficient $\mu = 0.05$.
+    *   **Loop Termination:** Stop the timer when $|\omega_t| < 0.01\text{ rad/s}$ to conserve battery and CPU resources.
+
+### Phase 3: Detent Crossing Haptics & Whirr Modulation
+*   **Detent Detection:** Divide the angle space into $15^\circ$ detent steps. On every frame update (during both dragging and free-spinning):
+    *   Calculate the integer detent index: $k = \lfloor \frac{\theta}{15^\circ} \rfloor$.
+    *   If $k \ne \text{lastTriggeredDetentIndex}$, update the index and trigger:
+        1.  `HapticsManager.shared.playClick(intensity: sharpness:)` for a transient touch pulse.
+        2.  `SoundManager.shared.playSystemClick()` to hear the mechanical click.
+*   **Audio Pitch Modulation:** Calculate the RPM of the dial rotation:
+    $$\text{RPM} = \frac{|\omega| \cdot 60}{2\pi}$$
+    Continuously feed this RPM value to `SoundManager` to modulate the frequency and volume of a synthesized sine wave, producing a whirring/clicking sound that aligns with the rotation speed.
+
+### Phase 4: Debug Tuning Panel Bindings
+*   **State Variable Bindings:** Expose physical properties inside `DialModel` as `@Published` parameters:
+    *   `frictionCoefficient` (mapping to $\mu$).
+    *   `detentSpacing` (default $15.0$ degrees).
+    *   `hapticIntensity` and `hapticSharpness`.
+*   **Overlay & Clipboard Integration:** Wire these parameters directly to the debug settings sliders in the overlay control panel. When the user clicks "Copy Settings as Text", serialize these variables into the clipboard Swift structure for copy-paste compilation.
+
