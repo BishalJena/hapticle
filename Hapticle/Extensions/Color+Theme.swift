@@ -1,17 +1,12 @@
 import SwiftUI
 
 extension Color {
-    // Light Theme Colors
-    static let primaryLight = Color("PrimaryLight")
-    static let highlightLight = Color("HighlightLight")
-    static let shadowLight = Color("ShadowLight")
+    // Semantic Dual-Appearance Colors (Automatically swaps between light/dark mode)
+    static let primary = Color("Primary")
+    static let highlight = Color("Highlight")
+    static let shadow = Color("Shadow")
 
-    // Dark Theme Colors
-    static let primaryDark = Color("PrimaryDark")
-    static let highlightDark = Color("HighlightDark")
-    static let shadowDark = Color("ShadowDark")
-
-    // Accent Theme Colors
+    // Accent Theme Colors (Static red theme)
     static let accent = Color("Accent")
     static let accentHighlight = Color("AccentHighlight")
     static let accentShadow = Color("AccentShadow")
