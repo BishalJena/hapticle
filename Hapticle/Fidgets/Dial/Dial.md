@@ -462,6 +462,28 @@ class SoundManager {
 ```
 This framework connects the physics loop directly to hardware outputs, converting erratic user swipes into continuous, mathematically accurate tactile and sonic feedback.
 
+---
+
+## 11. Current Implementation Details
+
+The current implementation of the dial in the codebase under [Hapticle/Fidgets/Dial/](file:///Users/moreno_m5/Projects/hapticle/Hapticle/Fidgets/Dial/) has been optimized to match these specifications:
+
+### 11.1 Visual Layer Refactoring (DialView.swift)
+*   **Shadow Stability Solution:** Rather than rotating any shadow-casting circles, we keep all background circular layers 100% static. The **Outer Circular Rim** is drawn as a static circle with diameter `300` and `stroke: 25`, holding static top-left highlight and bottom-right shadow modifiers.
+*   **Rotating Markings:** Only the **24 ticks** (radial rectangles) and the **Red Indicator Dot** (offset by $x: -73, y: 65$) are placed inside the rotating container. This container rotates by `model.rotationAngle`.
+*   **Depth Click Sensation:** When the user touches/drags the dial, `model.isPressed` is flagged. The shadows on the static outer ring contract slightly (radius decreases from 5 to 3.5, offsets shift from 5 to 3.5), simulating a physical mechanical dial being pressed downward into the casing.
+
+### 11.2 Rotational Physics Loop (DialModel.swift)
+*   **Frame Synchronization:** Runs on `CADisplayLink` inside `stepPhysics(link:)`, integrating time steps dynamically.
+*   **Torque Calculations:**
+    *   **Torsion Spring Touch Link:** If dragging, calculates rotation difference $(\theta_{finger} - \theta)$ normalized to $[-\pi, \pi]$ and multiplies by `springConstant` (default: 350.0).
+    *   **Sinusoidal Potential Wells:** Calculates restoring detent torque pulling to the nearest index step using $-T_{detent} \cdot \sin(N_{detents} \cdot \theta)$ (default $T_{detent} = 25.0$).
+    *   **Friction Damping:** Applies continuous damping opposing the speed: $-c \cdot \omega$ (default $c = 3.0$).
+*   **Newton Integration:** Computes acceleration $\alpha = \frac{\tau_{net}}{I}$ using Moment of Inertia $I = 0.5 \cdot m$ (default mass $m = 0.2$).
+*   **Self-Termination:** If the user releases the dial, the loop runs until velocity falls below $0.01$ and the angle settles in a potential well, automatically calling `.invalidate()` to save battery.
+*   **Hz Readout Communication:** Calculates the instantaneous frequency $f_{rep} = \frac{|\omega| \cdot N_{detents}}{2\pi}$ and invokes `HapticsManager.shared.update` and `SoundManager.shared.update` dynamically at the end of each frame step.
+
+
 
 
 
