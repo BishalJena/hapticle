@@ -11,7 +11,7 @@ import SwiftUI
 struct HapticleApp: App {
     var body: some Scene {
         WindowGroup {
-            DialView()
+            ContentView()
         }
     }
 }
