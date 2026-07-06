@@ -37,6 +37,23 @@
 /* Begin PBXFileReference section */
 		003195E52FF5F39900A7163E /* Hapticle.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Hapticle.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		003195F22FF5F39A00A7163E /* Hapticle Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Hapticle Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		FA94B9FA2FFBE56E00A5B768 /* Color+Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Theme.swift"; sourceTree = "<group>"; };
+		FA94B9FC2FFBE56E00A5B768 /* BlobModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlobModel.swift; sourceTree = "<group>"; };
+		FA94B9FD2FFBE56E00A5B768 /* BlobView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlobView.swift; sourceTree = "<group>"; };
+		FA94B9FF2FFBE56E00A5B768 /* Dial.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Dial.md; sourceTree = "<group>"; };
+		FA94BA002FFBE56E00A5B768 /* DialModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DialModel.swift; sourceTree = "<group>"; };
+		FA94BA012FFBE56E00A5B768 /* DialView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DialView.swift; sourceTree = "<group>"; };
+		FA94BA032FFBE56E00A5B768 /*  MagnetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = " MagnetView.swift"; sourceTree = "<group>"; };
+		FA94BA042FFBE56E00A5B768 /* MagnetModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MagnetModel.swift; sourceTree = "<group>"; };
+		FA94BA062FFBE56E00A5B768 /* PenModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PenModel.swift; sourceTree = "<group>"; };
+		FA94BA072FFBE56E00A5B768 /* PenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PenView.swift; sourceTree = "<group>"; };
+		FA94BA092FFBE56E00A5B768 /* TicketModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketModel.swift; sourceTree = "<group>"; };
+		FA94BA0A2FFBE56E00A5B768 /* TicketView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketView.swift; sourceTree = "<group>"; };
+		FA94BA0D2FFBE56E00A5B768 /* HapticsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticsManager.swift; sourceTree = "<group>"; };
+		FA94BA0E2FFBE56E00A5B768 /* SoundManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundManager.swift; sourceTree = "<group>"; };
+		FA94BA102FFBE56E00A5B768 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		FA94BA112FFBE56E00A5B768 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		FA94BA122FFBE56E00A5B768 /* HapticleApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticleApp.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -75,6 +92,7 @@
 			children = (
 				003195E72FF5F39900A7163E /* Hapticle */,
 				003195F62FF5F39A00A7163E /* Hapticle Watch App */,
+				FA94B9F92FFBE56E00A5B768 /* Frameworks */,
 				003195E62FF5F39900A7163E /* Products */,
 			);
 			sourceTree = "<group>";
@@ -86,6 +104,102 @@
 				003195F22FF5F39A00A7163E /* Hapticle Watch App.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		FA94B9F92FFBE56E00A5B768 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				FA94BA132FFBE56E00A5B768 /* Hapticle */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		FA94B9FB2FFBE56E00A5B768 /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				FA94B9FA2FFBE56E00A5B768 /* Color+Theme.swift */,
+			);
+			path = Extensions;
+			sourceTree = "<group>";
+		};
+		FA94B9FE2FFBE56E00A5B768 /* Blob */ = {
+			isa = PBXGroup;
+			children = (
+				FA94B9FC2FFBE56E00A5B768 /* BlobModel.swift */,
+				FA94B9FD2FFBE56E00A5B768 /* BlobView.swift */,
+			);
+			path = Blob;
+			sourceTree = "<group>";
+		};
+		FA94BA022FFBE56E00A5B768 /* Dial */ = {
+			isa = PBXGroup;
+			children = (
+				FA94B9FF2FFBE56E00A5B768 /* Dial.md */,
+				FA94BA002FFBE56E00A5B768 /* DialModel.swift */,
+				FA94BA012FFBE56E00A5B768 /* DialView.swift */,
+			);
+			path = Dial;
+			sourceTree = "<group>";
+		};
+		FA94BA052FFBE56E00A5B768 /* Magnet */ = {
+			isa = PBXGroup;
+			children = (
+				FA94BA032FFBE56E00A5B768 /*  MagnetView.swift */,
+				FA94BA042FFBE56E00A5B768 /* MagnetModel.swift */,
+			);
+			path = Magnet;
+			sourceTree = "<group>";
+		};
+		FA94BA082FFBE56E00A5B768 /* Pen */ = {
+			isa = PBXGroup;
+			children = (
+				FA94BA062FFBE56E00A5B768 /* PenModel.swift */,
+				FA94BA072FFBE56E00A5B768 /* PenView.swift */,
+			);
+			path = Pen;
+			sourceTree = "<group>";
+		};
+		FA94BA0B2FFBE56E00A5B768 /* Ticket */ = {
+			isa = PBXGroup;
+			children = (
+				FA94BA092FFBE56E00A5B768 /* TicketModel.swift */,
+				FA94BA0A2FFBE56E00A5B768 /* TicketView.swift */,
+			);
+			path = Ticket;
+			sourceTree = "<group>";
+		};
+		FA94BA0C2FFBE56E00A5B768 /* Fidgets */ = {
+			isa = PBXGroup;
+			children = (
+				FA94B9FE2FFBE56E00A5B768 /* Blob */,
+				FA94BA022FFBE56E00A5B768 /* Dial */,
+				FA94BA052FFBE56E00A5B768 /* Magnet */,
+				FA94BA082FFBE56E00A5B768 /* Pen */,
+				FA94BA0B2FFBE56E00A5B768 /* Ticket */,
+			);
+			path = Fidgets;
+			sourceTree = "<group>";
+		};
+		FA94BA0F2FFBE56E00A5B768 /* Managers */ = {
+			isa = PBXGroup;
+			children = (
+				FA94BA0D2FFBE56E00A5B768 /* HapticsManager.swift */,
+				FA94BA0E2FFBE56E00A5B768 /* SoundManager.swift */,
+			);
+			path = Managers;
+			sourceTree = "<group>";
+		};
+		FA94BA132FFBE56E00A5B768 /* Hapticle */ = {
+			isa = PBXGroup;
+			children = (
+				FA94B9FB2FFBE56E00A5B768 /* Extensions */,
+				FA94BA0C2FFBE56E00A5B768 /* Fidgets */,
+				FA94BA0F2FFBE56E00A5B768 /* Managers */,
+				FA94BA102FFBE56E00A5B768 /* Assets.xcassets */,
+				FA94BA112FFBE56E00A5B768 /* ContentView.swift */,
+				FA94BA122FFBE56E00A5B768 /* HapticleApp.swift */,
+			);
+			path = Hapticle;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -408,7 +522,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = DQK6W7R7J7;
+				DEVELOPMENT_TEAM = N8Y7P4HS74;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Hapticle;
@@ -443,7 +557,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = DQK6W7R7J7;
+				DEVELOPMENT_TEAM = N8Y7P4HS74;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Hapticle;
