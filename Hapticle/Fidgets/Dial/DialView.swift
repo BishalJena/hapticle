@@ -6,7 +6,7 @@ struct DialView: View {
     var body: some View {
         ZStack {
             // Background Canvas (adapts to primary light or dark theme background)
-            Color.primary
+            Color.fidgetPrimary
                 .ignoresSafeArea()
             
             // Layout safe container (reproducing CSS 402px x 874px boundary)
@@ -18,7 +18,7 @@ struct DialView: View {
                     
                     // 1. Inner Concave Well (recessed circle base: Ellipse 4)
                     Circle()
-                        .fill(Color.primary)
+                        .fill(Color.fidgetPrimary)
                         .frame(width: 260, height: 260)
                         // Inset shadows recreating the CSS box-shadow inset properties
                         .overlay(
@@ -46,7 +46,7 @@ struct DialView: View {
                     
                     // 2. Outer Circular Rim/Well Border (embossed ring: Ellipse 1)
                     Circle()
-                        .stroke(Color.primary, lineWidth: 16.27)
+                        .stroke(Color.fidgetPrimary, lineWidth: 16.27)
                         .frame(width: 293.73, height: 293.73) // stroke-width centers to 310 diameter
                         .shadow(color: Color.shadow.opacity(0.8), radius: 10.28 / 2, x: 5.14, y: 5.14)
                         .shadow(color: Color.highlight.opacity(0.9), radius: 10.28 / 2, x: -5.14, y: -5.14)
