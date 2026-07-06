@@ -331,12 +331,137 @@ $$\alpha = \frac{f_{rep} - 10}{10} \quad (\text{clamped between } 0.0 \text{ and
     $$f_{rumble}(t) = f_{rep}(t)$$
 *   *Tactile Feel:* The discrete clicks smoothly morph into a spinning, textured vibration, avoiding any sudden jerks or actuator saturation.
 
-#### 3. Continuous Domain ($f_{rep} > 20\text{ Hz}$)
-*   **Transients:** Disabled completely (0% amplitude) to protect the actuator and conserve processor overhead.
 *   **Continuous Rumble:** Enabled (100% amplitude). The haptics are rendered as a single continuous wave, where:
     *   $\text{Intensity}(t) \propto |\omega(t)|$
     *   $\text{Sharpness}(t) \propto |\omega(t)|$
 *   *Tactile Feel:* A high-frequency whirring buzz that mirrors the speed of the spin.
+
+---
+
+## 10. Code Implementation Architecture & Real-Time Hz Tracking
+
+To calculate the click frequency ($f_{rep}$) in real time when the user spins the dial erratically, we derive it directly from the **instantaneous angular velocity ($\omega$)** computed by the physics engine at each frame.
+
+### 10.1 Calculating Hz in Real-Time
+The angular velocity $\omega(t)$ is measured in **radians per second**. 
+*   A full rotation is $2\pi$ radians.
+*   The spacing between detents for $N_{detents}$ is:
+    $$\Delta\theta = \frac{2\pi}{N_{detents}}\text{ radians}$$
+*   The number of detents crossed per second (the click frequency in Hz) is therefore a direct linear scaling of the instantaneous speed:
+    $$f_{rep}(t) = \frac{|\omega(t)|}{\Delta\theta} = \frac{|\omega(t)| \cdot N_{detents}}{2\pi}$$
+    *   *Example:* If the dial is spinning at $4\pi\text{ rad/s}$ ($2$ full rotations per second) with $24$ detents, then $f_{rep} = \frac{4\pi \cdot 24}{2\pi} = 48\text{ Hz}$.
+
+This math runs instantly inside our frame update loop, giving us the exact frequency at every single frame, regardless of how erratically the user changes speed.
+
+### 10.2 Swift Implementation Details
+
+#### 1. FidgetPhysicsState Snapshot (DialModel.swift)
+Every frame step, `DialModel` runs its math equations and exposes/publishes the state:
+```swift
+struct FidgetPhysicsState {
+    let position: Double        // θ (radians)
+    let velocity: Double        // ω (rad/s)
+    let torque: Double          // Net rotational force
+    let crossedDetent: Bool     // True if crossed a 15-degree boundary this frame
+    let detentIndex: Int        // Current index
+}
+```
+
+#### 2. Sound and Haptic Managers Integration
+At the end of the physics frame step, the model calls the managers:
+```swift
+func physicsFrameUpdate(dt: Double) {
+    // 1. Calculate physical forces (Torque, Friction, Detents)
+    // 2. Integrate angle and velocity
+    // 3. Check for detent crossing
+    let state = FidgetPhysicsState(...)
+    
+    // 4. Actuate haptics and audio in sync
+    HapticsManager.shared.update(with: state, model: self)
+    SoundManager.shared.update(with: state, model: self)
+}
+```
+
+#### 3. Real-Time Haptic Actuation (HapticsManager.swift)
+```swift
+class HapticsManager {
+    static let shared = HapticsManager()
+    private var continuousPlayer: CHHapticAdvancedPatternPlayer?
+    
+    func update(with state: FidgetPhysicsState, model: DialModel) {
+        let speed = abs(state.velocity)
+        let f_rep = (speed * Double(model.detentCount)) / (2.0 * .pi)
+        
+        if speed < 0.01 {
+            continuousPlayer?.stop(atTime: 0)
+            return
+        }
+        
+        // 1. Calculate Cross-Fade Factor (Alpha)
+        let alpha = min(max((f_rep - 10.0) / 10.0, 0.0), 1.0)
+        
+        // 2. Play Transients (Discrete Domain & Cross-Fade Domain)
+        if alpha < 1.0 && state.crossedDetent {
+            let intensity = Float(model.baseHapticIntensity + model.speedScale * speed) * Float(1.0 - alpha)
+            let sharpness = Float(model.baseHapticSharpness + model.sharpnessScale * speed)
+            
+            playTransientClick(intensity: intensity, sharpness: sharpness)
+        }
+        
+        // 3. Modulate Continuous Pattern (Cross-Fade Domain & Continuous Domain)
+        if alpha > 0.0 {
+            ensureContinuousPlayerRunning()
+            
+            let intensity = Float(model.rumbleIntensity * (speed / model.maxSpeed)) * Float(alpha)
+            let sharpness = Float(model.rumbleSharpnessBase + model.rumbleSharpnessScale * speed)
+            
+            // Dynamic parameter update (zero-latency LRA adjustment)
+            continuousPlayer?.sendParameters([
+                CHHapticDynamicParameter(parameterID: .hapticIntensityControl, value: intensity, relativeTime: 0),
+                CHHapticDynamicParameter(parameterID: .hapticSharpnessControl, value: sharpness, relativeTime: 0)
+            ], atTime: 0)
+        } else {
+            continuousPlayer?.stop(atTime: 0)
+        }
+    }
+}
+```
+
+#### 4. Real-Time Audio Synthesis (SoundManager.swift)
+```swift
+class SoundManager {
+    static let shared = SoundManager()
+    private var synthNode: AVAudioSourceNode? // Synthesizes phase sine waves procedurally
+    
+    func update(with state: FidgetPhysicsState, model: DialModel) {
+        let speed = abs(state.velocity)
+        let f_rep = (speed * Double(model.detentCount)) / (2.0 * .pi)
+        
+        let alpha = min(max((f_rep - 10.0) / 10.0, 0.0), 1.0)
+        
+        // Play click sample if in low-speed/cross-fade domain
+        if alpha < 1.0 && state.crossedDetent {
+            let volume = Float(1.0 - alpha)
+            playSystemClickSample(volume: volume)
+        }
+        
+        // Modulate continuous oscillator frequency
+        if alpha > 0.0 {
+            ensureOscillatorRunning()
+            
+            // Repetition Hz determines fundamental frequency of the whirr
+            let targetFrequency = f_rep
+            let volume = Float(alpha) * Float(speed / model.maxSpeed)
+            
+            setOscillatorFrequency(targetFrequency, volume: volume)
+        } else {
+            stopOscillator()
+        }
+    }
+}
+```
+This framework connects the physics loop directly to hardware outputs, converting erratic user swipes into continuous, mathematically accurate tactile and sonic feedback.
+
 
 
 
