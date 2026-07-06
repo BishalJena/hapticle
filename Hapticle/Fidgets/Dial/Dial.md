@@ -250,6 +250,54 @@ As the dial's rotation speed increases, the repetition rate of the clicks ($f_{r
         $$f_{high}(t) = f_{base} + k_{velocity} \cdot |\omega(t)|$$
     *   As a result, individual clicks physically become **brighter and higher-pitched** when flicked quickly, mimicking the increased kinetic energy of the mechanical impact.
 
+---
+
+## 8. Physical Synthesis of Haptics: Transients, Damping, and LRA Resonance
+
+Physically, a haptic vibration is indeed the **low-pass filtered component of the same mechanical shockwave** that produces the audio click. 
+
+*   **Audio (High Frequency):** Air pressure waves between $20\text{ Hz}$ and $20,000\text{ Hz}$.
+*   **Haptics (Low Frequency):** Skin displacement shear waves between $1\text{ Hz}$ and $1000\text{ Hz}$ (with peak human touch sensitivity around $200\text{--}300\text{ Hz}$).
+
+However, due to mobile hardware limitations and API constraints, we cannot simply route a low-passed audio buffer directly to the Taptic Engine. Instead, we use Apple's **CoreHaptics API** to procedurally synthesize haptic states by mapping physical velocity, torque, and envelopes to parametric parameters.
+
+### 8.1 LRA Resonance & The Lowpass Analogy
+Mobile actuators are **Linear Resonant Actuators (LRAs)**. Unlike speakers which have flat responses, LRAs have a very narrow resonant frequency (typically $150\text{--}230\text{ Hz}$). 
+*   Feeding a raw low-passed signal can result in weak feedback if the frequencies fall outside this LRA resonance window.
+*   Instead, we synthesize parametric events using CoreHaptics **Sharpness** (which controls the LRA carrier frequency from heavy thuds at $\approx 80\text{ Hz}$ to bright metallic ticks at $\approx 250\text{ Hz}$) and **Intensity** (which controls vibration amplitude).
+
+### 8.2 Transient Haptics (Detent Snap Envelopes)
+When the dial crosses a detent, we trigger a discrete `CHHapticEvent` of type `.hapticTransient`. We shape its envelope using four parameters:
+
+```
+Force / Amp
+  ▲
+  │        /\
+  │       /  \
+  │      /    \_____________
+  │     /                   \____
+  │    /                         \
+  └────┴──────┴──────────────────┴──────► Time
+     Attack  Decay
+```
+
+1.  **Intensity ($I_{transient}$):** Directly proportional to the collision speed:
+    $$I_{transient} = I_{base} + k_{v} \cdot |\omega|$$
+2.  **Sharpness ($S_{transient}$):** Governs the click material feel. Higher velocity makes the collision feel stiffer and sharper:
+    $$S_{transient} = S_{base} + k_{s} \cdot |\omega|$$
+3.  **Attack Time ($t_{attack}$):** The time it takes for the LRA to reach peak intensity (typically $0.01\text{s}$ to $0.03\text{s}$). Stiff detents have near-zero attack time.
+4.  **Decay Time ($t_{decay}$):** Controls how long the resonance lingers (typically $0.02\text{s}$ to $0.08\text{s}$). A longer decay creates a springy, metallic ping; a short decay feels like dry wood or rubber.
+
+### 8.3 Continuous Haptics (Rotational Rumble & Friction)
+When the dial is spinning, we play a continuous haptic wave (`.hapticContinuous`) to represent surface texture friction. We update its parameters dynamically every frame:
+*   **Intensity:** Scales with rotation speed. No movement = zero rumble:
+    $$I_{continuous}(t) = I_{rumble\_max} \cdot \left( \frac{|\omega(t)|}{\omega_{max}} \right)$$
+*   **Sharpness:** Speeds up the LRA oscillation frequency, shifting the tactile rumble from a low thrum to a high buzz as velocity increases:
+    $$S_{continuous}(t) = S_{rumble\_base} + k_{rumble} \cdot |\omega(t)|$$
+
+This parametric control gives us the resolution to simulate everything from smooth, oil-damped rotary knobs to heavy, teeth-gripping ratchets.
+
+
 
 
 
