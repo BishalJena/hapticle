@@ -69,3 +69,35 @@ SoundManager.shared.update(with: state, model: self)
 ```
 
 By computing Hz ($f_{rep} = \frac{|\omega| \cdot N_{detents}}{2\pi}$) and fading the signals dynamically based on this frequency, the managers ensure that visual rotation, tactile buzz, and audio whirr remain perfectly in phase at all speeds.
+
+---
+
+## 4. Fidget Modularity & Material Timbre Presets
+
+The managers are built to be **highly modular** and are fully equipped to support the remaining four fidgets (Pen, Ticket, Magnet, Blob) by mapping physical states to generic parametric parameters.
+
+### 4.1 Fidget-to-Manager Mapping
+
+| Fidget | Physical Event | Actuator Pipeline | Dynamic Parameter Mapping |
+| :--- | :--- | :--- | :--- |
+| **The Pen** | Latch Click Down / Release Up | Transient Click (`playClick`) | Stiff high-intensity transient on click down, slightly lower-sharpness click on release. |
+| | Slide Friction along Track | Continuous Rumble (`updateContinuous`) | Damping resistance mapped to touch drag speed. |
+| **The Ticket** | Perforation Snap (12pt steps) | Transient Clicks (`playClick`) | Low-intensity, high-repetition ticks as fibers yield. |
+| | Tear-off Release (12pt final) | Transient Click (`playClick`) | Stiff, high-intensity pop click. |
+| | Tearing card fibers | Audio Impulse Burst | Rapid, randomized click impulses mimicking ripping paper. |
+| **The Magnet** | Center Orbit Rotation | Continuous Rumble (`updateContinuous`) | Magnetic attraction/repulsion hum. Volume/Intensity $\propto \frac{1}{\text{distance}}$. |
+| | Pole Lock (attract snap) | Transient Click (`playClick`) | High-intensity, low-sharpness metallic snap-to-pole. |
+| **The Blob** | Jelly Drag Stretch | Continuous Rumble (`updateContinuous`) | Damping rumble representing fluid viscosity. Rumble intensity $\propto \text{stretch distance}$. |
+| | Mitosis Division Pop | Transient Click (`playClick`) | Bubble-burst pop (high intensity, low sharpness). |
+
+### 4.2 Supporting Material Timbres
+To prevent all fidgets from sounding like the metal dial casing, the managers will support **Timbral Material Presets** using a generic `Material` enum:
+```swift
+enum FidgetMaterial {
+    case metal      // High sharpness, low damping, resonant (Dial, Pen latch)
+    case plastic    // Medium-high sharpness, medium decay (Pen casing)
+    case paper      // Low sharpness, high decay, high friction (Ticket tearing)
+    case organic    // Very low sharpness, high damping (Blob viscous squelches)
+}
+```
+Expanding the managers with this enum allows the audio oscillators and LRA haptic players to scale their base frequencies and decay envelopes ($f_0$, $\lambda$, $t_{decay}$) dynamically—ensuring a unique, physically cohesive identity for each of the five fidgets.
