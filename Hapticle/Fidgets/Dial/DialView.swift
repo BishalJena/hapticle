@@ -16,58 +16,24 @@ struct DialView: View {
                 // Circle Dial Container (310px x 310px)
                 ZStack {
                     
-                    // 1. Debossed Socket Well (recessed circle base)
-                    Circle()
-                        .fill(Color.fidgetPrimary)
-                        .frame(width: 275, height: 275)
-                        .overlay(
-                            Circle()
-                                .stroke(Color.shadow.opacity(0.4), lineWidth: 5)
-                                .blur(radius: 4)
-                                .offset(x: 4, y: 4)
-                                .mask(Circle().fill(LinearGradient(
-                                    colors: [Color.shadow, Color.clear],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )))
-                        )
-                        .overlay(
-                            Circle()
-                                .stroke(Color.highlight.opacity(0.8), lineWidth: 10)
-                                .blur(radius: 8)
-                                .offset(x: -4, y: -4)
-                                .mask(Circle().fill(LinearGradient(
-                                    colors: [Color.clear, Color.highlight],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )))
-                        )
-                    
-                    // 2. Embossed Dial Face (recesses slightly when pressed)
-                    Circle()
-                        .fill(Color.fidgetPrimary)
-                        .frame(width: 245, height: 245)
-                        .shadow(
-                            color: Color.shadow.opacity(model.isPressed ? 0.5 : 0.8),
-                            radius: model.isPressed ? 4 : 8,
-                            x: model.isPressed ? 2.5 : 5.0,
-                            y: model.isPressed ? 2.5 : 5.0
-                        )
-                        .shadow(
-                            color: Color.highlight.opacity(model.isPressed ? 0.6 : 0.9),
-                            radius: model.isPressed ? 4 : 8,
-                            x: model.isPressed ? -2.5 : -5.0,
-                            y: model.isPressed ? -2.5 : -5.0
-                        )
-                    
-                    // 3. Outer Circular Rim/Well Border (embossed ring)
+                    // 1. Static Embossed Bezel Ring (Outer Circular Rim/Well Border) - Does not spin
                     Circle()
                         .stroke(Color.fidgetPrimary, lineWidth: 25)
                         .frame(width: 300, height: 300)
-                        .shadow(color: Color.shadow.opacity(0.8), radius: 5, x: 5, y: 5)
-                        .shadow(color: Color.highlight.opacity(0.9), radius: 5, x: -5, y: -5)
+                        .shadow(
+                            color: Color.shadow.opacity(model.isPressed ? 0.5 : 0.8),
+                            radius: model.isPressed ? 3.5 : 5.0,
+                            x: model.isPressed ? 3.5 : 5.0,
+                            y: model.isPressed ? 3.5 : 5.0
+                        )
+                        .shadow(
+                            color: Color.highlight.opacity(model.isPressed ? 0.6 : 0.9),
+                            radius: model.isPressed ? 3.5 : 5.0,
+                            x: model.isPressed ? -3.5 : -5.0,
+                            y: model.isPressed ? -3.5 : -5.0
+                        )
                     
-                    // 4. Rotating Dial Face details (ticks & indicator)
+                    // 2. Rotating Foreground Markings (Only the ticks and Red Dot spin)
                     ZStack {
                         // 24 Ticks (Rectangle 7) rotated in 15-degree increments at radius 149
                         ForEach(0..<24) { i in
@@ -103,7 +69,8 @@ struct DialView: View {
                             .offset(x: -73, y: 65)
                     }
                     .rotationEffect(.radians(model.rotationAngle))
-                    .contentShape(Circle()) // Ensures the drag gesture catches touches over the entire dial
+                    .frame(width: 300, height: 300)
+                    .contentShape(Circle()) // Ensures the drag gesture catches touches over the entire inner region
                     .gesture(
                         DragGesture(minimumDistance: 0)
                             .onChanged { value in
