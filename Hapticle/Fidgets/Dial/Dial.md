@@ -95,3 +95,57 @@ To implement the physics and interactive behaviors of the safe dial, we will exe
     *   `hapticIntensity` and `hapticSharpness`.
 *   **Overlay & Clipboard Integration:** Wire these parameters directly to the debug settings sliders in the overlay control panel. When the user clicks "Copy Settings as Text", serialize these variables into the clipboard Swift structure for copy-paste compilation.
 
+---
+
+## 5. Advanced Physical Simulation & Detent Modeling
+
+Implementing tunable **Mass (Moment of Inertia)**, **Virtual Spring Touch Coupling**, and **Equilibrium Detent Wells** creates a highly immersive simulation. By adjusting these physical parameters, we can replicate multiple real-world devices (from free-spinning combination safes to ratcheting CNC encoders).
+
+### 5.1 The Physics Model
+
+We define the following tunable parameters inside `DialModel`:
+*   $m$ (**Dial Mass**): Represents the simulated mass of the dial. Since the dial is a disc, its Moment of Inertia is:
+    $$I = \frac{1}{2} m R^2$$
+    where $R$ is the dial radius ($155\text{ pt}$).
+*   $c$ (**Rotational Damping/Friction**): Damps the velocity continuously.
+*   $k_{spring}$ (**Touch Coupling Spring Constant**): Connects the dial's physical angle to the user's touch angle.
+*   $T_{detent}$ (**Detent Torque Strength**): The peak force pulling the dial into the nearest tick mark.
+*   $N_{detents}$ (**Detent Count**): Number of ticks per full rotation (default: 24, spacing: $\Delta\theta = \frac{2\pi}{N_{detents}}$).
+
+### 5.2 Equations of Motion
+
+At each timestep $dt$ inside our update loop, we compute the torques acting on the dial:
+
+1.  **Touch Torque ($\tau_{touch}$):**
+    During a drag gesture, we model the link between the finger angle $\theta_{finger}$ and the dial angle $\theta$ as a virtual torsion spring:
+    $$\tau_{touch} = \begin{cases} 
+      k_{spring} \cdot (\theta_{finger} - \theta) & \text{if dragging} \\
+      0 & \text{if released}
+    \end{cases}$$
+    *   *Note:* If Mass is high, the dial lag feels heavy and authentic. If Mass is low or Spring is infinite, it snaps directly to the touch.
+2.  **Detent Restoring Torque ($\tau_{detent}$):**
+    Detents are represented as sinusoidal potential energy wells. The restoring torque pulls the dial toward the nearest equilibrium index:
+    $$\tau_{detent} = -T_{detent} \cdot \sin(N_{detents} \cdot \theta)$$
+    This torque is zero exactly at the detent centers (stable) and halfway between them (unstable), pulling the dial back to a tick.
+3.  **Friction Damping Torque ($\tau_{friction}$):**
+    $$\tau_{friction} = -c \cdot \omega$$
+
+The net torque $\tau_{net}$ yields the angular acceleration $\alpha$:
+$$\tau_{net} = \tau_{touch} + \tau_{detent} + \tau_{friction}$$
+$$\alpha = \frac{\tau_{net}}{I}$$
+
+Using Euler-Cromer integration, we update velocity and position:
+$$\omega_{t+1} = \omega_t + \alpha \cdot dt$$
+$$\theta_{t+1} = \theta_t + \omega_{t+1} \cdot dt$$
+
+### 5.3 Preset Configurations
+
+By adjusting $m$, $T_{detent}$, and $c$, we can instantly switch modes in the app:
+
+| Encoder Preset | Mass ($m$) | Damping ($c$) | Detent Torque ($T_{detent}$) | Spacing ($N_{detents}$) | Behavior Description |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Heavy Combination Safe** | High | Low | Very Low (or $0$) | 100 | Spins freely for a long time; heavy momentum; clicks are purely sensory. |
+| **Ball Detent Encoder** | Low-Med | Medium | High | 24 | Strong physical detents; clicks into place, bounces slightly in the wells; can be flicked past multiple notches. |
+| **Ratcheting CNC Wheel** | Very Low | High | Very High | 60 | No momentum; stops instantly in the next notch; ticks grip the wheel tightly. |
+
+
