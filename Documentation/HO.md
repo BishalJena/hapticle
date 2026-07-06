@@ -25,6 +25,10 @@ All color variables should be registered in assets and mapped via `Color` extens
 | **AccentHighlight** | ![#D86E6E](Colors/accent_highlight.svg) | `#D86E6E` | `rgba(216, 110, 110, 1.00)` | `hsl(0, 58%, 64%)` | Accent Theme Highlight |
 | **AccentShadow** | ![#892424](Colors/accent_shadow.svg) | `#892424` | `rgba(137, 36, 36, 1.00)` | `hsl(0, 58%, 34%)` | Accent Theme Shadow |
 
+> [!TIP]
+> **Implementation Note (Xcode Assets Consolidation):**
+> In the codebase asset catalog (`Assets.xcassets`), the separate Light and Dark color sets are consolidated into single dual-appearance color sets (`Primary`, `Highlight`, and `Shadow`). Xcode automatically resolves these to their respective Light (`PrimaryLight`, `HighlightLight`, `ShadowLight`) or Dark (`PrimaryDark`, `HighlightDark`, `ShadowDark`) values based on system appearance context. The three active accent colors (`Accent`, `AccentHighlight`, and `AccentShadow`) are kept as three separate static assets.
+
 ---
 
 ### 1.2 Neumorphic Shadow Modifiers (SwiftUI)
