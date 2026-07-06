@@ -115,15 +115,15 @@ With a highly visual and neumorphic style, contrast is a key challenge. We imple
 *   **Grey Theme (Dark Mode):** Base ![#454545](Colors/primary_grey.svg) `#454545`, Highlight ![#D9D9D9](Colors/grey_highlight.svg) `#D9D9D9`, Shadow ![#000000](Colors/grey_shadow.svg) `#000000`
 *   **Red Theme (Active/Accent):** Base ![#C73535](Colors/primary_red.svg) `#C73535`, Highlight ![#D86E6E](Colors/red_highlight.svg) `#D86E6E`, Shadow ![#892424](Colors/red_shadow.svg) `#892424`
 
-### 8.2 Universal UX & Localization
-Rather than spending time translating text into different languages, we designed a **text-less, intuitive user interface**. The fidgets simulate objects that are globally understood:
-*   A pen button clicker.
-*   A rotating safe dial.
-*   A tear-off paper ticket.
-*   Alternating magnetic rings.
-By relying entirely on interactive visual metaphors, auditory cues, and physical haptics, the application is naturally universal and requires zero localization.
+### 8.2 Universal UX & Onboarding Text
+To cycle through the five fidget interfaces, the application implements a custom **2-finger swipe gesture**. Because this navigation scheme is not a standard system gesture, we introduced a minimal onboarding text instruction in the initial user flow to guide users: *"Swipe with two fingers to change fidgets."*
+*   **Typography & Styling:** This text guidance conforms to standard Apple HIG layout spacing, styled in `SF Pro Rounded`, size `17 pt`, and `Medium` weight.
+*   **Minimalist Footprint:** Beyond this essential swipe instruction, the interface remains entirely text-less, utilizing visual metaphors and auditory/tactile feedback to retain a universal design that requires minimal localization overhead.
 
-### 8.3 Privacy Compliance
+### 8.3 Figma Static Component Note
+Our source Figma components are strictly static designs without pre-defined interactive states. The dynamic behaviors—such as visual depth recessions, spring tensions, and dial rotations—are synthesized programmatically in SwiftUI, rather than replicated from Figma variant states.
+
+### 8.4 Privacy Compliance
 Our application requires no network connectivity, profile creation, or data storage. It is built to run entirely on the user's device:
 *   **No User Data Collected:** We do not track, store, or transmit any user behavior or metrics, ensuring 100% user privacy.
 

@@ -31,6 +31,22 @@ Hapticle implements a modern **Neumorphic (soft 3D)** user interface. The UI ele
 | **Shadow (Dark)** | ![#A3B1C6](Colors/white_shadow.svg) `White Shadow` (`#A3B1C6`) | ![#000000](Colors/grey_shadow.svg) `Grey Shadow` (`#000000`) | ![#892424](Colors/red_shadow.svg) `Red Shadow` (`#892424`) | Simulates cast shadow on the bottom-right edges of components. |
 
 
+### Typography
+
+To support minimal interface guidance (specifically for onboarding navigation instructions), the design incorporates a clean, system-aligned typographic style:
+*   **Font Family:** `SF Pro Rounded`
+*   **Font Size:** `17 pt`
+*   **Weight:** `Medium`
+
+### Spacing
+
+We adhere strictly to standard **Apple Human Interface Guidelines (HIG)** for layout spacing, gutter margins, and interactive hit targets:
+*   **Screen Margins / Gutters:** `16pt` to `20pt` padding on side edges.
+*   **Onboarding Guidance:** To assist first-time users with navigation, the interface displays a minimal text instruction: *"Swipe with two fingers to change fidgets."* This text guidance is required to instruct users to perform the custom **2-finger swipe gesture** used to cycle through the five fidget interfaces. The text block is aligned following standard HIG safe areas and typographic hierarchies.
+
+> [!NOTE]
+> **Figma Design Constraint:** The source Figma components do not have defined interactive states; they are static designs. Dynamic states (such as debossed recess overlays, elastic stretch coefficients, or rotational displacement) must be generated entirely in SwiftUI.
+
 ---
 
 ## 2. Fidget Interactivity & Design Specifications
