@@ -297,6 +297,48 @@ When the dial is spinning, we play a continuous haptic wave (`.hapticContinuous`
 
 This parametric control gives us the resolution to simulate everything from smooth, oil-damped rotary knobs to heavy, teeth-gripping ratchets.
 
+---
+
+## 9. The Transient-to-Continuous Transition Engine (Cross-Fading & Temporal Fusion)
+
+Just like the ear fuses periodic pulses into a pitched tone above $20\text{ Hz}$, the skin's mechanoreceptors (specifically Meissner's and Pacinian corpuscles) have a **temporal tactile resolution limit** of approximately **$10\text{ Hz}$ to $15\text{ Hz}$** (repetitions spaced less than $70\text{ ms}$ apart).
+
+### 9.1 The Perceptual and Hardware Challenge
+*   **Low-Speed ($f_{rep} < 10\text{ Hz}$):** The brain resolves individual, discrete impacts: *tap... tap... tap*.
+*   **High-Speed ($f_{rep} > 15\text{ Hz}$):** The taps fuse into a continuous, vibrating **flutter or buzz**.
+*   **Actuator Damping Limit:** In physical hardware, a mobile LRA's mass takes $30\text{--}50\text{ ms}$ to decay. If we fire discrete `.hapticTransient` events at $30\text{ Hz}$, the actuator cannot start and stop fast enough. The waveforms overlap, causing the LRA to saturate and output a mushy, uncontrolled vibration.
+
+### 9.2 The Solution: Dynamic Cross-Fading
+
+To bridge this gap organically, we divide the dial's rotation speed (repetition frequency $f_{rep} = \frac{|\omega| \cdot N_{detents}}{2\pi}$) into three distinct operational domains:
+
+```
+Low-Speed (< 10 Hz)          Transition Domain (10 - 20 Hz)        High-Speed (> 20 Hz)
+ 100% Transients              Cross-fade: Transients ──► 0%          0% Transients
+   0% Continuous                         Continuous ──► 100%       100% Continuous (Rumble)
+```
+
+#### 1. Discrete Domain ($f_{rep} < 10\text{ Hz}$)
+*   **Transients:** Enabled (100% amplitude). Each detent crossing fires a crisp haptic tick and audio impulse.
+*   **Continuous Rumble:** Disabled (0% amplitude).
+*   *Tactile Feel:* Heavy, discrete mechanical steps.
+
+#### 2. Cross-Fade Domain ($10\text{ Hz} \le f_{rep} \le 20\text{ Hz}$)
+We define a normalized transition factor $\alpha$:
+$$\alpha = \frac{f_{rep} - 10}{10} \quad (\text{clamped between } 0.0 \text{ and } 1.0)$$
+*   **Transients Amplitude:** Scaled by $(1 - \alpha)$. As speed increases, individual clicks are dynamically attenuated.
+*   **Continuous Rumble Amplitude:** Scaled by $\alpha$. A low-frequency continuous texture is faded in, whose frequency matches the repetition rate:
+    $$f_{rumble}(t) = f_{rep}(t)$$
+*   *Tactile Feel:* The discrete clicks smoothly morph into a spinning, textured vibration, avoiding any sudden jerks or actuator saturation.
+
+#### 3. Continuous Domain ($f_{rep} > 20\text{ Hz}$)
+*   **Transients:** Disabled completely (0% amplitude) to protect the actuator and conserve processor overhead.
+*   **Continuous Rumble:** Enabled (100% amplitude). The haptics are rendered as a single continuous wave, where:
+    *   $\text{Intensity}(t) \propto |\omega(t)|$
+    *   $\text{Sharpness}(t) \propto |\omega(t)|$
+*   *Tactile Feel:* A high-frequency whirring buzz that mirrors the speed of the spin.
+
+
 
 
 
