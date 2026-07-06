@@ -80,23 +80,6 @@ struct PenView: View {
                         : .easeOut(duration: 0.25),
                         value: buttonState
                     )
-                    .gesture(
-                        DragGesture(minimumDistance: 0)
-                            .onChanged { _ in
-                                if buttonState != .beingClicked {
-                                    preClickState = buttonState // remember where we came from
-                                    buttonState = .beingClicked
-                                }
-                            }
-                            .onEnded { _ in
-                                let generator = UIImpactFeedbackGenerator(style: .heavy)
-                                generator.prepare()
-                                generator.impactOccurred()
-                                
-                                // toggle: if it was unclicked before, resolve to clicked, and vice versa
-                                buttonState = (preClickState == .clicked) ? .unclicked : .clicked
-                            }
-                    )
                 Spacer()
             }
             // pen body
@@ -161,6 +144,23 @@ struct PenView: View {
             
             
         }
+        .contentShape(Rectangle()) // makes the ENTIRE ZStack area (including empty space) hit-testable
+                .gesture(
+                    DragGesture(minimumDistance: 0)
+                        .onChanged { _ in
+                            if buttonState != .beingClicked {
+                                preClickState = buttonState
+                                buttonState = .beingClicked
+                            }
+                        }
+                        .onEnded { _ in
+                            let generator = UIImpactFeedbackGenerator(style: .rigid)
+                            generator.prepare()
+                            generator.impactOccurred()
+                            
+                            buttonState = (preClickState == .clicked) ? .unclicked : .clicked
+                        }
+                )
         
     }
 }
