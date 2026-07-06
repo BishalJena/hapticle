@@ -15,15 +15,15 @@ All color variables should be registered in assets and mapped via `Color` extens
 
 | Color Name | Preview | HEX | RGBA | HSL | Neumorphic Role |
 | :--- | :---: | :--- | :--- | :--- | :--- |
-| **White** | ![#E0E5EC](Colors/white.svg) | `#E0E5EC` | `rgba(224, 229, 236, 1.00)` | `hsl(215, 24%, 90%)` | Light Theme Background |
-| **White Highlight** | ![#FFFFFF](Colors/white_highlight.svg) | `#FFFFFF` | `rgba(255, 255, 255, 1.00)` | `hsl(0, 0%, 100%)` | Light Theme Highlight |
-| **White Shadow** | ![#A3B1C6](Colors/white_shadow.svg) | `#A3B1C6` | `rgba(163, 177, 198, 1.00)` | `hsl(216, 23%, 71%)` | Light Theme Shadow |
-| **Primary Grey** | ![#454545](Colors/primary_grey.svg) | `#454545` | `rgba(69, 69, 69, 1.00)` | `hsl(0, 0%, 27%)` | Dark Theme Background |
-| **Grey Highlight** | ![#D9D9D9](Colors/grey_highlight.svg) | `#D9D9D9` | `rgba(217, 217, 217, 1.00)` | `hsl(0, 0%, 85%)` | Dark Theme Highlight |
-| **Grey Shadow** | ![#000000](Colors/grey_shadow.svg) | `#000000` | `rgba(0, 0, 0, 1.00)` | `hsl(0, 0%, 0%)` | Dark Theme Shadow |
-| **Primary Red** | ![#C73535](Colors/primary_red.svg) | `#C73535` | `rgba(199, 53, 53, 1.00)` | `hsl(0, 58%, 49%)` | Red Theme Background |
-| **Red Highlight** | ![#D86E6E](Colors/red_highlight.svg) | `#D86E6E` | `rgba(216, 110, 110, 1.00)` | `hsl(0, 58%, 64%)` | Red Theme Highlight |
-| **Red Shadow** | ![#892424](Colors/red_shadow.svg) | `#892424` | `rgba(137, 36, 36, 1.00)` | `hsl(0, 58%, 34%)` | Red Theme Shadow |
+| **PrimaryLight** | ![#E0E5EC](Colors/primary_light.svg) | `#E0E5EC` | `rgba(224, 229, 236, 1.00)` | `hsl(215, 24%, 90%)` | Light Theme Background |
+| **HighlightLight** | ![#FFFFFF](Colors/highlight_light.svg) | `#FFFFFF` | `rgba(255, 255, 255, 1.00)` | `hsl(0, 0%, 100%)` | Light Theme Highlight |
+| **ShadowLight** | ![#A3B1C6](Colors/shadow_light.svg) | `#A3B1C6` | `rgba(163, 177, 198, 1.00)` | `hsl(216, 23%, 71%)` | Light Theme Shadow |
+| **PrimaryDark** | ![#454545](Colors/primary_dark.svg) | `#454545` | `rgba(69, 69, 69, 1.00)` | `hsl(0, 0%, 27%)` | Dark Theme Background |
+| **HighlightDark** | ![#D9D9D9](Colors/highlight_dark.svg) | `#D9D9D9` | `rgba(217, 217, 217, 1.00)` | `hsl(0, 0%, 85%)` | Dark Theme Highlight |
+| **ShadowDark** | ![#000000](Colors/shadow_dark.svg) | `#000000` | `rgba(0, 0, 0, 1.00)` | `hsl(0, 0%, 0%)` | Dark Theme Shadow |
+| **Accent** | ![#C73535](Colors/accent.svg) | `#C73535` | `rgba(199, 53, 53, 1.00)` | `hsl(0, 58%, 49%)` | Accent Theme Background |
+| **AccentHighlight** | ![#D86E6E](Colors/accent_highlight.svg) | `#D86E6E` | `rgba(216, 110, 110, 1.00)` | `hsl(0, 58%, 64%)` | Accent Theme Highlight |
+| **AccentShadow** | ![#892424](Colors/accent_shadow.svg) | `#892424` | `rgba(137, 36, 36, 1.00)` | `hsl(0, 58%, 34%)` | Accent Theme Shadow |
 
 ---
 

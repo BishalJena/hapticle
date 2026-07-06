@@ -116,9 +116,9 @@ To solve the issue of slow iteration cycles during physical testing, we implemen
 
 ### 8.1 Accessibility & Visual Modes
 With a highly visual and neumorphic style, contrast is a key challenge. We implemented dedicated neumorphic shadow and highlight color tokens across three core themes to ensure that the soft 3D extrusions remain visible and accessible in any lighting environment:
-*   **White Theme (Light Mode):** Base ![#E0E5EC](Colors/white.svg) `#E0E5EC`, Highlight ![#FFFFFF](Colors/white_highlight.svg) `#FFFFFF`, Shadow ![#A3B1C6](Colors/white_shadow.svg) `#A3B1C6`
-*   **Grey Theme (Dark Mode):** Base ![#454545](Colors/primary_grey.svg) `#454545`, Highlight ![#D9D9D9](Colors/grey_highlight.svg) `#D9D9D9`, Shadow ![#000000](Colors/grey_shadow.svg) `#000000`
-*   **Red Theme (Active/Accent):** Base ![#C73535](Colors/primary_red.svg) `#C73535`, Highlight ![#D86E6E](Colors/red_highlight.svg) `#D86E6E`, Shadow ![#892424](Colors/red_shadow.svg) `#892424`
+*   **Light Theme (Light Mode):** Base ![#E0E5EC](Colors/primary_light.svg) `PrimaryLight` (`#E0E5EC`), Highlight ![#FFFFFF](Colors/highlight_light.svg) `HighlightLight` (`#FFFFFF`), Shadow ![#A3B1C6](Colors/shadow_light.svg) `ShadowLight` (`#A3B1C6`)
+*   **Dark Theme (Dark Mode):** Base ![#454545](Colors/primary_dark.svg) `PrimaryDark` (`#454545`), Highlight ![#D9D9D9](Colors/highlight_dark.svg) `HighlightDark` (`#D9D9D9`), Shadow ![#000000](Colors/shadow_dark.svg) `ShadowDark` (`#000000`)
+*   **Accent Theme (Active/Accent):** Base ![#C73535](Colors/accent.svg) `Accent` (`#C73535`), Highlight ![#D86E6E](Colors/accent_highlight.svg) `AccentHighlight` (`#D86E6E`), Shadow ![#892424](Colors/accent_shadow.svg) `AccentShadow` (`#892424`)
 
 ### 8.2 Universal UX & Navigation Deliberations
 To cycle through the five fidget interfaces, the application currently implements a custom **2-finger swipe gesture**. Because this navigation scheme is not a standard system gesture, we introduced a minimal onboarding text instruction in the initial user flow to guide users: *"Swipe with two fingers to change fidgets."*

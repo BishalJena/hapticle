@@ -12,23 +12,23 @@ Hapticle implements a modern **Neumorphic (soft 3D)** user interface. The UI ele
 
 | Color Name | Preview | HEX | RGBA | HSL |
 | :--- | :---: | :--- | :--- | :--- |
-| **Grey Shadow** | ![#000000](Colors/grey_shadow.svg) | `#000000` | `rgba(0, 0, 0, 1.00)` | `hsl(0, 0%, 0%)` |
-| **Primary Grey** | ![#454545](Colors/primary_grey.svg) | `#454545` | `rgba(69, 69, 69, 1.00)` | `hsl(0, 0%, 27%)` |
-| **Grey Highlight** | ![#D9D9D9](Colors/grey_highlight.svg) | `#D9D9D9` | `rgba(217, 217, 217, 1.00)` | `hsl(0, 0%, 85%)` |
-| **White Highlight** | ![#FFFFFF](Colors/white_highlight.svg) | `#FFFFFF` | `rgba(255, 255, 255, 1.00)` | `hsl(0, 0%, 100%)` |
-| **Red Shadow** | ![#892424](Colors/red_shadow.svg) | `#892424` | `rgba(137, 36, 36, 1.00)` | `hsl(0, 58%, 34%)` |
-| **Primary Red** | ![#C73535](Colors/primary_red.svg) | `#C73535` | `rgba(199, 53, 53, 1.00)` | `hsl(0, 58%, 49%)` |
-| **Red Highlight** | ![#D86E6E](Colors/red_highlight.svg) | `#D86E6E` | `rgba(216, 110, 110, 1.00)` | `hsl(0, 58%, 64%)` |
-| **White** | ![#E0E5EC](Colors/white.svg) | `#E0E5EC` | `rgba(224, 229, 236, 1.00)` | `hsl(215, 24%, 90%)` |
-| **White Shadow** | ![#A3B1C6](Colors/white_shadow.svg) | `#A3B1C6` | `rgba(163, 177, 198, 1.00)` | `hsl(216, 23%, 71%)` |
+| **ShadowDark** | ![#000000](Colors/shadow_dark.svg) | `#000000` | `rgba(0, 0, 0, 1.00)` | `hsl(0, 0%, 0%)` |
+| **PrimaryDark** | ![#454545](Colors/primary_dark.svg) | `#454545` | `rgba(69, 69, 69, 1.00)` | `hsl(0, 0%, 27%)` |
+| **HighlightDark** | ![#D9D9D9](Colors/highlight_dark.svg) | `#D9D9D9` | `rgba(217, 217, 217, 1.00)` | `hsl(0, 0%, 85%)` |
+| **HighlightLight** | ![#FFFFFF](Colors/highlight_light.svg) | `#FFFFFF` | `rgba(255, 255, 255, 1.00)` | `hsl(0, 0%, 100%)` |
+| **AccentShadow** | ![#892424](Colors/accent_shadow.svg) | `#892424` | `rgba(137, 36, 36, 1.00)` | `hsl(0, 58%, 34%)` |
+| **Accent** | ![#C73535](Colors/accent.svg) | `#C73535` | `rgba(199, 53, 53, 1.00)` | `hsl(0, 58%, 49%)` |
+| **AccentHighlight** | ![#D86E6E](Colors/accent_highlight.svg) | `#D86E6E` | `rgba(216, 110, 110, 1.00)` | `hsl(0, 58%, 64%)` |
+| **PrimaryLight** | ![#E0E5EC](Colors/primary_light.svg) | `#E0E5EC` | `rgba(224, 229, 236, 1.00)` | `hsl(215, 24%, 90%)` |
+| **ShadowLight** | ![#A3B1C6](Colors/shadow_light.svg) | `#A3B1C6` | `rgba(163, 177, 198, 1.00)` | `hsl(216, 23%, 71%)` |
 
 ### Neumorphic Theme Tokens
 
-| Neumorphic Role | White Theme (Light Mode) | Grey Theme (Dark Mode) | Red Theme (Active/Accent) | Description |
+| Neumorphic Role | Light Theme (Light Mode) | Dark Theme (Dark Mode) | Accent Theme (Active/Accent) | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| **Base / Background** | ![#E0E5EC](Colors/white.svg) `White` (`#E0E5EC`) | ![#454545](Colors/primary_grey.svg) `Primary Grey` (`#454545`) | ![#C73535](Colors/primary_red.svg) `Primary Red` (`#C73535`) | Base surface canvas; all neumorphic extrusions blend into this. |
-| **Highlight (Light)** | ![#FFFFFF](Colors/white_highlight.svg) `White Highlight` (`#FFFFFF`) | ![#D9D9D9](Colors/grey_highlight.svg) `Grey Highlight` (`#D9D9D9`) | ![#D86E6E](Colors/red_highlight.svg) `Red Highlight` (`#D86E6E`) | Simulates reflected light on the top-left edges of components. |
-| **Shadow (Dark)** | ![#A3B1C6](Colors/white_shadow.svg) `White Shadow` (`#A3B1C6`) | ![#000000](Colors/grey_shadow.svg) `Grey Shadow` (`#000000`) | ![#892424](Colors/red_shadow.svg) `Red Shadow` (`#892424`) | Simulates cast shadow on the bottom-right edges of components. |
+| **Base / Background** | ![#E0E5EC](Colors/primary_light.svg) `PrimaryLight` (`#E0E5EC`) | ![#454545](Colors/primary_dark.svg) `PrimaryDark` (`#454545`) | ![#C73535](Colors/accent.svg) `Accent` (`#C73535`) | Base surface canvas; all neumorphic extrusions blend into this. |
+| **Highlight (Light)** | ![#FFFFFF](Colors/highlight_light.svg) `HighlightLight` (`#FFFFFF`) | ![#D9D9D9](Colors/highlight_dark.svg) `HighlightDark` (`#D9D9D9`) | ![#D86E6E](Colors/accent_highlight.svg) `AccentHighlight` (`#D86E6E`) | Simulates reflected light on the top-left edges of components. |
+| **Shadow (Dark)** | ![#A3B1C6](Colors/shadow_light.svg) `ShadowLight` (`#A3B1C6`) | ![#000000](Colors/shadow_dark.svg) `ShadowDark` (`#000000`) | ![#892424](Colors/accent_shadow.svg) `AccentShadow` (`#892424`) | Simulates cast shadow on the bottom-right edges of components. |
 
 
 ### Typography
