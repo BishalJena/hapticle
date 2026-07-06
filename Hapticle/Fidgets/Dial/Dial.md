@@ -148,4 +148,59 @@ By adjusting $m$, $T_{detent}$, and $c$, we can instantly switch modes in the ap
 | **Ball Detent Encoder** | Low-Med | Medium | High | 24 | Strong physical detents; clicks into place, bounces slightly in the wells; can be flicked past multiple notches. |
 | **Ratcheting CNC Wheel** | Very Low | High | Very High | 60 | No momentum; stops instantly in the next notch; ticks grip the wheel tightly. |
 
+---
+
+## 6. Architectural Philosophy: Coupled vs. Decoupled Physics & Sensory Synthesis
+
+You are completely right: **procedural haptics and sound are technically part of the physics simulation itself**. If we treat them as decoupled reactive systems (e.g. listening to angle changes asynchronously), we introduce latency and lose state coherency, which ruins high-fidelity physical feedback.
+
+To merge the clean architecture of MVVM-M with zero-latency physical rendering, we will utilize the **"Physical Readout Model"**.
+
+### 6.1 The Problem with Extreme Decoupling
+*   **Latency Spikes:** Sending an event from `DialModel` $\rightarrow$ `HapticsManager` $\rightarrow$ system drivers introduces a $5\text{--}15\text{ms}$ phase delay. At high rotational speeds (high RPM), a click that triggers after the boundary is crossed feels disconnected from the visual ticks on screen.
+*   **Lack of State Coherency:** Procedural sounds (like a friction whirr or spring hum) are not discrete events. They are continuous signals where:
+    *   $\text{AudioAmplitude}(t) \propto \text{FrictionForce}(t)$ or $\omega(t)$
+    *   $\text{AudioFrequency}(t) \propto \text{RotationalSpeed}(t)$
+    If the physics model doesn't compute these directly, the sound generator has to run its own duplicate math to approximate them, causing divergence.
+
+### 6.2 The Solution: The "Physical Readout Model"
+
+We treat the managers (`HapticsManager` and `SoundManager`) as **dumb actuators/renderers** (analogous to how a GPU renders raw vertex data). The physics loop owns the mathematical truth and outputs a unified frame state struct at each timestep:
+
+```swift
+struct FidgetPhysicsState {
+    let position: Double        // Current angle θ
+    let velocity: Double        // Angular speed ω
+    let acceleration: Double    // Net α
+    let activeTorque: Double    // Total force applied
+    let detentForce: Double     // Instaneous restoring pull
+    let crossedDetent: Bool     // Discrete tick crossing flag
+    let detentIndex: Int        // Index of current detent
+}
+```
+
+### 6.3 Frame-by-Frame Actuation Pipeline
+
+During each update frame inside the `CADisplayLink` loop:
+
+```
+[Touch Input] 
+     │
+     ▼
+[DialModel Physics Loop] (Computes equations of motion)
+     │
+     ├─► Generates FidgetPhysicsState struct
+     │
+     ├─► [SoundManager] (Modulates sine wave frequency based on state.velocity)
+     │
+     ├─► [HapticsManager] (Triggers transient vibe with intensity proportional to state.detentForce)
+     │
+     └─► [DialView] (Renders rotation transformation using state.position)
+```
+
+1.  **Pure Mathematics Isolation:** `DialModel` has zero dependencies on `CoreHaptics` or `AVFoundation`. It only computes pure mathematical variables and packs them into `FidgetPhysicsState`. This keeps the model 100% testable on any platform (including command-line unit tests).
+2.  **Synchronous Actuation:** The view, sound engine, and haptic engine are updated synchronously inside the same frame step. The haptic pulse and whirr pitch are calculated directly from `PhysicsState` variables, ensuring **zero phase lag**.
+3.  **Procedural Whirr:** The whirring frequency is directly bound to `state.velocity`, and click sound/haptic intensity is bound to `state.detentForce`. As a result, the physical sensation feels organic, heavy, and responsive.
+
+
 
