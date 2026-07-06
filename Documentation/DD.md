@@ -12,23 +12,23 @@ Hapticle implements a modern **Neumorphic (soft 3D)** user interface. The UI ele
 
 | Color Name | Preview | HEX | RGBA | HSL |
 | :--- | :---: | :--- | :--- | :--- |
-| **ShadowDark** | ![#000000](Colors/shadow_dark.svg) | `#000000` | `rgba(0, 0, 0, 1.00)` | `hsl(0, 0%, 0%)` |
-| **FidgetPrimaryDark** | ![#454545](Colors/fidget_primary_dark.svg) | `#454545` | `rgba(69, 69, 69, 1.00)` | `hsl(0, 0%, 27%)` |
-| **HighlightDark** | ![#D9D9D9](Colors/highlight_dark.svg) | `#D9D9D9` | `rgba(217, 217, 217, 1.00)` | `hsl(0, 0%, 85%)` |
-| **HighlightLight** | ![#FFFFFF](Colors/highlight_light.svg) | `#FFFFFF` | `rgba(255, 255, 255, 1.00)` | `hsl(0, 0%, 100%)` |
-| **AccentShadow** | ![#892424](Colors/accent_shadow.svg) | `#892424` | `rgba(137, 36, 36, 1.00)` | `hsl(0, 58%, 34%)` |
-| **Accent** | ![#C73535](Colors/accent.svg) | `#C73535` | `rgba(199, 53, 53, 1.00)` | `hsl(0, 58%, 49%)` |
-| **AccentHighlight** | ![#D86E6E](Colors/accent_highlight.svg) | `#D86E6E` | `rgba(216, 110, 110, 1.00)` | `hsl(0, 58%, 64%)` |
-| **FidgetPrimaryLight** | ![#E0E5EC](Colors/fidget_primary_light.svg) | `#E0E5EC` | `rgba(224, 229, 236, 1.00)` | `hsl(215, 24%, 90%)` |
-| **ShadowLight** | ![#A3B1C6](Colors/shadow_light.svg) | `#A3B1C6` | `rgba(163, 177, 198, 1.00)` | `hsl(216, 23%, 71%)` |
+| **shadowDark** | ![#000000](Colors/shadow_dark.svg) | `#000000` | `rgba(0, 0, 0, 1.00)` | `hsl(0, 0%, 0%)` |
+| **fidgetPrimaryDark** | ![#454545](Colors/fidget_primary_dark.svg) | `#454545` | `rgba(69, 69, 69, 1.00)` | `hsl(0, 0%, 27%)` |
+| **highlightDark** | ![#D9D9D9](Colors/highlight_dark.svg) | `#D9D9D9` | `rgba(217, 217, 217, 1.00)` | `hsl(0, 0%, 85%)` |
+| **highlightLight** | ![#FFFFFF](Colors/highlight_light.svg) | `#FFFFFF` | `rgba(255, 255, 255, 1.00)` | `hsl(0, 0%, 100%)` |
+| **accentShadow** | ![#892424](Colors/accent_shadow.svg) | `#892424` | `rgba(137, 36, 36, 1.00)` | `hsl(0, 58%, 34%)` |
+| **accent** | ![#C73535](Colors/accent.svg) | `#C73535` | `rgba(199, 53, 53, 1.00)` | `hsl(0, 58%, 49%)` |
+| **accentHighlight** | ![#D86E6E](Colors/accent_highlight.svg) | `#D86E6E` | `rgba(216, 110, 110, 1.00)` | `hsl(0, 58%, 64%)` |
+| **fidgetPrimaryLight** | ![#E0E5EC](Colors/fidget_primary_light.svg) | `#E0E5EC` | `rgba(224, 229, 236, 1.00)` | `hsl(215, 24%, 90%)` |
+| **shadowLight** | ![#A3B1C6](Colors/shadow_light.svg) | `#A3B1C6` | `rgba(163, 177, 198, 1.00)` | `hsl(216, 23%, 71%)` |
 
 ### Neumorphic Theme Tokens
 
 | Neumorphic Role | Light Theme (Light Mode) | Dark Theme (Dark Mode) | Accent Theme (Active/Accent) | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| **Base / Background** | ![#E0E5EC](Colors/fidget_primary_light.svg) `FidgetPrimary` (`#E0E5EC`) | ![#454545](Colors/fidget_primary_dark.svg) `FidgetPrimary` (`#454545`) | ![#C73535](Colors/accent.svg) `Accent` (`#C73535`) | Base surface canvas; all neumorphic extrusions blend into this. |
-| **Highlight (Light)** | ![#FFFFFF](Colors/highlight_light.svg) `HighlightLight` (`#FFFFFF`) | ![#D9D9D9](Colors/highlight_dark.svg) `HighlightDark` (`#D9D9D9`) | ![#D86E6E](Colors/accent_highlight.svg) `AccentHighlight` (`#D86E6E`) | Simulates reflected light on the top-left edges of components. |
-| **Shadow (Dark)** | ![#A3B1C6](Colors/shadow_light.svg) `ShadowLight` (`#A3B1C6`) | ![#000000](Colors/shadow_dark.svg) `ShadowDark` (`#000000`) | ![#892424](Colors/accent_shadow.svg) `AccentShadow` (`#892424`) | Simulates cast shadow on the bottom-right edges of components. |
+| **Base / Background** | ![#E0E5EC](Colors/fidget_primary_light.svg) `fidgetPrimary` (`#E0E5EC`) | ![#454545](Colors/fidget_primary_dark.svg) `fidgetPrimary` (`#454545`) | ![#C73535](Colors/accent.svg) `accent` (`#C73535`) | Base surface canvas; all neumorphic extrusions blend into this. |
+| **Highlight (Light)** | ![#FFFFFF](Colors/highlight_light.svg) `highlight` (`#FFFFFF`) | ![#D9D9D9](Colors/highlight_dark.svg) `highlight` (`#D9D9D9`) | ![#D86E6E](Colors/accent_highlight.svg) `accentHighlight` (`#D86E6E`) | Simulates reflected light on the top-left edges of components. |
+| **Shadow (Dark)** | ![#A3B1C6](Colors/shadow_light.svg) `shadow` (`#A3B1C6`) | ![#000000](Colors/shadow_dark.svg) `shadow` (`#000000`) | ![#892424](Colors/accent_shadow.svg) `accentShadow` (`#892424`) | Simulates cast shadow on the bottom-right edges of components. |
 
 
 ### Typography
@@ -53,7 +53,7 @@ To resolve concerns that users may forget the custom **2-finger swipe gesture** 
     - The user presses and holds a central menu button.
     - A **circular progress bar** fills up around the button as they hold it.
     - Once the progress bar is filled, a radial menu pops up displaying **4 circular selection targets** representing the other fidgets.
-    - **Radial Layout Geometry:** The circles are arranged in a radius around the main button, starting from the left ($180^\circ$) and spacing each subsequent circle every $60^\circ$ clockwise (i.e., at $180^\circ$, $240^\circ$, $300^\circ$, and $360^\circ$/$0^\circ$).
+    - **Radial Layout Geometry:** The circles are arranged along the upper/top side of the semicircle above the menu button, spaced equally in a $100\text{pt}$ radius. Standard mathematical angles place these at: Left ($180^\circ$), Top-Left ($120^\circ$), Top-Right ($60^\circ$), and Right ($0^\circ$). (In SwiftUI rotation coordinates where positive is clockwise: Left at $180^\circ$, Top-Left at $240^\circ$, Top-Right at $300^\circ$, and Right at $360^\circ$/$0^\circ$).
     - **Selection Interaction:** Without lifting their finger, the user drags/swipes toward the desired circular selection. Hovering over a circle and releasing the finger completes the choice and switches the active fidget.
     - **Cancellation Interaction:** If the user releases their finger without hovering over any of the four circular selections, the menu closes with no change.
 

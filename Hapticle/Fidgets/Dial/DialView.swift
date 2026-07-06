@@ -17,37 +17,37 @@ struct DialView: View {
                 ZStack {
                     
                     // 1. Inner Concave Well (recessed circle base: Ellipse 4)
-                    Circle()
-                        .fill(Color.fidgetPrimary)
-                        .frame(width: 260, height: 260)
-                        // Inset shadows recreating the CSS box-shadow inset properties
-                        .overlay(
-                            Circle()
-                                .stroke(Color.shadow.opacity(0.35), lineWidth: 6.85)
-                                .blur(radius: 8.14 / 2)
-                                .offset(x: 6.85, y: 6.85)
-                                .mask(Circle().fill(LinearGradient(
-                                    colors: [Color.shadow, Color.clear],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )))
-                        )
-                        .overlay(
-                            Circle()
-                                .stroke(Color.highlight.opacity(0.9), lineWidth: 12.42)
-                                .blur(radius: 12.42 / 2)
-                                .offset(x: -6.85, y: -6.85)
-                                .mask(Circle().fill(LinearGradient(
-                                    colors: [Color.clear, Color.highlight],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )))
-                        )
+//                    Circle()
+//                        .fill(Color.fidgetPrimary)
+//                        .frame(width: 260, height: 260)
+//                        // Inset shadows recreating the CSS box-shadow inset properties
+//                        .overlay(
+//                            Circle()
+//                                .stroke(Color.shadow.opacity(0.35), lineWidth: 6.85)
+//                                .blur(radius: 8.14 / 2)
+//                                .offset(x: 6.85, y: 6.85)
+//                                .mask(Circle().fill(LinearGradient(
+//                                    colors: [Color.shadow, Color.clear],
+//                                    startPoint: .topLeading,
+//                                    endPoint: .bottomTrailing
+//                                )))
+//                        )
+//                        .overlay(
+//                            Circle()
+//                                .stroke(Color.highlight.opacity(0.9), lineWidth: 12.42)
+//                                .blur(radius: 12.42 / 2)
+//                                .offset(x: -6.85, y: -6.85)
+//                                .mask(Circle().fill(LinearGradient(
+//                                    colors: [Color.clear, Color.highlight],
+//                                    startPoint: .topLeading,
+//                                    endPoint: .bottomTrailing
+//                                )))
+//                        )
                     
                     // 2. Outer Circular Rim/Well Border (embossed ring: Ellipse 1)
                     Circle()
-                        .stroke(Color.fidgetPrimary, lineWidth: 16.27)
-                        .frame(width: 293.73, height: 293.73) // stroke-width centers to 310 diameter
+                        .stroke(Color.fidgetPrimary, lineWidth: 25)
+                        .frame(width: 300, height: 300) // stroke-width centers to 310 diameter
                         .shadow(color: Color.shadow.opacity(0.8), radius: 10.28 / 2, x: 5.14, y: 5.14)
                         .shadow(color: Color.highlight.opacity(0.9), radius: 10.28 / 2, x: -5.14, y: -5.14)
                     
@@ -128,10 +128,4 @@ struct DialView_Previews: PreviewProvider {
         }
     }
 }
-#Preview {
-    DialView()
-        .preferredColorScheme(.dark)
 
-    DialView()
-        .preferredColorScheme(.light)
-}

@@ -7,11 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		003195F32FF5F39A00A7163E /* Hapticle Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 003195F22FF5F39A00A7163E /* Hapticle Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		003196AB2FFBE56E00A71602 /* BlobModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA94B9FC2FFBE56E00A5B768 /* BlobModel.swift */; };
 		003196AB2FFBE56E00A71603 /* BlobView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA94B9FD2FFBE56E00A5B768 /* BlobView.swift */; };
 		003196AB2FFBE56E00A71604 /* DialModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA94BA002FFBE56E00A5B768 /* DialModel.swift */; };
 		003196AB2FFBE56E00A71605 /* DialView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA94BA012FFBE56E00A5B768 /* DialView.swift */; };
-		003196AB2FFBE56E00A71606 /* MagnetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA94BA032FFBE56E00A5B768 /* MagnetView.swift */; };
+		003196AB2FFBE56E00A71606 /*  MagnetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA94BA032FFBE56E00A5B768 /*  MagnetView.swift */; };
 		003196AB2FFBE56E00A71607 /* MagnetModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA94BA042FFBE56E00A5B768 /* MagnetModel.swift */; };
 		003196AB2FFBE56E00A71608 /* PenModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA94BA062FFBE56E00A5B768 /* PenModel.swift */; };
 		003196AB2FFBE56E00A71609 /* PenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA94BA072FFBE56E00A5B768 /* PenView.swift */; };
@@ -21,7 +22,6 @@
 		003196AB2FFBE56E00A7160D /* SoundManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA94BA0E2FFBE56E00A5B768 /* SoundManager.swift */; };
 		003196AB2FFBE56E00A7160E /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA94BA112FFBE56E00A5B768 /* ContentView.swift */; };
 		003196AB2FFBE56E00A7160F /* HapticleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA94BA122FFBE56E00A5B768 /* HapticleApp.swift */; };
-		003195F32FF5F39A00A7163E /* Hapticle Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 003195F22FF5F39A00A7163E /* Hapticle Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -329,7 +329,7 @@
 				003196AB2FFBE56E00A71603 /* BlobView.swift in Sources */,
 				003196AB2FFBE56E00A71604 /* DialModel.swift in Sources */,
 				003196AB2FFBE56E00A71605 /* DialView.swift in Sources */,
-				003196AB2FFBE56E00A71606 /* MagnetView.swift in Sources */,
+				003196AB2FFBE56E00A71606 /*  MagnetView.swift in Sources */,
 				003196AB2FFBE56E00A71607 /* MagnetModel.swift in Sources */,
 				003196AB2FFBE56E00A71608 /* PenModel.swift in Sources */,
 				003196AB2FFBE56E00A71609 /* PenView.swift in Sources */,
@@ -505,7 +505,7 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 4;
-				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+				WATCHOS_DEPLOYMENT_TARGET = 26.0;
 			};
 			name = Debug;
 		};
@@ -539,7 +539,7 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 4;
 				VALIDATE_PRODUCT = YES;
-				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+				WATCHOS_DEPLOYMENT_TARGET = 26.0;
 			};
 			name = Release;
 		};
@@ -560,7 +560,7 @@
 				INFOPLIST_KEY_UIStatusBarStyle = "";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -596,7 +596,7 @@
 				INFOPLIST_KEY_UIStatusBarStyle = "";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

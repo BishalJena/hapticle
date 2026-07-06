@@ -15,19 +15,19 @@ All color variables should be registered in assets and mapped via `Color` extens
 
 | Color Name | Preview | HEX | RGBA | HSL | Neumorphic Role |
 | :--- | :---: | :--- | :--- | :--- | :--- |
-| **FidgetPrimaryLight** | ![#E0E5EC](Colors/fidget_primary_light.svg) | `#E0E5EC` | `rgba(224, 229, 236, 1.00)` | `hsl(215, 24%, 90%)` | Light Theme Background |
-| **HighlightLight** | ![#FFFFFF](Colors/highlight_light.svg) | `#FFFFFF` | `rgba(255, 255, 255, 1.00)` | `hsl(0, 0%, 100%)` | Light Theme Highlight |
-| **ShadowLight** | ![#A3B1C6](Colors/shadow_light.svg) | `#A3B1C6` | `rgba(163, 177, 198, 1.00)` | `hsl(216, 23%, 71%)` | Light Theme Shadow |
-| **FidgetPrimaryDark** | ![#454545](Colors/fidget_primary_dark.svg) | `#454545` | `rgba(69, 69, 69, 1.00)` | `hsl(0, 0%, 27%)` | Dark Theme Background |
-| **HighlightDark** | ![#D9D9D9](Colors/highlight_dark.svg) | `#D9D9D9` | `rgba(217, 217, 217, 1.00)` | `hsl(0, 0%, 85%)` | Dark Theme Highlight |
-| **ShadowDark** | ![#000000](Colors/shadow_dark.svg) | `#000000` | `rgba(0, 0, 0, 1.00)` | `hsl(0, 0%, 0%)` | Dark Theme Shadow |
-| **Accent** | ![#C73535](Colors/accent.svg) | `#C73535` | `rgba(199, 53, 53, 1.00)` | `hsl(0, 58%, 49%)` | Accent Theme Background |
-| **AccentHighlight** | ![#D86E6E](Colors/accent_highlight.svg) | `#D86E6E` | `rgba(216, 110, 110, 1.00)` | `hsl(0, 58%, 64%)` | Accent Theme Highlight |
-| **AccentShadow** | ![#892424](Colors/accent_shadow.svg) | `#892424` | `rgba(137, 36, 36, 1.00)` | `hsl(0, 58%, 34%)` | Accent Theme Shadow |
+| **fidgetPrimaryLight** | ![#E0E5EC](Colors/fidget_primary_light.svg) | `#E0E5EC` | `rgba(224, 229, 236, 1.00)` | `hsl(215, 24%, 90%)` | Light Theme Background |
+| **highlightLight** | ![#FFFFFF](Colors/highlight_light.svg) | `#FFFFFF` | `rgba(255, 255, 255, 1.00)` | `hsl(0, 0%, 100%)` | Light Theme Highlight |
+| **shadowLight** | ![#A3B1C6](Colors/shadow_light.svg) | `#A3B1C6` | `rgba(163, 177, 198, 1.00)` | `hsl(216, 23%, 71%)` | Light Theme Shadow |
+| **fidgetPrimaryDark** | ![#454545](Colors/fidget_primary_dark.svg) | `#454545` | `rgba(69, 69, 69, 1.00)` | `hsl(0, 0%, 27%)` | Dark Theme Background |
+| **highlightDark** | ![#D9D9D9](Colors/highlight_dark.svg) | `#D9D9D9` | `rgba(217, 217, 217, 1.00)` | `hsl(0, 0%, 85%)` | Dark Theme Highlight |
+| **shadowDark** | ![#000000](Colors/shadow_dark.svg) | `#000000` | `rgba(0, 0, 0, 1.00)` | `hsl(0, 0%, 0%)` | Dark Theme Shadow |
+| **accent** | ![#C73535](Colors/accent.svg) | `#C73535` | `rgba(199, 53, 53, 1.00)` | `hsl(0, 58%, 49%)` | Accent Theme Background |
+| **accentHighlight** | ![#D86E6E](Colors/accent_highlight.svg) | `#D86E6E` | `rgba(216, 110, 110, 1.00)` | `hsl(0, 58%, 64%)` | Accent Theme Highlight |
+| **accentShadow** | ![#892424](Colors/accent_shadow.svg) | `#892424` | `rgba(137, 36, 36, 1.00)` | `hsl(0, 58%, 34%)` | Accent Theme Shadow |
 
 > [!TIP]
 > **Implementation Note (Xcode Assets Consolidation):**
-> In the codebase asset catalog (`Assets.xcassets`), the separate Light and Dark color sets are consolidated into single dual-appearance color sets (`FidgetPrimary`, `Highlight`, and `Shadow`). Xcode automatically resolves these to their respective Light (`FidgetPrimaryLight`, `HighlightLight`, `ShadowLight`) or Dark (`FidgetPrimaryDark`, `HighlightDark`, `ShadowDark`) values based on system appearance context. The three active accent colors (`Accent`, `AccentHighlight`, and `AccentShadow`) are kept as three separate static assets.
+> In the codebase asset catalog (`Assets.xcassets`), the separate Light and Dark color sets are consolidated into single dual-appearance color sets (`fidgetPrimary`, `highlight`, and `shadow`). Xcode automatically resolves these to their respective Light (`fidgetPrimaryLight`, `highlightLight`, `shadowLight`) or Dark (`fidgetPrimaryDark`, `highlightDark`, `shadowDark`) values based on system appearance context. The three active accent colors (`accent`, `accentHighlight`, and `accentShadow`) are kept as three separate static assets.
 
 ---
 
@@ -96,11 +96,11 @@ To coordinate app navigation, developers must support two gestures. The baseline
     1.  **Press & Hold:** User initiates a long press gesture on the menu button.
     2.  **Circular Progress Filler:** A circular outline indicator (`StrokeWidth: 4pt`, `Radius: 36pt`) fills around the button over a `0.8s` hold duration.
     3.  **Radial Pop-up:** Upon full completion of the progress circle, the menu opens and displays 4 circular selector nodes (`Diameter: 48pt`, spaced in a `100pt` radius from the central button).
-    4.  **Geometry Alignment:** 
-        - **Target 1 (Fidget A):** Left side ($180^\circ$).
-        - **Target 2 (Fidget B):** Top-left angle ($240^\circ$).
-        - **Target 3 (Fidget C):** Top-right angle ($300^\circ$).
-        - **Target 4 (Fidget D):** Right side ($360^\circ$ or $0^\circ$).
+    4.  **Geometry Alignment (Upper Semicircle):** 
+        - **Target 1 (Fidget A):** Left side ($180^\circ$ SwiftUI / $180^\circ$ Trig).
+        - **Target 2 (Fidget B):** Top-left ($240^\circ$ SwiftUI / $120^\circ$ Trig).
+        - **Target 3 (Fidget C):** Top-right ($300^\circ$ SwiftUI / $60^\circ$ Trig).
+        - **Target 4 (Fidget D):** Right side ($360^\circ$ or $0^\circ$ SwiftUI / $0^\circ$ Trig).
     5.  **Selection Hover/Release:** Without lifting their finger, the user drags toward a target node. Releasing the finger while the drag position is inside a node's bounds (`r <= 24pt` from the node's center) commits the navigation change. Releasing the touch outside any node bounds cancels and closes the menu.
 
 ---
