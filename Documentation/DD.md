@@ -42,10 +42,23 @@ To support minimal interface guidance (specifically for onboarding navigation in
 
 We adhere strictly to standard **Apple Human Interface Guidelines (HIG)** for layout spacing, gutter margins, and interactive hit targets:
 *   **Screen Margins / Gutters:** `16pt` to `20pt` padding on side edges.
-*   **Onboarding Guidance:** To assist first-time users with navigation, the interface displays a minimal text instruction: *"Swipe with two fingers to change fidgets."* This text guidance is required to instruct users to perform the custom **2-finger swipe gesture** used to cycle through the five fidget interfaces. The text block is aligned following standard HIG safe areas and typographic hierarchies.
+*   **Onboarding Guidance:** To assist first-time users with navigation, the interface displays a minimal text instruction: *"Swipe with two fingers to change fidgets."*
+
+### Navigation & Selector Menu Deliberations
+To resolve concerns that users may forget the custom **2-finger swipe gesture** after the initial onboarding text disappears, we are actively deliberating on an alternative or supplementary interactive selector menu:
+
+1.  **Gesture Cycling (Current Baseline):** 
+    - The user swipes horizontally with two fingers anywhere on the screen to cycle sequentially (previous/next) through the fidgets.
+2.  **Hold-to-Radial Menu (Proposed Alternative):**
+    - The user presses and holds a central menu button.
+    - A **circular progress bar** fills up around the button as they hold it.
+    - Once the progress bar is filled, a radial menu pops up displaying **4 circular selection targets** representing the other fidgets.
+    - **Radial Layout Geometry:** The circles are arranged in a radius around the main button, starting from the left ($180^\circ$) and spacing each subsequent circle every $60^\circ$ clockwise (i.e., at $180^\circ$, $240^\circ$, $300^\circ$, and $360^\circ$/$0^\circ$).
+    - **Selection Interaction:** Without lifting their finger, the user drags/swipes toward the desired circular selection. Hovering over a circle and releasing the finger completes the choice and switches the active fidget.
+    - **Cancellation Interaction:** If the user releases their finger without hovering over any of the four circular selections, the menu closes with no change.
 
 > [!NOTE]
-> **Figma Design Constraint:** The source Figma components do not have defined interactive states; they are static designs. Dynamic states (such as debossed recess overlays, elastic stretch coefficients, or rotational displacement) must be generated entirely in SwiftUI.
+> **Figma Design Constraint:** The source Figma components do not have defined interactive states; they are static designs. Dynamic states (such as debossed recess overlays, elastic stretch coefficients, or the hold-to-radial progress animation) must be generated entirely in SwiftUI.
 
 ---
 

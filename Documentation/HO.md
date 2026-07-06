@@ -75,6 +75,32 @@ struct NeumorphicModifier: ViewModifier {
 
 ---
 
+### 1.3 Navigation & Selector Menu Layout Specs
+
+To coordinate app navigation, developers must support two gestures. The baseline method uses sequential 2-finger swiping, and the alternate design introduces a hold-to-radial selector menu.
+
+#### 1.3.1 Onboarding & 2-Finger Swipe Gesture
+*   **Cycling Gesture:** A horizontal `DragGesture(minimumDistance: 30)` that requires exactly two active touches (`numberOfTouches: 2`). A leftward swipe cycles to the next fidget; a rightward swipe cycles to the previous one.
+*   **Instruction Text Block:** 
+    - **String:** *"Swipe with two fingers to change fidgets."*
+    - **Font:** `SF Pro Rounded`, Size `17 pt`, Weight `Medium`.
+    - **HIG Layout Constraints:** Centered horizontally at the bottom of the screen, with a `20pt` safe area margin from the bottom edge.
+
+#### 1.3.2 Hold-to-Radial Selector Menu
+*   **Central Menu Button:** Located at the bottom-center of the screen, styled as a raised neumorphic circle (`Diameter: 64pt`).
+*   **Interaction Sequence:**
+    1.  **Press & Hold:** User initiates a long press gesture on the menu button.
+    2.  **Circular Progress Filler:** A circular outline indicator (`StrokeWidth: 4pt`, `Radius: 36pt`) fills around the button over a `0.8s` hold duration.
+    3.  **Radial Pop-up:** Upon full completion of the progress circle, the menu opens and displays 4 circular selector nodes (`Diameter: 48pt`, spaced in a `100pt` radius from the central button).
+    4.  **Geometry Alignment:** 
+        - **Target 1 (Fidget A):** Left side ($180^\circ$).
+        - **Target 2 (Fidget B):** Top-left angle ($240^\circ$).
+        - **Target 3 (Fidget C):** Top-right angle ($300^\circ$).
+        - **Target 4 (Fidget D):** Right side ($360^\circ$ or $0^\circ$).
+    5.  **Selection Hover/Release:** Without lifting their finger, the user drags toward a target node. Releasing the finger while the drag position is inside a node's bounds (`r <= 24pt` from the node's center) commits the navigation change. Releasing the touch outside any node bounds cancels and closes the menu.
+
+---
+
 ## 2. Core Architecture & Managers
 
 We enforce a strict **MVVM-M** (Model-View-ViewModel-Manager) structure to decouple gesture handlers from physical hardware pipelines.

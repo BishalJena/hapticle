@@ -115,10 +115,14 @@ With a highly visual and neumorphic style, contrast is a key challenge. We imple
 *   **Grey Theme (Dark Mode):** Base ![#454545](Colors/primary_grey.svg) `#454545`, Highlight ![#D9D9D9](Colors/grey_highlight.svg) `#D9D9D9`, Shadow ![#000000](Colors/grey_shadow.svg) `#000000`
 *   **Red Theme (Active/Accent):** Base ![#C73535](Colors/primary_red.svg) `#C73535`, Highlight ![#D86E6E](Colors/red_highlight.svg) `#D86E6E`, Shadow ![#892424](Colors/red_shadow.svg) `#892424`
 
-### 8.2 Universal UX & Onboarding Text
-To cycle through the five fidget interfaces, the application implements a custom **2-finger swipe gesture**. Because this navigation scheme is not a standard system gesture, we introduced a minimal onboarding text instruction in the initial user flow to guide users: *"Swipe with two fingers to change fidgets."*
+### 8.2 Universal UX & Navigation Deliberations
+To cycle through the five fidget interfaces, the application currently implements a custom **2-finger swipe gesture**. Because this navigation scheme is not a standard system gesture, we introduced a minimal onboarding text instruction in the initial user flow to guide users: *"Swipe with two fingers to change fidgets."*
 *   **Typography & Styling:** This text guidance conforms to standard Apple HIG layout spacing, styled in `SF Pro Rounded`, size `17 pt`, and `Medium` weight.
-*   **Minimalist Footprint:** Beyond this essential swipe instruction, the interface remains entirely text-less, utilizing visual metaphors and auditory/tactile feedback to retain a universal design that requires minimal localization overhead.
+*   **Active Deliberation & UX Concerns:** We are concerned that users will forget the 2-finger swipe gesture once the initial onboarding text disappears. To address this, we are deliberating on an alternative hold-based radial menu selector:
+    - **Radial Menu Mechanics:** Holding down a menu button initiates a circular progress indicator. When filled, 4 circular selections representing the other fidgets pop up in a radius starting from the left ($180^\circ$) and spaced every $60^\circ$ clockwise (at $180^\circ$, $240^\circ$, $300^\circ$, and $360^\circ$/$0^\circ$).
+    - **Interactive Selection:** The user swipes toward their choice while holding the finger down, releasing it to select, or letting go outside the nodes to cancel.
+    - **Localization Impact:** This selector menu uses purely visual targets (circular previews or icons), maintaining our goal of a minimalist, highly universal visual design with low localization overhead.
+
 
 ### 8.3 Figma Static Component Note
 Our source Figma components are strictly static designs without pre-defined interactive states. The dynamic behaviors—such as visual depth recessions, spring tensions, and dial rotations—are synthesized programmatically in SwiftUI, rather than replicated from Figma variant states.
