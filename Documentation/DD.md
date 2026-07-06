@@ -84,7 +84,10 @@ The Pen fidget simulates the tactile pleasure of clicking a real retractable bal
         *   Upon letting go (screen/button up): *Another* click is felt.
         *   Quick Taps: Two fast clicks are felt in rapid succession.
 
-![Pen Lo-Fi Sketch](Pen_lofi.jpeg)
+#### Mid-Fi Design Reference (Pen)
+| Light Mode | Dark Mode |
+| :---: | :---: |
+| ![Pen Light Mode](MidFi/Pen_LightMode.svg) | ![Pen Dark Mode](MidFi/Pen_DarkMode.svg) |
 
 ---
 
@@ -103,7 +106,10 @@ The Dial simulates a heavy, physical rotary dial (like a safe dial or volume kno
     *   Sound pitch and volume are dynamically modulated based on the RPM (Revolutions Per Minute).
     *   Faster RPM results in a higher pitch, mimicking a mechanical whirr or clicking ratchet.
 
-![Dial Lo-Fi Sketch](Dial_lofi.jpeg)
+#### Mid-Fi Design Reference (Dial)
+| Light Mode | Dark Mode |
+| :---: | :---: |
+| ![Dial Light Mode](MidFi/Dial_LightMode.svg) | ![Dial Dark Mode](MidFi/Dial_DarkMode.svg) |
 
 ---
 
@@ -125,7 +131,10 @@ The Ticket simulates the satisfying feeling of tearing a perforated cardboard ar
 *   **Audio Design:**
     *   A ripping sound effect synthesized dynamically or pitched according to the speed of the tear.
 
-![Ticket Lo-Fi Sketch](Ticket_lofi.jpeg)
+#### Mid-Fi Design Reference (Ticket)
+| Light Mode | Dark Mode |
+| :---: | :---: |
+| ![Ticket Light Mode](MidFi/Ticket_LightMode.svg) | ![Ticket Dark Mode](MidFi/Ticket_DarkMode.svg) |
 
 ---
 
@@ -149,7 +158,10 @@ The Magnet simulates playing with magnets, mimicking the MagSafe ring on the bac
     *   Transient snaps when locking onto a magnetic node.
     *   Repulsive pushback felt via high-frequency micro-haptics when passing repulsive poles.
 
-![Magnet Lo-Fi Sketch](Magnet_lofi.jpeg)
+#### Mid-Fi Design Reference (Magnet)
+| Light Mode | Dark Mode |
+| :---: | :---: |
+| ![Magnet Light Mode](MidFi/Magnet_LightMode.svg) | ![Magnet Dark Mode](MidFi/Magnet_DarkMode.svg) |
 
 ---
 
@@ -171,7 +183,10 @@ The Blob is a squishy, jelly-like creature centered on a grid background.
     *   Squelching audio effects pitch-shifted during stretching.
     *   A satisfying "pop" sound effect upon division.
 
-![Blob Lo-Fi Sketch](Blob_lofi.jpeg)
+#### Mid-Fi Design Reference (Blob)
+| Light Mode | Dark Mode |
+| :---: | :---: |
+| ![Blob Light Mode](MidFi/Blob_LightMode.svg) | ![Blob Dark Mode](MidFi/Blob_DarkMode.svg) |
 
 ---
 
