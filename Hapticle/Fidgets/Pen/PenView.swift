@@ -7,43 +7,58 @@
 
 import SwiftUI
 
-struct ThreeStatePenStyle: ButtonStyle {
-    @Binding var isClicked: Bool
-    
-    // Optimizing the style body to minimize redrawing overhead
-    func makeBody(configuration: Configuration) -> some View {
-        let currentAsset = configuration.isPressed ? "PenV1_Clicking" : (isClicked ? "PenV1_Clicked" : "PenV1_Unclicked")
-        
-        return Image(currentAsset)
-            .resizable()
-            .scaledToFit()
-            .frame(width: 400, height: 600)
-            .scaleEffect(configuration.isPressed ? 0.85 : 1.0, anchor: .bottom)
-            .animation(.bouncy(duration: 0.1, extraBounce: 0.1), value: configuration.isPressed)
+extension View {
+    /// Inner shadow that works on any View (including Image), using the view
+    /// itself as the alpha mask rather than requiring a Shape.
+    func innerShadow<Mask: View>(
+        mask maskView: Mask,
+        color: Color = .black,
+        radius: CGFloat = 5,
+        x: CGFloat = 0,
+        y: CGFloat = 0
+    ) -> some View {
+        self.overlay(
+            Rectangle()
+                .fill(color)
+                .mask(maskView)       // clip the fill to the shape's silhouette
+                .offset(x: x, y: y)   // push it in the shadow direction
+                .blur(radius: radius) // soften it
+                .mask(maskView)       // clip again so blur doesn't spill outside the shape
+        )
     }
 }
 
 struct PenView: View {
-    @State private var isClicked: Bool = false
+    let slateShadow = Color(red: 0.64, green: 0.69, blue: 0.78)
     
     var body: some View {
         VStack {
-            Button {
-                isClicked.toggle()
-            } label: {
+            ZStack {
                 
-                Text("Toggle Pen")
+                Image("hapticle")
+                Image("Vector 6")
+                // crown
+                Image("Vector 9")
+                Image("Vector 7")
+                    .shadow(color: Color.whiteShadow, radius: 3, x: 3, y: 3)
+                    .shadow(color: .white, radius: 3, x: -3, y: -3)
+                    .innerShadow(
+                        mask: Image("Vector 7"),
+                        color: Color.whiteShadow,
+                        radius: 5,
+                        x: -13,
+                        y: 0
+                    )
+
+                
             }
-            .buttonStyle(ThreeStatePenStyle(isClicked: $isClicked))
-            .padding(.top, 300)
-            .sensoryFeedback(.impact(weight: .medium, intensity: 1.0), trigger: isClicked)
+            
         }
-        .background(Color.backgroundColour)
-        .ignoresSafeArea()
+        .background(Color.black)
     }
-    
 }
 
 #Preview {
     PenView()
 }
+
