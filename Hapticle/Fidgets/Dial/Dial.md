@@ -202,5 +202,54 @@ During each update frame inside the `CADisplayLink` loop:
 2.  **Synchronous Actuation:** The view, sound engine, and haptic engine are updated synchronously inside the same frame step. The haptic pulse and whirr pitch are calculated directly from `PhysicsState` variables, ensuring **zero phase lag**.
 3.  **Procedural Whirr:** The whirring frequency is directly bound to `state.velocity`, and click sound/haptic intensity is bound to `state.detentForce`. As a result, the physical sensation feels organic, heavy, and responsive.
 
+---
+
+## 7. Acoustics & Psychoacoustics of Procedural Clicks
+
+A "click" is not a simple static sound event. To build a premium tactile engine, we synthesize clicks procedurally by modeling the **physics of wave impulses** and how the human brain processes repetitive acoustic transients.
+
+### 7.1 What is a "Click" mathematically?
+
+In signal processing:
+1.  **The Unit Impulse (Dirac Delta):** A single sample spike in a quiet digital stream. An impulse contains **all frequencies at equal amplitude** (a flat spectrum, similar to white noise but compressed into a single instant). In a speaker, this spike excites the physical cone's natural resonance, causing a "pop" or "click".
+2.  **The Damped Tonal Resonator:** In mechanical reality, a click (like a spring tooth sliding off a gear) is a collision that triggers a localized high-frequency vibration, which decays exponentially. We model this as a **damped sine wave**:
+    $$x(t) = A \cdot e^{-\lambda t} \sin(2\pi f_0 t)$$
+    where:
+    *   $A$ is the **Initial Amplitude** (proportional to the impact speed/force).
+    *   $\lambda$ is the **Decay Rate** (controls damping; a high $\lambda$ creates a tight "tick", a low $\lambda$ creates a metallic ringing "ping").
+    *   $f_0$ is the **Carrier Frequency** (controls timbre; $2000\text{ Hz}$ represents plastic click, $800\text{ Hz}$ wood case resonance, and $150\text{ Hz}$ low-end mechanical thud).
+
+### 7.2 Frequency Layering for Physical Realism
+
+To prevent clicks from sounding synthetic ("synthetic beeps"), we synthesize them by layering three frequency bands:
+
+```
+                  ┌──► [High-Freq Transient] (2.5 kHz, rapid decay)  ──► Sharp contact point
+                  │
+[Detent Trigger] ─┼──► [Mid-Freq Case Resonator] (900 Hz, med decay) ──► Dial structure volume
+                  │
+                  └──► [Low-Freq Thud] (120 Hz, heavy decay)         ──► Mass and weight
+```
+
+*   **Wave Synthesis Formula:**
+    $$Waveform(t) = e^{-\lambda_{high} t} \sin(2\pi f_{high} t) \cdot w_1 + e^{-\lambda_{mid} t} \sin(2\pi f_{mid} t) \cdot w_2 + \text{Noise}(t) \cdot e^{-\lambda_{noise} t} \cdot w_3$$
+    where $w_1, w_2, w_3$ are weights determining the physical material of the dial (e.g. metal vs. plastic).
+
+### 7.3 Rate Repetition & Psychoacoustic Pitch Shifts
+
+As the dial's rotation speed increases, the repetition rate of the clicks ($f_{rep}$) increases. This creates two distinct physical and psychoacoustic shifts:
+
+1.  **Click Repetition Pitch (Pulse Train Transition):**
+    *   At low speeds ($f_{rep} < 20\text{ Hz}$), the human brain hears clicks as **discrete events**: *tick... tick... tick*.
+    *   At high speeds ($f_{rep} > 20\text{ Hz}$), the brain's temporal resolution limit is crossed. The individual clicks blend together, and the brain perceives a **continuous pitched tone** (a whirr or buzz). The fundamental pitch of this tone is *exactly* the repetition rate:
+        $$f_{fundamental} = f_{rep} = \frac{\text{clicks}}{\text{second}}$$
+        *This is not a psychological trick; it is a physical reality.* Periodic repetition of short impulses mathematically transforms the spectrum, concentrating energy into harmonics of the repetition frequency.
+2.  **Impact Brightening (Velocity Frequency Scaling):**
+    *   When the dial spins faster, the physical collision force is stronger and shorter. 
+    *   To model this, we scale the **carrier frequencies** of the individual clicks based on the rotational velocity:
+        $$f_{high}(t) = f_{base} + k_{velocity} \cdot |\omega(t)|$$
+    *   As a result, individual clicks physically become **brighter and higher-pitched** when flicked quickly, mimicking the increased kinetic energy of the mechanical impact.
+
+
 
 
