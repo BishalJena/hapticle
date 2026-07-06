@@ -16,42 +16,58 @@ struct DialView: View {
                 // Circle Dial Container (310px x 310px)
                 ZStack {
                     
-                    // 1. Inner Concave Well (recessed circle base: Ellipse 4)
-//                    Circle()
-//                        .fill(Color.fidgetPrimary)
-//                        .frame(width: 260, height: 260)
-//                        // Inset shadows recreating the CSS box-shadow inset properties
-//                        .overlay(
-//                            Circle()
-//                                .stroke(Color.shadow.opacity(0.35), lineWidth: 6.85)
-//                                .blur(radius: 8.14 / 2)
-//                                .offset(x: 6.85, y: 6.85)
-//                                .mask(Circle().fill(LinearGradient(
-//                                    colors: [Color.shadow, Color.clear],
-//                                    startPoint: .topLeading,
-//                                    endPoint: .bottomTrailing
-//                                )))
-//                        )
-//                        .overlay(
-//                            Circle()
-//                                .stroke(Color.highlight.opacity(0.9), lineWidth: 12.42)
-//                                .blur(radius: 12.42 / 2)
-//                                .offset(x: -6.85, y: -6.85)
-//                                .mask(Circle().fill(LinearGradient(
-//                                    colors: [Color.clear, Color.highlight],
-//                                    startPoint: .topLeading,
-//                                    endPoint: .bottomTrailing
-//                                )))
-//                        )
+                    // 1. Debossed Socket Well (recessed circle base)
+                    Circle()
+                        .fill(Color.fidgetPrimary)
+                        .frame(width: 275, height: 275)
+                        .overlay(
+                            Circle()
+                                .stroke(Color.shadow.opacity(0.4), lineWidth: 5)
+                                .blur(radius: 4)
+                                .offset(x: 4, y: 4)
+                                .mask(Circle().fill(LinearGradient(
+                                    colors: [Color.shadow, Color.clear],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )))
+                        )
+                        .overlay(
+                            Circle()
+                                .stroke(Color.highlight.opacity(0.8), lineWidth: 10)
+                                .blur(radius: 8)
+                                .offset(x: -4, y: -4)
+                                .mask(Circle().fill(LinearGradient(
+                                    colors: [Color.clear, Color.highlight],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )))
+                        )
                     
-                    // 2. Outer Circular Rim/Well Border (embossed ring: Ellipse 1)
+                    // 2. Embossed Dial Face (recesses slightly when pressed)
+                    Circle()
+                        .fill(Color.fidgetPrimary)
+                        .frame(width: 245, height: 245)
+                        .shadow(
+                            color: Color.shadow.opacity(model.isPressed ? 0.5 : 0.8),
+                            radius: model.isPressed ? 4 : 8,
+                            x: model.isPressed ? 2.5 : 5.0,
+                            y: model.isPressed ? 2.5 : 5.0
+                        )
+                        .shadow(
+                            color: Color.highlight.opacity(model.isPressed ? 0.6 : 0.9),
+                            radius: model.isPressed ? 4 : 8,
+                            x: model.isPressed ? -2.5 : -5.0,
+                            y: model.isPressed ? -2.5 : -5.0
+                        )
+                    
+                    // 3. Outer Circular Rim/Well Border (embossed ring)
                     Circle()
                         .stroke(Color.fidgetPrimary, lineWidth: 25)
-                        .frame(width: 300, height: 300) // stroke-width centers to 310 diameter
-                        .shadow(color: Color.shadow.opacity(0.8), radius: 10.28 / 2, x: 5.14, y: 5.14)
-                        .shadow(color: Color.highlight.opacity(0.9), radius: 10.28 / 2, x: -5.14, y: -5.14)
+                        .frame(width: 300, height: 300)
+                        .shadow(color: Color.shadow.opacity(0.8), radius: 5, x: 5, y: 5)
+                        .shadow(color: Color.highlight.opacity(0.9), radius: 5, x: -5, y: -5)
                     
-                    // 3. Rotating Dial Face details (ticks & indicator)
+                    // 4. Rotating Dial Face details (ticks & indicator)
                     ZStack {
                         // 24 Ticks (Rectangle 7) rotated in 15-degree increments at radius 149
                         ForEach(0..<24) { i in
@@ -91,7 +107,7 @@ struct DialView: View {
                     .gesture(
                         DragGesture(minimumDistance: 0)
                             .onChanged { value in
-                                let center = CGPoint(x: 155, y: 155) // Center of 310x310 coordinate system
+                                let center = CGPoint(x: 150, y: 150) // Center of 300x300 coordinate system
                                 if !model.isDragging {
                                     model.handleDragStarted(at: value.startLocation, dialCenter: center)
                                 }
@@ -128,4 +144,3 @@ struct DialView_Previews: PreviewProvider {
         }
     }
 }
-
