@@ -15,7 +15,21 @@ class SoundManager {
     private var phase: Float = 0.0
     
     init() {
+        configureAudioSession()
         setupAudioEngine()
+    }
+    
+    private func configureAudioSession() {
+        do {
+            let session = AVAudioSession.sharedInstance()
+            // Set the audio session category to .playback with .mixWithOthers option.
+            // This prevents iOS from ducking system sounds (like the Digital Crown tick)
+            // when the AVAudioEngine is active.
+            try session.setCategory(.playback, options: [.mixWithOthers])
+            try session.setActive(true)
+        } catch {
+            print("Failed to configure AVAudioSession: \(error)")
+        }
     }
     
     private func setupAudioEngine() {
@@ -23,31 +37,37 @@ class SoundManager {
         audioEngine = engine
         sampleRate = engine.mainMixerNode.outputFormat(forBus: 0).sampleRate
         
-        // 1. Create the procedural synthesizer node
+        // 1. Create the procedural synthesizer node with correct channel-first loop nesting
         sourceNode = AVAudioSourceNode { [weak self] _, _, frameCount, audioBufferList in
             guard let self = self else { return noErr }
             
-            let bufferPointer = UnsafeMutableAudioBufferListPointer(audioBufferList)
+            let ablPointer = UnsafeMutableAudioBufferListPointer(audioBufferList)
             let freq = self.currentFrequency
             let vol = self.currentVolume
             let step = (2.0 * Float.pi * freq) / Float(self.sampleRate)
             
-            for frame in 0..<Int(frameCount) {
-                // Generate a simple sine wave with exponential decay envelope if needed,
-                // or continuously tracking the speed.
-                let sample = sin(self.phase) * vol
-                self.phase += step
-                if self.phase >= 2.0 * Float.pi {
-                    self.phase -= 2.0 * Float.pi
-                }
+            // Loop over channels first to handle multi-channel layouts correctly
+            for channel in 0..<ablPointer.count {
+                let buffer = ablPointer[channel]
+                guard let buf = buffer.mData?.assumingMemoryBound(to: Float.self) else { continue }
                 
-                for buffer in bufferPointer {
-                    let buf: UnsafeMutableBufferPointer<Float> = UnsafeMutableBufferPointer(buffer)
-                    if frame < buf.count {
-                        buf[frame] = sample
+                // Track channel-specific phase to keep channels in sync
+                var channelPhase = self.phase
+                for frame in 0..<Int(frameCount) {
+                    buf[frame] = sin(channelPhase) * vol
+                    channelPhase += step
+                    if channelPhase >= 2.0 * Float.pi {
+                        channelPhase -= 2.0 * Float.pi
                     }
                 }
             }
+            
+            // Update master phase once after processing all channels
+            self.phase += step * Float(frameCount)
+            while self.phase >= 2.0 * Float.pi {
+                self.phase -= 2.0 * Float.pi
+            }
+            
             return noErr
         }
         
