@@ -174,7 +174,12 @@ struct PenView: View {
                         .foregroundColor(Color.fidgetPrimary)
                     .shadow(color: Color.highlight, radius: 3, x: -3, y: -3)
                     .shadow(color: Color.shadow, radius: 3, x: 3, y: 3)
-
+                    .innerShadowShift(
+                        mask: Image("PenClip"),
+                        color: Color.shadow,
+                        blur: 15,
+                        x: 25, y: 0
+                    )
                     .scaledToFit()
                     .frame(width: 40.37, height: 337.8)
                     .padding(.top, 300)
