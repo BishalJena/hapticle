@@ -114,13 +114,13 @@ struct PenView: View {
             VStack {
                 Image("PenBody")
                     .colorMultiply(Color.fidgetPrimary)
-                    .shadow(color: Color.white, radius: 6, x: -7, y: -6)
+                    .shadow(color: Color.highlight, radius: 6, x: -7, y: -6)
                     .shadow(color: .shadow, radius: 6, x: 7, y: 6)
                     .innerShadowShift(
                         mask: Image("PenBody"),
                         color: Color.fidgetPrimary,
-                        blur: 13.85,
-                        x: -21, y: -4
+                        blur: 10,
+                        x: -17, y: -4
                     )
                     .scaledToFit()
                     .frame(width: 200, height: 200)
@@ -136,8 +136,8 @@ struct PenView: View {
             VStack {
                 Image("PenCrown")
                     .colorMultiply(Color.fidgetPrimary)
+                    .shadow(color: .highlight, radius: 3, x: -3, y: -3)
                     .shadow(color: Color.shadow, radius: 3, x: 3, y: 3)
-                    .shadow(color: .white, radius: 3, x: -3, y: -3)
                     .innerShadowShift(
                         mask: Image("PenCrown"),
                         color: Color.fidgetPrimary,
@@ -157,7 +157,7 @@ struct PenView: View {
             VStack {
                 Image("PenClip")
                     .colorMultiply(Color.fidgetPrimary)
-                    .shadow(color: Color.white, radius: 3, x: -4, y: -3)
+                    .shadow(color: Color.highlight, radius: 3, x: -4, y: -3)
                     .shadow(color: .shadow, radius: 3, x: 4, y: 3)
                     .innerShadowShift(
                         mask: Image("PenClip"),
@@ -176,7 +176,7 @@ struct PenView: View {
             VStack {
                 Image("HapticleText")
                     .colorMultiply(Color.fidgetPrimary)
-                    .shadow(color: Color.white, radius: 1, x: -1, y: -1)
+                    .shadow(color: Color.highlight, radius: 1, x: -1, y: -1)
                     .shadow(color: .shadow, radius: 1, x: 1, y: 1)
                     .scaledToFit()
                     .padding(.top, 350)
