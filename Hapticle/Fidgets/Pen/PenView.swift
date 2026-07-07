@@ -3,22 +3,10 @@
 //  Hapticle
 //
 //  Created by Syauqi Auliya M on 02/07/26.
-//
 
 import SwiftUI
 
-enum PenButtonState {
-    case unclicked   // offset 0
-    case beingClicked // offset 70 (while finger is down)
-    case clicked     // offset 45 (toggled "locked in" state)
-}
-
-
 extension View {
-    /// Creates a duplicate of `maskView` filled with `color`, blurs it as a whole shape,
-    /// offsets it, then re-clips to the original silhouette. Where the shifted blur
-    /// no longer reaches, the original content underneath shows through — mimicking
-    /// an inner shadow.
     func innerShadowShift<Mask: View>(
         mask maskView: Mask,
         color: Color,
@@ -29,36 +17,25 @@ extension View {
         self.overlay(
             Rectangle()
                 .fill(color)
-                .mask(maskView)          // clip solid fill to the shape's silhouette
-                .blur(radius: blur)      // blur the whole filled shape
-                .offset(x: x, y: y)      // shift it
-                .mask(maskView)          // re-clip so nothing spills outside the original shape
+                .mask(maskView)
+                .blur(radius: blur)
+                .offset(x: x, y: y)
+                .mask(maskView)
         )
     }
 }
 
 struct PenView: View {
-    @State private var buttonState: PenButtonState = .unclicked
-    @State private var preClickState: PenButtonState = .unclicked // remembers state before press
-    
-    private var currentOffset: CGFloat {
-        switch buttonState {
-        case .unclicked: return 0
-        case .beingClicked: return 50
-        case .clicked: return 30
-        }
-    }
-    
+    @StateObject private var model = PenModel()
     
     var body: some View {
         
-        ZStack
-        {
+        ZStack {
             Color.primaryWhite
                 .ignoresSafeArea()
             
-            //clicky part
-            VStack{
+            // clicky part
+            VStack {
                 Image("Vector 3")
                     .innerShadowShift(
                         mask: Image("Vector 3"),
@@ -73,17 +50,18 @@ struct PenView: View {
                     .scaledToFit()
                     .frame(width: 200, height: 200)
                     .padding(.top, 160)
-                    .offset(y: currentOffset)
+                    .offset(y: model.currentOffset)
                     .animation(
-                        buttonState == .beingClicked
-                        ? .easeIn(duration: 0.08)
-                        : .easeOut(duration: 0.25),
-                        value: buttonState
+                        model.buttonState == .beingClicked
+                            ? .easeIn(duration: 0.08)
+                            : .easeOut(duration: 0.25),
+                        value: model.buttonState
                     )
                 Spacer()
             }
+            
             // pen body
-            VStack{
+            VStack {
                 Image("Vector 6")
                     .shadow(color: Color.white, radius: 6, x: -7, y: -6)
                     .shadow(color: .whiteShadow, radius: 6, x: 7, y: 6)
@@ -91,18 +69,16 @@ struct PenView: View {
                         mask: Image("Vector 6"),
                         color: Color.primaryWhite,
                         blur: 13.85,
-                        x: -21,
-                        y: -4
+                        x: -21, y: -4
                     )
                     .scaledToFit()
                     .frame(width: 200, height: 200)
-                    .padding(.top, 450) //(+150
+                    .padding(.top, 450)
                 Spacer()
             }
             
-            
-            //crown
-            VStack{
+            // crown
+            VStack {
                 Image("Vector 7")
                     .shadow(color: Color.whiteShadow, radius: 3, x: 3, y: 3)
                     .shadow(color: .white, radius: 3, x: -3, y: -3)
@@ -110,8 +86,7 @@ struct PenView: View {
                         mask: Image("Vector 7"),
                         color: Color.primaryWhite,
                         blur: 4.9,
-                        x: -13,
-                        y: 0
+                        x: -13, y: 0
                     )
                     .scaledToFit()
                     .frame(width: 150, height: 150)
@@ -120,7 +95,7 @@ struct PenView: View {
             }
             
             // pen clip
-            VStack{
+            VStack {
                 Image("Vector9PNG")
                     .resizable()
                     .scaledToFit()
@@ -131,41 +106,25 @@ struct PenView: View {
             }
             
             // Hapticle text
-            VStack{
+            VStack {
                 Image("hapticle")
                     .shadow(color: Color.white, radius: 1, x: -1, y: -1)
-                    .shadow(color: .whiteShadow, radius:1, x: 1, y: 1)
+                    .shadow(color: .whiteShadow, radius: 1, x: 1, y: 1)
                     .scaledToFit()
                     .padding(.top, 350)
                     .padding(.leading, 25)
                 Spacer()
             }
-            
-            
-            
         }
-        .contentShape(Rectangle()) // makes the ENTIRE ZStack area (including empty space) hit-testable
-                .gesture(
-                    DragGesture(minimumDistance: 0)
-                        .onChanged { _ in
-                            if buttonState != .beingClicked {
-                                preClickState = buttonState
-                                buttonState = .beingClicked
-                            }
-                        }
-                        .onEnded { _ in
-                            let generator = UIImpactFeedbackGenerator(style: .rigid)
-                            generator.prepare()
-                            generator.impactOccurred()
-                            
-                            buttonState = (preClickState == .clicked) ? .unclicked : .clicked
-                        }
-                )
-        
+        .contentShape(Rectangle())
+        .gesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { value in model.onTouchDown(velocity: value.velocity) }
+                .onEnded { _ in model.onTouchUp() }
+        )
     }
 }
 
 #Preview {
     PenView()
 }
-

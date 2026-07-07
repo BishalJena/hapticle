@@ -105,25 +105,34 @@ Our team adopted a strict minimalist approach to frameworks. We stripped our dep
 ### watchOS Stack
 *   **WatchKit:** Handles the watch app interface and triggers basic Apple Watch Taptic Engine patterns.
 
+### 7.3 Developer Tooling: Parameter Tuning Overlay
+To solve the issue of slow iteration cycles during physical testing, we implemented a custom float-over **Debug Control Panel** in the app's root view structure (`HapticleApp.swift`).
+*   **Why We Need It:** Physical constants (e.g. spring stiffness, friction coefficients, and haptic transient levels) require extensive physical testing to "feel" right. Re-compiling and deploying to physical devices for every parameter adjustment is highly inefficient.
+*   **Real-time Tuning & Copy Pipeline:** The panel includes interactive sliders representing active fidget properties. Once a developer achieves the desired tactile sensation, they can tap **"Copy Settings as Text"** to serialize the configurations directly to their device clipboard. This block can be pasted directly into code configuration models, completely eliminating manual transcription and transcription errors.
+
 ---
 
 ## 8. Accessibility, Localization, & Privacy
 
 ### 8.1 Accessibility & Visual Modes
 With a highly visual and neumorphic style, contrast is a key challenge. We implemented dedicated neumorphic shadow and highlight color tokens across three core themes to ensure that the soft 3D extrusions remain visible and accessible in any lighting environment:
-*   **White Theme (Light Mode):** Base ![#E0E5EC](Colors/white.svg) `#E0E5EC`, Highlight ![#FFFFFF](Colors/white_highlight.svg) `#FFFFFF`, Shadow ![#A3B1C6](Colors/white_shadow.svg) `#A3B1C6`
-*   **Grey Theme (Dark Mode):** Base ![#454545](Colors/primary_grey.svg) `#454545`, Highlight ![#D9D9D9](Colors/grey_highlight.svg) `#D9D9D9`, Shadow ![#000000](Colors/grey_shadow.svg) `#000000`
-*   **Red Theme (Active/Accent):** Base ![#C73535](Colors/primary_red.svg) `#C73535`, Highlight ![#D86E6E](Colors/red_highlight.svg) `#D86E6E`, Shadow ![#892424](Colors/red_shadow.svg) `#892424`
+*   **Light Theme (Light Mode):** Base ![#E0E5EC](Colors/primary_light.svg) `PrimaryLight` (`#E0E5EC`), Highlight ![#FFFFFF](Colors/highlight_light.svg) `HighlightLight` (`#FFFFFF`), Shadow ![#A3B1C6](Colors/shadow_light.svg) `ShadowLight` (`#A3B1C6`)
+*   **Dark Theme (Dark Mode):** Base ![#454545](Colors/primary_dark.svg) `PrimaryDark` (`#454545`), Highlight ![#D9D9D9](Colors/highlight_dark.svg) `HighlightDark` (`#D9D9D9`), Shadow ![#000000](Colors/shadow_dark.svg) `ShadowDark` (`#000000`)
+*   **Accent Theme (Active/Accent):** Base ![#C73535](Colors/accent.svg) `Accent` (`#C73535`), Highlight ![#D86E6E](Colors/accent_highlight.svg) `AccentHighlight` (`#D86E6E`), Shadow ![#892424](Colors/accent_shadow.svg) `AccentShadow` (`#892424`)
 
-### 8.2 Universal UX & Localization
-Rather than spending time translating text into different languages, we designed a **text-less, intuitive user interface**. The fidgets simulate objects that are globally understood:
-*   A pen button clicker.
-*   A rotating safe dial.
-*   A tear-off paper ticket.
-*   Alternating magnetic rings.
-By relying entirely on interactive visual metaphors, auditory cues, and physical haptics, the application is naturally universal and requires zero localization.
+### 8.2 Universal UX & Navigation Deliberations
+To cycle through the five fidget interfaces, the application currently implements a custom **2-finger swipe gesture**. Because this navigation scheme is not a standard system gesture, we introduced a minimal onboarding text instruction in the initial user flow to guide users: *"Swipe with two fingers to change fidgets."*
+*   **Typography & Styling:** This text guidance conforms to standard Apple HIG layout spacing, styled in `SF Pro Rounded`, size `17 pt`, and `Medium` weight.
+*   **Active Deliberation & UX Concerns:** We are concerned that users will forget the 2-finger swipe gesture once the initial onboarding text disappears. To address this, we are deliberating on an alternative hold-based radial menu selector:
+    - **Radial Menu Mechanics:** Holding down a menu button initiates a circular progress indicator. When filled, 4 circular selections representing the other fidgets pop up in a radius starting from the left ($180^\circ$) and spaced every $60^\circ$ clockwise (at $180^\circ$, $240^\circ$, $300^\circ$, and $360^\circ$/$0^\circ$).
+    - **Interactive Selection:** The user swipes toward their choice while holding the finger down, releasing it to select, or letting go outside the nodes to cancel.
+    - **Localization Impact:** This selector menu uses purely visual targets (circular previews or icons), maintaining our goal of a minimalist, highly universal visual design with low localization overhead.
 
-### 8.3 Privacy Compliance
+
+### 8.3 Figma Static Component Note
+Our source Figma components are strictly static designs without pre-defined interactive states. The dynamic behaviors—such as visual depth recessions, spring tensions, and dial rotations—are synthesized programmatically in SwiftUI, rather than replicated from Figma variant states.
+
+### 8.4 Privacy Compliance
 Our application requires no network connectivity, profile creation, or data storage. It is built to run entirely on the user's device:
 *   **No User Data Collected:** We do not track, store, or transmit any user behavior or metrics, ensuring 100% user privacy.
 

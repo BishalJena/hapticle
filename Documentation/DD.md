@@ -12,24 +12,53 @@ Hapticle implements a modern **Neumorphic (soft 3D)** user interface. The UI ele
 
 | Color Name | Preview | HEX | RGBA | HSL |
 | :--- | :---: | :--- | :--- | :--- |
-| **Grey Shadow** | ![#000000](Colors/grey_shadow.svg) | `#000000` | `rgba(0, 0, 0, 1.00)` | `hsl(0, 0%, 0%)` |
-| **Primary Grey** | ![#454545](Colors/primary_grey.svg) | `#454545` | `rgba(69, 69, 69, 1.00)` | `hsl(0, 0%, 27%)` |
-| **Grey Highlight** | ![#D9D9D9](Colors/grey_highlight.svg) | `#D9D9D9` | `rgba(217, 217, 217, 1.00)` | `hsl(0, 0%, 85%)` |
-| **White Highlight** | ![#FFFFFF](Colors/white_highlight.svg) | `#FFFFFF` | `rgba(255, 255, 255, 1.00)` | `hsl(0, 0%, 100%)` |
-| **Red Shadow** | ![#892424](Colors/red_shadow.svg) | `#892424` | `rgba(137, 36, 36, 1.00)` | `hsl(0, 58%, 34%)` |
-| **Primary Red** | ![#C73535](Colors/primary_red.svg) | `#C73535` | `rgba(199, 53, 53, 1.00)` | `hsl(0, 58%, 49%)` |
-| **Red Highlight** | ![#D86E6E](Colors/red_highlight.svg) | `#D86E6E` | `rgba(216, 110, 110, 1.00)` | `hsl(0, 58%, 64%)` |
-| **White** | ![#E0E5EC](Colors/white.svg) | `#E0E5EC` | `rgba(224, 229, 236, 1.00)` | `hsl(215, 24%, 90%)` |
-| **White Shadow** | ![#A3B1C6](Colors/white_shadow.svg) | `#A3B1C6` | `rgba(163, 177, 198, 1.00)` | `hsl(216, 23%, 71%)` |
+| **shadowDark** | ![#000000](Colors/shadow_dark.svg) | `#000000` | `rgba(0, 0, 0, 1.00)` | `hsl(0, 0%, 0%)` |
+| **fidgetPrimaryDark** | ![#454545](Colors/fidget_primary_dark.svg) | `#454545` | `rgba(69, 69, 69, 1.00)` | `hsl(0, 0%, 27%)` |
+| **highlightDark** | ![#D9D9D9](Colors/highlight_dark.svg) | `#D9D9D9` | `rgba(217, 217, 217, 1.00)` | `hsl(0, 0%, 85%)` |
+| **highlightLight** | ![#FFFFFF](Colors/highlight_light.svg) | `#FFFFFF` | `rgba(255, 255, 255, 1.00)` | `hsl(0, 0%, 100%)` |
+| **accentShadow** | ![#892424](Colors/accent_shadow.svg) | `#892424` | `rgba(137, 36, 36, 1.00)` | `hsl(0, 58%, 34%)` |
+| **accent** | ![#C73535](Colors/accent.svg) | `#C73535` | `rgba(199, 53, 53, 1.00)` | `hsl(0, 58%, 49%)` |
+| **accentHighlight** | ![#D86E6E](Colors/accent_highlight.svg) | `#D86E6E` | `rgba(216, 110, 110, 1.00)` | `hsl(0, 58%, 64%)` |
+| **fidgetPrimaryLight** | ![#E0E5EC](Colors/fidget_primary_light.svg) | `#E0E5EC` | `rgba(224, 229, 236, 1.00)` | `hsl(215, 24%, 90%)` |
+| **shadowLight** | ![#A3B1C6](Colors/shadow_light.svg) | `#A3B1C6` | `rgba(163, 177, 198, 1.00)` | `hsl(216, 23%, 71%)` |
 
 ### Neumorphic Theme Tokens
 
-| Neumorphic Role | White Theme (Light Mode) | Grey Theme (Dark Mode) | Red Theme (Active/Accent) | Description |
+| Neumorphic Role | Light Theme (Light Mode) | Dark Theme (Dark Mode) | Accent Theme (Active/Accent) | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| **Base / Background** | ![#E0E5EC](Colors/white.svg) `White` (`#E0E5EC`) | ![#454545](Colors/primary_grey.svg) `Primary Grey` (`#454545`) | ![#C73535](Colors/primary_red.svg) `Primary Red` (`#C73535`) | Base surface canvas; all neumorphic extrusions blend into this. |
-| **Highlight (Light)** | ![#FFFFFF](Colors/white_highlight.svg) `White Highlight` (`#FFFFFF`) | ![#D9D9D9](Colors/grey_highlight.svg) `Grey Highlight` (`#D9D9D9`) | ![#D86E6E](Colors/red_highlight.svg) `Red Highlight` (`#D86E6E`) | Simulates reflected light on the top-left edges of components. |
-| **Shadow (Dark)** | ![#A3B1C6](Colors/white_shadow.svg) `White Shadow` (`#A3B1C6`) | ![#000000](Colors/grey_shadow.svg) `Grey Shadow` (`#000000`) | ![#892424](Colors/red_shadow.svg) `Red Shadow` (`#892424`) | Simulates cast shadow on the bottom-right edges of components. |
+| **Base / Background** | ![#E0E5EC](Colors/fidget_primary_light.svg) `fidgetPrimary` (`#E0E5EC`) | ![#454545](Colors/fidget_primary_dark.svg) `fidgetPrimary` (`#454545`) | ![#C73535](Colors/accent.svg) `accent` (`#C73535`) | Base surface canvas; all neumorphic extrusions blend into this. |
+| **Highlight (Light)** | ![#FFFFFF](Colors/highlight_light.svg) `highlight` (`#FFFFFF`) | ![#D9D9D9](Colors/highlight_dark.svg) `highlight` (`#D9D9D9`) | ![#D86E6E](Colors/accent_highlight.svg) `accentHighlight` (`#D86E6E`) | Simulates reflected light on the top-left edges of components. |
+| **Shadow (Dark)** | ![#A3B1C6](Colors/shadow_light.svg) `shadow` (`#A3B1C6`) | ![#000000](Colors/shadow_dark.svg) `shadow` (`#000000`) | ![#892424](Colors/accent_shadow.svg) `accentShadow` (`#892424`) | Simulates cast shadow on the bottom-right edges of components. |
 
+
+### Typography
+
+To support minimal interface guidance (specifically for onboarding navigation instructions), the design incorporates a clean, system-aligned typographic style:
+*   **Font Family:** `SF Pro Rounded`
+*   **Font Size:** `17 pt`
+*   **Weight:** `Medium`
+
+### Spacing
+
+We adhere strictly to standard **Apple Human Interface Guidelines (HIG)** for layout spacing, gutter margins, and interactive hit targets:
+*   **Screen Margins / Gutters:** `16pt` to `20pt` padding on side edges.
+*   **Onboarding Guidance:** To assist first-time users with navigation, the interface displays a minimal text instruction: *"Swipe with two fingers to change fidgets."*
+
+### Navigation & Selector Menu Deliberations
+To resolve concerns that users may forget the custom **2-finger swipe gesture** after the initial onboarding text disappears, we are actively deliberating on an alternative or supplementary interactive selector menu:
+
+1.  **Gesture Cycling (Current Baseline):** 
+    - The user swipes horizontally with two fingers anywhere on the screen to cycle sequentially (previous/next) through the fidgets.
+2.  **Hold-to-Radial Menu (Proposed Alternative):**
+    - The user presses and holds a central menu button.
+    - A **circular progress bar** fills up around the button as they hold it.
+    - Once the progress bar is filled, a radial menu pops up displaying **4 circular selection targets** representing the other fidgets.
+    - **Radial Layout Geometry:** The circles are arranged along the upper/top side of the semicircle above the menu button, spaced equally in a $100\text{pt}$ radius. Standard mathematical angles place these at: Left ($180^\circ$), Top-Left ($120^\circ$), Top-Right ($60^\circ$), and Right ($0^\circ$). (In SwiftUI rotation coordinates where positive is clockwise: Left at $180^\circ$, Top-Left at $240^\circ$, Top-Right at $300^\circ$, and Right at $360^\circ$/$0^\circ$).
+    - **Selection Interaction:** Without lifting their finger, the user drags/swipes toward the desired circular selection. Hovering over a circle and releasing the finger completes the choice and switches the active fidget.
+    - **Cancellation Interaction:** If the user releases their finger without hovering over any of the four circular selections, the menu closes with no change.
+
+> [!NOTE]
+> **Figma Design Constraint:** The source Figma components do not have defined interactive states; they are static designs. Dynamic states (such as debossed recess overlays, elastic stretch coefficients, or the hold-to-radial progress animation) must be generated entirely in SwiftUI.
 
 ---
 
@@ -55,7 +84,10 @@ The Pen fidget simulates the tactile pleasure of clicking a real retractable bal
         *   Upon letting go (screen/button up): *Another* click is felt.
         *   Quick Taps: Two fast clicks are felt in rapid succession.
 
-![Pen Lo-Fi Sketch](Pen_lofi.jpeg)
+#### Mid-Fi Design Reference (Pen)
+| Light Mode | Dark Mode |
+| :---: | :---: |
+| ![Pen Light Mode](MidFi/Pen_LightMode.svg) | ![Pen Dark Mode](MidFi/Pen_DarkMode.svg) |
 
 ---
 
@@ -74,7 +106,10 @@ The Dial simulates a heavy, physical rotary dial (like a safe dial or volume kno
     *   Sound pitch and volume are dynamically modulated based on the RPM (Revolutions Per Minute).
     *   Faster RPM results in a higher pitch, mimicking a mechanical whirr or clicking ratchet.
 
-![Dial Lo-Fi Sketch](Dial_lofi.jpeg)
+#### Mid-Fi Design Reference (Dial)
+| Light Mode | Dark Mode |
+| :---: | :---: |
+| ![Dial Light Mode](MidFi/Dial_LightMode.svg) | ![Dial Dark Mode](MidFi/Dial_DarkMode.svg) |
 
 ---
 
@@ -96,7 +131,10 @@ The Ticket simulates the satisfying feeling of tearing a perforated cardboard ar
 *   **Audio Design:**
     *   A ripping sound effect synthesized dynamically or pitched according to the speed of the tear.
 
-![Ticket Lo-Fi Sketch](Ticket_lofi.jpeg)
+#### Mid-Fi Design Reference (Ticket)
+| Light Mode | Dark Mode |
+| :---: | :---: |
+| ![Ticket Light Mode](MidFi/Ticket_LightMode.svg) | ![Ticket Dark Mode](MidFi/Ticket_DarkMode.svg) |
 
 ---
 
@@ -120,7 +158,10 @@ The Magnet simulates playing with magnets, mimicking the MagSafe ring on the bac
     *   Transient snaps when locking onto a magnetic node.
     *   Repulsive pushback felt via high-frequency micro-haptics when passing repulsive poles.
 
-![Magnet Lo-Fi Sketch](Magnet_lofi.jpeg)
+#### Mid-Fi Design Reference (Magnet)
+| Light Mode | Dark Mode |
+| :---: | :---: |
+| ![Magnet Light Mode](MidFi/Magnet_LightMode.svg) | ![Magnet Dark Mode](MidFi/Magnet_DarkMode.svg) |
 
 ---
 
@@ -142,4 +183,16 @@ The Blob is a squishy, jelly-like creature centered on a grid background.
     *   Squelching audio effects pitch-shifted during stretching.
     *   A satisfying "pop" sound effect upon division.
 
-![Blob Lo-Fi Sketch](Blob_lofi.jpeg)
+#### Mid-Fi Design Reference (Blob)
+| Light Mode | Dark Mode |
+| :---: | :---: |
+| ![Blob Light Mode](MidFi/Blob_LightMode.svg) | ![Blob Dark Mode](MidFi/Blob_DarkMode.svg) |
+
+---
+
+## 3. Developer Tooling & Parameter Tuning (Debug Control Panel)
+
+To speed up the visual and physical tuning of interactive values, we introduce a dedicated developer overlay in the application interface:
+
+*   **Interactive Parameter Toggles & Sliders:** Floating panel providing sliders for adjusting physics variables (spring stiffness, friction decay, torque leverage, and stretch thresholds) and haptic/audio settings (transient intensity, sharpness, and audio base pitch) in real time.
+*   **Rapid Tuning Flow:** Rather than forcing developers to manually transcribe tuned parameters from the device screen to their codebase—which introduces typos and slow compile cycles—the panel includes a **"Copy Settings as Text"** button. This serializes all adjusted parameters into a structured text format (e.g., Swift Dictionary or JSON) and copies it directly to the system clipboard for immediate pasting into model source configurations.
