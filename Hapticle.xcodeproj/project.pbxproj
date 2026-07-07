@@ -7,21 +7,26 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		003195F32FF5F39A00A7163E /* Hapticle Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 003195F22FF5F39A00A7163E /* Hapticle Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		003196AB2FFBE56E00A71602 /* BlobModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA94B9FC2FFBE56E00A5B768 /* BlobModel.swift */; };
-		003196AB2FFBE56E00A71603 /* BlobView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA94B9FD2FFBE56E00A5B768 /* BlobView.swift */; };
-		003196AB2FFBE56E00A71604 /* DialModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA94BA002FFBE56E00A5B768 /* DialModel.swift */; };
-		003196AB2FFBE56E00A71605 /* DialView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA94BA012FFBE56E00A5B768 /* DialView.swift */; };
-		003196AB2FFBE56E00A71606 /*  MagnetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA94BA032FFBE56E00A5B768 /*  MagnetView.swift */; };
-		003196AB2FFBE56E00A71607 /* MagnetModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA94BA042FFBE56E00A5B768 /* MagnetModel.swift */; };
-		003196AB2FFBE56E00A71608 /* PenModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA94BA062FFBE56E00A5B768 /* PenModel.swift */; };
-		003196AB2FFBE56E00A71609 /* PenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA94BA072FFBE56E00A5B768 /* PenView.swift */; };
-		003196AB2FFBE56E00A7160A /* TicketModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA94BA092FFBE56E00A5B768 /* TicketModel.swift */; };
-		003196AB2FFBE56E00A7160B /* TicketView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA94BA0A2FFBE56E00A5B768 /* TicketView.swift */; };
-		003196AB2FFBE56E00A7160C /* HapticsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA94BA0D2FFBE56E00A5B768 /* HapticsManager.swift */; };
-		003196AB2FFBE56E00A7160D /* SoundManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA94BA0E2FFBE56E00A5B768 /* SoundManager.swift */; };
-		003196AB2FFBE56E00A7160E /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA94BA112FFBE56E00A5B768 /* ContentView.swift */; };
-		003196AB2FFBE56E00A7160F /* HapticleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA94BA122FFBE56E00A5B768 /* HapticleApp.swift */; };
+		4AF3D342E60335C5AC727B8C /* HapticleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3B9681F8A2DAA952893A5BC /* HapticleApp.swift */; };
+		FD68E75E24EBF3FEC25851FE /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AAEB235AABAF39F7AB217E5 /* ContentView.swift */; };
+		AE36D3D4517058BA989CE444 /* DialView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCBCB39ADAC118A92BE72589 /* DialView.swift */; };
+		838B5541A4D986899C358F53 /* DialModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1392B84C40B39115BE96A73 /* DialModel.swift */; };
+		96D0737DD51A0ADE83CC0A4C /* PenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8009DA83AB106F7439357104 /* PenView.swift */; };
+		8E0A6FF8C11E7F9E36051358 /* PenModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F3543C7028DA01B831244C0 /* PenModel.swift */; };
+		5543185C13405DEBC3AF99D8 /* MagnetModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BEC97AC89D0E2A218775A2E /* MagnetModel.swift */; };
+		93F98C54FFF7D8AC90F68594 /*  MagnetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4908C4BDC4384AE02E4919A0 /*  MagnetView.swift */; };
+		65577DC92BE77540DE350E34 /* TicketModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40F5C89DDE9CA3DBFDEE6DBF /* TicketModel.swift */; };
+		531518E7CC3E7721770BC469 /* TicketView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 943C3C7F80B20393CEBB445C /* TicketView.swift */; };
+		BB71C41CAAE83DAB18D31D12 /* BlobView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC455F7786546C694E3DFAE6 /* BlobView.swift */; };
+		D87B805017F43B12F63DC6F3 /* BlobModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A01EA80E37C0A00F5EF3BD97 /* BlobModel.swift */; };
+		6CACE97F76577FDA9EE5F3DC /* SoundManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59B30D248CFACF7B9F83D36F /* SoundManager.swift */; };
+		4D171F1B531F81D0AA1FD3DD /* HapticsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 496E5B0988276130049DB91A /* HapticsManager.swift */; };
+		04469F0A40ABEF653578901D /* RadialMenuDemoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6C7421BE5A37D61B6975066 /* RadialMenuDemoView.swift */; };
+		6F6FEC393468D3452561AE2E /* RadialMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31C443A22B6AF5FBE2DC6D71 /* RadialMenuView.swift */; };
+		1BB17AE1BA1FF577DE8FC24E /* NeumorphicStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3C34453B03518F81CD88508 /* NeumorphicStyle.swift */; };
+		12D5C50D2622A5256F6F622E /* RadialMenuModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3980FD942558D0AAE09226D0 /* RadialMenuModel.swift */; };
+		7ECAD293F77E1396445E4BA1 /* SatelliteNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C66484677CA350E2E2F957E /* SatelliteNode.swift */; };
+		1CFEC7F3605656F740904989 /* RadialMenuConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DC34764F7AB23433DC2DB5A /* RadialMenuConfig.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -325,20 +330,26 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				003196AB2FFBE56E00A71602 /* BlobModel.swift in Sources */,
-				003196AB2FFBE56E00A71603 /* BlobView.swift in Sources */,
-				003196AB2FFBE56E00A71604 /* DialModel.swift in Sources */,
-				003196AB2FFBE56E00A71605 /* DialView.swift in Sources */,
-				003196AB2FFBE56E00A71606 /*  MagnetView.swift in Sources */,
-				003196AB2FFBE56E00A71607 /* MagnetModel.swift in Sources */,
-				003196AB2FFBE56E00A71608 /* PenModel.swift in Sources */,
-				003196AB2FFBE56E00A71609 /* PenView.swift in Sources */,
-				003196AB2FFBE56E00A7160A /* TicketModel.swift in Sources */,
-				003196AB2FFBE56E00A7160B /* TicketView.swift in Sources */,
-				003196AB2FFBE56E00A7160C /* HapticsManager.swift in Sources */,
-				003196AB2FFBE56E00A7160D /* SoundManager.swift in Sources */,
-				003196AB2FFBE56E00A7160E /* ContentView.swift in Sources */,
-				003196AB2FFBE56E00A7160F /* HapticleApp.swift in Sources */,
+				4AF3D342E60335C5AC727B8C /* HapticleApp.swift in Sources */,
+				FD68E75E24EBF3FEC25851FE /* ContentView.swift in Sources */,
+				AE36D3D4517058BA989CE444 /* DialView.swift in Sources */,
+				838B5541A4D986899C358F53 /* DialModel.swift in Sources */,
+				96D0737DD51A0ADE83CC0A4C /* PenView.swift in Sources */,
+				8E0A6FF8C11E7F9E36051358 /* PenModel.swift in Sources */,
+				5543185C13405DEBC3AF99D8 /* MagnetModel.swift in Sources */,
+				93F98C54FFF7D8AC90F68594 /*  MagnetView.swift in Sources */,
+				65577DC92BE77540DE350E34 /* TicketModel.swift in Sources */,
+				531518E7CC3E7721770BC469 /* TicketView.swift in Sources */,
+				BB71C41CAAE83DAB18D31D12 /* BlobView.swift in Sources */,
+				D87B805017F43B12F63DC6F3 /* BlobModel.swift in Sources */,
+				6CACE97F76577FDA9EE5F3DC /* SoundManager.swift in Sources */,
+				4D171F1B531F81D0AA1FD3DD /* HapticsManager.swift in Sources */,
+				04469F0A40ABEF653578901D /* RadialMenuDemoView.swift in Sources */,
+				6F6FEC393468D3452561AE2E /* RadialMenuView.swift in Sources */,
+				1BB17AE1BA1FF577DE8FC24E /* NeumorphicStyle.swift in Sources */,
+				12D5C50D2622A5256F6F622E /* RadialMenuModel.swift in Sources */,
+				7ECAD293F77E1396445E4BA1 /* SatelliteNode.swift in Sources */,
+				1CFEC7F3605656F740904989 /* RadialMenuConfig.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
