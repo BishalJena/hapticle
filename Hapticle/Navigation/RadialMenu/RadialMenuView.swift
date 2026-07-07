@@ -182,7 +182,7 @@ struct RadialMenuView: View {
 
 #Preview {
     ZStack {
-        Color.hpBase.ignoresSafeArea()
+        Color.fidgetPrimary.ignoresSafeArea()
         RadialMenuView(onSelect: { print("selected \($0.label)") })
     }
 }
