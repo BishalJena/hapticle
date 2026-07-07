@@ -2,6 +2,9 @@ import SwiftUI
 
 struct ContentView: View {
     @State private var activeFidget: FidgetID = .dial // Default start on the dial
+    @State private var isMenuVisible = true
+    @State private var menuHideTimer: Timer?
+    @State private var isDialActive = false
     
     var body: some View {
         ZStack {
@@ -15,7 +18,14 @@ struct ContentView: View {
                 case .pen:
                     PenView()
                 case .dial:
-                    DialView()
+                    DialView(onInteractionChange: { active in
+                        isDialActive = active
+                        if active {
+                            triggerInteraction()
+                        } else {
+                            endInteraction()
+                        }
+                    })
                 case .ticket:
                     TicketView()
                 case .magnet:
@@ -25,12 +35,46 @@ struct ContentView: View {
                 }
             }
             .transition(.opacity) // Smooth opacity shift between features
+            .simultaneousGesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { _ in
+                        triggerInteraction()
+                    }
+                    .onEnded { _ in
+                        // Only schedule menu to reappear if the dial itself isn't still actively spinning
+                        if !isDialActive {
+                            endInteraction()
+                        }
+                    }
+            )
             
             // 2. Global Bottom-Anchored Radial Selector
-            RadialMenuView { selectedFidget in
-                withAnimation(.spring(duration: 0.32, bounce: 0.12)) {
-                    activeFidget = selectedFidget
+            if isMenuVisible {
+                RadialMenuView { selectedFidget in
+                    withAnimation(.spring(duration: 0.32, bounce: 0.12)) {
+                        activeFidget = selectedFidget
+                    }
                 }
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
+    }
+    
+    private func triggerInteraction() {
+        menuHideTimer?.invalidate()
+        menuHideTimer = nil
+        if isMenuVisible {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                isMenuVisible = false
+            }
+        }
+    }
+    
+    private func endInteraction() {
+        menuHideTimer?.invalidate()
+        menuHideTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: false) { _ in
+            withAnimation(.easeInOut(duration: 0.3)) {
+                isMenuVisible = true
             }
         }
     }

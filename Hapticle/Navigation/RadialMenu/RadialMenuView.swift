@@ -32,8 +32,6 @@ struct RadialMenuView: View {
                 ringButton(at: ringCenter)
             }
             .coordinateSpace(.named(Self.space))
-            .contentShape(Rectangle())
-            .gesture(drag(ringCenter: ringCenter))
         }
         .ignoresSafeArea()
         .onAppear {
@@ -118,26 +116,26 @@ struct RadialMenuView: View {
             // Liquid Glass Toggle Button - exactly 46x46
             ZStack {
                 // Glass Base
-                Circle()
-                    .fill(.thinMaterial)
-                    
-                // Inner Shadow (recessed peephole look)
-                Circle()
-                    .stroke(Color.black.opacity(0.18), lineWidth: 3)
-                    .blur(radius: 2)
-                    .offset(x: 1.5, y: 1.5)
-                    .mask(Circle())
-                
-                // Outer Bezel Stroke
-                Circle()
-                    .stroke(
-                        LinearGradient(
-                            colors: [.white.opacity(0.55), .clear, .black.opacity(0.15)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1.0
-                    )
+//                Circle()
+//                    .fill(.thinMaterial)
+//                    
+//                // Inner Shadow (recessed peephole look)
+//                Circle()
+//                    .stroke(Color.black.opacity(0.18), lineWidth: 3)
+//                    .blur(radius: 2)
+//                    .offset(x: 1.5, y: 1.5)
+//                    .mask(Circle())
+//                
+//                // Outer Bezel Stroke
+//                Circle()
+//                    .stroke(
+//                        LinearGradient(
+//                            colors: [.white.opacity(0.55), .clear, .black.opacity(0.15)],
+//                            startPoint: .topLeading,
+//                            endPoint: .bottomTrailing
+//                        ),
+//                        lineWidth: 1.0
+//                    )
                 
                 // Scaled central toggle Icon/Menu
                 Image("Icon/Menu")
@@ -158,6 +156,8 @@ struct RadialMenuView: View {
             .scaleEffect(model.isCharging ? 1 + CGFloat(model.chargeProgress) * 0.08 : 1)
             .animation(.spring(RadialMenuConfig.hoverSpring), value: model.chargeProgress)
         }
+        .contentShape(Circle())
+        .gesture(drag(ringCenter: center))
         .position(center)
     }
 

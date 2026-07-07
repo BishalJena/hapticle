@@ -45,7 +45,7 @@ struct SatelliteNode: View {
             Image(assetName)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .frame(width: 24, height: 24)
+                .frame(width: 36, height: 36)
         }
         .frame(width: RadialMenuConfig.satelliteDiameter,
                height: RadialMenuConfig.satelliteDiameter)
