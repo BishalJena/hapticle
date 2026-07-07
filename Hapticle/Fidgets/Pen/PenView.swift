@@ -74,7 +74,7 @@ struct PenView: View {
     var body: some View {
 
         ZStack {
-            Color.primaryWhite
+            Color.fidgetPrimary
                 .ignoresSafeArea()
 
             // MARK: - Clicky part (button)
@@ -86,12 +86,12 @@ struct PenView: View {
                 Image("PenClick")
                     .innerShadowShift(
                         mask: Image("PenClick"),
-                        color: Color.redHighlight,
+                        color: Color.accentHighlight,
                         blur: 7, x: -20, y: -2
                     )
                     .innerShadowShift(
                         mask: Image("PenClick"),
-                        color: Color.redShadow,
+                        color: Color.accentShadow,
                         blur: 11, x: 20, y: 5
                     )
                     .scaledToFit()
@@ -113,11 +113,12 @@ struct PenView: View {
             // shadow to suggest a subtle concave surface.
             VStack {
                 Image("PenBody")
+                    .colorMultiply(Color.fidgetPrimary)
                     .shadow(color: Color.white, radius: 6, x: -7, y: -6)
-                    .shadow(color: .whiteShadow, radius: 6, x: 7, y: 6)
+                    .shadow(color: .shadow, radius: 6, x: 7, y: 6)
                     .innerShadowShift(
                         mask: Image("PenBody"),
-                        color: Color.primaryWhite,
+                        color: Color.fidgetPrimary,
                         blur: 13.85,
                         x: -21, y: -4
                     )
@@ -127,17 +128,19 @@ struct PenView: View {
                 Spacer()
             }
 
+
             // MARK: - Crown
             // Sits above and overlapping the clicky part in Z-order (drawn
             // after it in the ZStack), so as the button presses down it
             // slides partially behind the crown's fixed silhouette.
             VStack {
                 Image("PenCrown")
-                    .shadow(color: Color.whiteShadow, radius: 3, x: 3, y: 3)
+                    .colorMultiply(Color.fidgetPrimary)
+                    .shadow(color: Color.shadow, radius: 3, x: 3, y: 3)
                     .shadow(color: .white, radius: 3, x: -3, y: -3)
                     .innerShadowShift(
                         mask: Image("PenCrown"),
-                        color: Color.primaryWhite,
+                        color: Color.fidgetPrimary,
                         blur: 4.9,
                         x: -13, y: 0
                     )
@@ -153,7 +156,15 @@ struct PenView: View {
             // shadows in code).
             VStack {
                 Image("PenClip")
-                    .resizable()
+                    .colorMultiply(Color.fidgetPrimary)
+                    .shadow(color: Color.white, radius: 3, x: -4, y: -3)
+                    .shadow(color: .shadow, radius: 3, x: 4, y: 3)
+                    .innerShadowShift(
+                        mask: Image("PenClip"),
+                        color: Color.fidgetPrimary,
+                        blur: 4,
+                        x: -7, y: -2
+                    )
                     .scaledToFit()
                     .frame(width: 40.37, height: 337.8)
                     .padding(.top, 300)
@@ -164,13 +175,15 @@ struct PenView: View {
             // MARK: - Wordmark
             VStack {
                 Image("HapticleText")
+                    .colorMultiply(Color.fidgetPrimary)
                     .shadow(color: Color.white, radius: 1, x: -1, y: -1)
-                    .shadow(color: .whiteShadow, radius: 1, x: 1, y: 1)
+                    .shadow(color: .shadow, radius: 1, x: 1, y: 1)
                     .scaledToFit()
                     .padding(.top, 350)
                     .padding(.leading, 25)
                 Spacer()
             }
+
         }
         // Expands the hit-testable area to the full screen (rather than
         // just the visible pixels of child views), so a tap anywhere
@@ -185,6 +198,19 @@ struct PenView: View {
     }
 }
 
-#Preview {
-    PenView()
+struct PenView_Previews: PreviewProvider {
+    static var previews: some View {
+        Group {
+            // Light Mode Preview
+            PenView()
+                .preferredColorScheme(.light)
+                .previewDisplayName("Light Mode")
+            
+            // Dark Mode Preview
+            PenView()
+                .preferredColorScheme(.dark)
+                .previewDisplayName("Dark Mode")
+        }
+    }
 }
+

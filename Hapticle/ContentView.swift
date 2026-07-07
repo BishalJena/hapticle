@@ -9,8 +9,19 @@ import SwiftUI
 
 struct ContentView: View {
     var body: some View {
+        
+        TabView {
+            DialView()
+                .tabItem {
+                    Label("Dial", systemImage: "dial.low")
+                }
+            
+            PenView()
+                .tabItem {
+                    Label("Pen", systemImage: "applepencil.gen1")
+                }
+        }
         // Launches the standalone radial fidget selector demo.
-        DialView()
     }
 }
 
