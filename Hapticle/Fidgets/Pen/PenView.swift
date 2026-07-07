@@ -70,13 +70,20 @@ extension View {
 /// 5. `HapticleText` — the wordmark text
 struct PenView: View {
     @StateObject private var model = PenModel()
-
+    @Environment(\.colorScheme) private var colorScheme
+    
+//    // Opacity multipliers — only reduced in dark mode; full strength in light mode.
+//    private var highlightOpacity: Double { colorScheme == .dark ? 0.25 : 1.0 }
+//    private var shadowOpacity: Double { colorScheme == .dark ? 0.75 : 1.0 }
+//    private var innerShadowOpacity: Double { colorScheme == .dark ? 0.5 : 1.0 }
+    
+    
     var body: some View {
-
+        
         ZStack {
             Color.fidgetPrimary
                 .ignoresSafeArea()
-
+            
             // MARK: - Clicky part (button)
             // Animates its Y-offset based on `model.currentOffset`, using
             // a fast ease-in while being pressed and a slower ease-out on
@@ -84,60 +91,66 @@ struct PenView: View {
             // release settles more naturally.
             VStack {
                 Image("PenClick")
+                    .renderingMode(.template)
+                    .foregroundColor(Color.accent)
                     .innerShadowShift(
                         mask: Image("PenClick"),
                         color: Color.accentHighlight,
-                        blur: 7, x: -20, y: -2
+                        blur: 4.9, x: -10, y: -8
                     )
                     .innerShadowShift(
                         mask: Image("PenClick"),
                         color: Color.accentShadow,
-                        blur: 11, x: 20, y: 5
+                        blur: 10, x: 25, y: 3
                     )
                     .scaledToFit()
                     .frame(width: 200, height: 200)
-                    .padding(.top, 160)
+                    .padding(.top, 165)
                     .offset(y: model.currentOffset)
                     .animation(
                         model.buttonState == .beingClicked
-                            ? .easeIn(duration: 0.08)
-                            : .easeOut(duration: 0.25),
+                        ? .easeIn(duration: 0.08)
+                        : .easeOut(duration: 0.25),
                         value: model.buttonState
                     )
                 Spacer()
             }
-
+            
             // MARK: - Pen body
             // Static neumorphic shell: standard drop-shadow pair (light
             // top-left highlight, dark bottom-right shadow) plus an inner
             // shadow to suggest a subtle concave surface.
             VStack {
                 Image("PenBody")
-                    .colorMultiply(Color.fidgetPrimary)
-                    .shadow(color: Color.white, radius: 6, x: -7, y: -6)
-                    .shadow(color: .shadow, radius: 6, x: 7, y: 6)
+//                    .colorMultiply(Color.fidgetPrimary)
+                    .renderingMode(.template)
+                    .foregroundColor(Color.fidgetPrimary)
+                    .shadow(color: Color.highlight, radius: 6, x: -7, y: -6)
+                    .shadow(color: Color.shadow, radius: 6, x: 7, y: 6)
                     .innerShadowShift(
                         mask: Image("PenBody"),
-                        color: Color.fidgetPrimary,
-                        blur: 13.85,
-                        x: -21, y: -4
+                        color: Color.shadow,
+                        blur: 20,
+                        x: 55, y: 0
                     )
                     .scaledToFit()
                     .frame(width: 200, height: 200)
                     .padding(.top, 450)
                 Spacer()
             }
-
-
+            
+            
             // MARK: - Crown
             // Sits above and overlapping the clicky part in Z-order (drawn
             // after it in the ZStack), so as the button presses down it
             // slides partially behind the crown's fixed silhouette.
             VStack {
                 Image("PenCrown")
-                    .colorMultiply(Color.fidgetPrimary)
+//                    .colorMultiply(Color.fidgetPrimary)
+                    .renderingMode(.template)
+                        .foregroundColor(Color.shadow)
                     .shadow(color: Color.shadow, radius: 3, x: 3, y: 3)
-                    .shadow(color: .white, radius: 3, x: -3, y: -3)
+                    .shadow(color: Color.highlight, radius: 3, x: -3, y: -3)
                     .innerShadowShift(
                         mask: Image("PenCrown"),
                         color: Color.fidgetPrimary,
@@ -146,44 +159,43 @@ struct PenView: View {
                     )
                     .scaledToFit()
                     .frame(width: 150, height: 150)
-                    .padding(.top, 210)
+                    .padding(.top, 215)
                 Spacer()
             }
-
+            
             // MARK: - Pen clip
             // Flat PNG asset (pre-flattened shadows baked into the image
             // itself, unlike the vector layers above which reconstruct
             // shadows in code).
             VStack {
                 Image("PenClip")
-                    .colorMultiply(Color.fidgetPrimary)
-                    .shadow(color: Color.white, radius: 3, x: -4, y: -3)
-                    .shadow(color: .shadow, radius: 3, x: 4, y: 3)
-                    .innerShadowShift(
-                        mask: Image("PenClip"),
-                        color: Color.fidgetPrimary,
-                        blur: 4,
-                        x: -7, y: -2
-                    )
+//                    .colorMultiply(Color.fidgetPrimary)
+                    .renderingMode(.template)
+                        .foregroundColor(Color.fidgetPrimary)
+                    .shadow(color: Color.highlight, radius: 3, x: -3, y: -3)
+                    .shadow(color: Color.shadow, radius: 3, x: 3, y: 3)
+
                     .scaledToFit()
                     .frame(width: 40.37, height: 337.8)
                     .padding(.top, 300)
                     .padding(.leading, 25)
                 Spacer()
             }
-
+            
             // MARK: - Wordmark
             VStack {
                 Image("HapticleText")
-                    .colorMultiply(Color.fidgetPrimary)
-                    .shadow(color: Color.white, radius: 1, x: -1, y: -1)
-                    .shadow(color: .shadow, radius: 1, x: 1, y: 1)
+//                    .colorMultiply(Color.fidgetPrimary)
+                    .renderingMode(.template)
+                        .foregroundColor(Color.fidgetPrimary)
+                    .shadow(color: Color.highlight, radius: 1, x: -1, y: -1)
+                    .shadow(color: Color.shadow, radius: 1, x: 1, y: 1)
                     .scaledToFit()
                     .padding(.top, 350)
                     .padding(.leading, 25)
                 Spacer()
             }
-
+            
         }
         // Expands the hit-testable area to the full screen (rather than
         // just the visible pixels of child views), so a tap anywhere
