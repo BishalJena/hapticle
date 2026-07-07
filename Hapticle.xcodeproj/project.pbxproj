@@ -21,9 +21,7 @@
 		D87B805017F43B12F63DC6F3 /* BlobModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A01EA80E37C0A00F5EF3BD97 /* BlobModel.swift */; };
 		6CACE97F76577FDA9EE5F3DC /* SoundManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59B30D248CFACF7B9F83D36F /* SoundManager.swift */; };
 		4D171F1B531F81D0AA1FD3DD /* HapticsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 496E5B0988276130049DB91A /* HapticsManager.swift */; };
-		04469F0A40ABEF653578901D /* RadialMenuDemoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6C7421BE5A37D61B6975066 /* RadialMenuDemoView.swift */; };
 		6F6FEC393468D3452561AE2E /* RadialMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31C443A22B6AF5FBE2DC6D71 /* RadialMenuView.swift */; };
-		1BB17AE1BA1FF577DE8FC24E /* NeumorphicStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3C34453B03518F81CD88508 /* NeumorphicStyle.swift */; };
 		12D5C50D2622A5256F6F622E /* RadialMenuModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3980FD942558D0AAE09226D0 /* RadialMenuModel.swift */; };
 		7ECAD293F77E1396445E4BA1 /* SatelliteNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C66484677CA350E2E2F957E /* SatelliteNode.swift */; };
 		1CFEC7F3605656F740904989 /* RadialMenuConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DC34764F7AB23433DC2DB5A /* RadialMenuConfig.swift */; };
@@ -46,7 +44,6 @@
 			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
 			dstSubfolderSpec = 16;
 			files = (
-				003195F32FF5F39A00A7163E /* Hapticle Watch App.app in Embed Watch Content */,
 			);
 			name = "Embed Watch Content";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -344,9 +341,7 @@
 				D87B805017F43B12F63DC6F3 /* BlobModel.swift in Sources */,
 				6CACE97F76577FDA9EE5F3DC /* SoundManager.swift in Sources */,
 				4D171F1B531F81D0AA1FD3DD /* HapticsManager.swift in Sources */,
-				04469F0A40ABEF653578901D /* RadialMenuDemoView.swift in Sources */,
 				6F6FEC393468D3452561AE2E /* RadialMenuView.swift in Sources */,
-				1BB17AE1BA1FF577DE8FC24E /* NeumorphicStyle.swift in Sources */,
 				12D5C50D2622A5256F6F622E /* RadialMenuModel.swift in Sources */,
 				7ECAD293F77E1396445E4BA1 /* SatelliteNode.swift in Sources */,
 				1CFEC7F3605656F740904989 /* RadialMenuConfig.swift in Sources */,

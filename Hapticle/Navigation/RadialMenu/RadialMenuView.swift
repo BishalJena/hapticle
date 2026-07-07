@@ -65,7 +65,7 @@ struct RadialMenuView: View {
         let committing = model.committingID != nil
 
         return SatelliteNode(
-            label: id.label,
+            assetName: id.assetName,
             isHovered: model.hoveredID == id,
             recede: model.hoveredID != nil && model.hoveredID != id
         )
@@ -115,29 +115,48 @@ struct RadialMenuView: View {
 
     private func ringButton(at center: CGPoint) -> some View {
         ZStack {
-            // Resting/pressed neumorphic ring with an inner recessed detail
-            // (echoes the idle ring glyph in the reference).
-            Circle()
-                .fill(Color.hpBase)
-                .frame(width: RadialMenuConfig.ringDiameter,
-                       height: RadialMenuConfig.ringDiameter)
-                .neumorphicCircle(isPressed: model.isCharging || model.isOpen)
-                .overlay(
-                    Circle()
-                        .stroke(Color.hpShadow.opacity(0.55), lineWidth: 2)
-                        .frame(width: RadialMenuConfig.ringDiameter * 0.42,
-                               height: RadialMenuConfig.ringDiameter * 0.42)
-                )
-                // Idle breathing — subtle, and skipped under Reduce Motion.
-                .scaleEffect(model.isResting && breathe && !reduceMotion
-                             ? RadialMenuConfig.breathScale : 1)
-                .animation(.easeInOut(duration: RadialMenuConfig.breathPeriod)
-                            .repeatForever(autoreverses: true),
-                           value: breathe)
-                // Charge feedback: the dot presses in (deboss above) and
-                // swells slightly while held. No colored progress ring.
-                .scaleEffect(model.isCharging ? 1 + CGFloat(model.chargeProgress) * 0.08 : 1)
-                .animation(.spring(RadialMenuConfig.hoverSpring), value: model.chargeProgress)
+            // Liquid Glass Toggle Button - exactly 46x46
+            ZStack {
+                // Glass Base
+                Circle()
+                    .fill(.thinMaterial)
+                    
+                // Inner Shadow (recessed peephole look)
+                Circle()
+                    .stroke(Color.black.opacity(0.18), lineWidth: 3)
+                    .blur(radius: 2)
+                    .offset(x: 1.5, y: 1.5)
+                    .mask(Circle())
+                
+                // Outer Bezel Stroke
+                Circle()
+                    .stroke(
+                        LinearGradient(
+                            colors: [.white.opacity(0.55), .clear, .black.opacity(0.15)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1.0
+                    )
+                
+                // Scaled central toggle Icon/Menu
+                Image("Icon/Menu")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 24, height: 24)
+            }
+            .frame(width: RadialMenuConfig.satelliteDiameter,
+                   height: RadialMenuConfig.satelliteDiameter)
+            // Idle breathing — subtle, and skipped under Reduce Motion.
+            .scaleEffect(model.isResting && breathe && !reduceMotion
+                         ? RadialMenuConfig.breathScale : 1)
+            .animation(.easeInOut(duration: RadialMenuConfig.breathPeriod)
+                        .repeatForever(autoreverses: true),
+                       value: breathe)
+            // Charge feedback: the dot presses in (deboss above) and
+            // swells slightly while held. No colored progress ring.
+            .scaleEffect(model.isCharging ? 1 + CGFloat(model.chargeProgress) * 0.08 : 1)
+            .animation(.spring(RadialMenuConfig.hoverSpring), value: model.chargeProgress)
         }
         .position(center)
     }
