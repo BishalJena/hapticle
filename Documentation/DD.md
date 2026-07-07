@@ -1,0 +1,198 @@
+# Hapticle - Design Document (DD)
+
+Hapticle is a neumorphic fidget application built for **Challenge 4 of the Apple Developer Academy (ADA)**. The core objective of the challenge is to explore, learn, and implement native iOS frameworks. Hapticle specifically focuses on **CoreHaptics** (vibrations and haptic feedback) and **AudioToolbox** (audio feedback and sound synthesis) to create a highly tactile, playful, and responsive fidget experience.
+
+---
+
+## 1. Visual & Interaction Style (Neumorphism)
+
+Hapticle implements a modern **Neumorphic (soft 3D)** user interface. The UI elements appear to be extruded from or recessed into the background, simulating real-world plastic, rubber, and metal surfaces, utilizing soft shadows and highlights instead of flat elements or mixed-media textures.
+
+### Color Palette Specification
+
+| Color Name | Preview | HEX | RGBA | HSL |
+| :--- | :---: | :--- | :--- | :--- |
+| **shadowDark** | ![#000000](Colors/shadow_dark.svg) | `#000000` | `rgba(0, 0, 0, 1.00)` | `hsl(0, 0%, 0%)` |
+| **fidgetPrimaryDark** | ![#454545](Colors/fidget_primary_dark.svg) | `#454545` | `rgba(69, 69, 69, 1.00)` | `hsl(0, 0%, 27%)` |
+| **highlightDark** | ![#D9D9D9](Colors/highlight_dark.svg) | `#D9D9D9` | `rgba(217, 217, 217, 1.00)` | `hsl(0, 0%, 85%)` |
+| **highlightLight** | ![#FFFFFF](Colors/highlight_light.svg) | `#FFFFFF` | `rgba(255, 255, 255, 1.00)` | `hsl(0, 0%, 100%)` |
+| **accentShadow** | ![#892424](Colors/accent_shadow.svg) | `#892424` | `rgba(137, 36, 36, 1.00)` | `hsl(0, 58%, 34%)` |
+| **accent** | ![#C73535](Colors/accent.svg) | `#C73535` | `rgba(199, 53, 53, 1.00)` | `hsl(0, 58%, 49%)` |
+| **accentHighlight** | ![#D86E6E](Colors/accent_highlight.svg) | `#D86E6E` | `rgba(216, 110, 110, 1.00)` | `hsl(0, 58%, 64%)` |
+| **fidgetPrimaryLight** | ![#E0E5EC](Colors/fidget_primary_light.svg) | `#E0E5EC` | `rgba(224, 229, 236, 1.00)` | `hsl(215, 24%, 90%)` |
+| **shadowLight** | ![#A3B1C6](Colors/shadow_light.svg) | `#A3B1C6` | `rgba(163, 177, 198, 1.00)` | `hsl(216, 23%, 71%)` |
+
+### Neumorphic Theme Tokens
+
+| Neumorphic Role | Light Theme (Light Mode) | Dark Theme (Dark Mode) | Accent Theme (Active/Accent) | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| **Base / Background** | ![#E0E5EC](Colors/fidget_primary_light.svg) `fidgetPrimary` (`#E0E5EC`) | ![#454545](Colors/fidget_primary_dark.svg) `fidgetPrimary` (`#454545`) | ![#C73535](Colors/accent.svg) `accent` (`#C73535`) | Base surface canvas; all neumorphic extrusions blend into this. |
+| **Highlight (Light)** | ![#FFFFFF](Colors/highlight_light.svg) `highlight` (`#FFFFFF`) | ![#D9D9D9](Colors/highlight_dark.svg) `highlight` (`#D9D9D9`) | ![#D86E6E](Colors/accent_highlight.svg) `accentHighlight` (`#D86E6E`) | Simulates reflected light on the top-left edges of components. |
+| **Shadow (Dark)** | ![#A3B1C6](Colors/shadow_light.svg) `shadow` (`#A3B1C6`) | ![#000000](Colors/shadow_dark.svg) `shadow` (`#000000`) | ![#892424](Colors/accent_shadow.svg) `accentShadow` (`#892424`) | Simulates cast shadow on the bottom-right edges of components. |
+
+
+### Typography
+
+To support minimal interface guidance (specifically for onboarding navigation instructions), the design incorporates a clean, system-aligned typographic style:
+*   **Font Family:** `SF Pro Rounded`
+*   **Font Size:** `17 pt`
+*   **Weight:** `Medium`
+
+### Spacing
+
+We adhere strictly to standard **Apple Human Interface Guidelines (HIG)** for layout spacing, gutter margins, and interactive hit targets:
+*   **Screen Margins / Gutters:** `16pt` to `20pt` padding on side edges.
+*   **Onboarding Guidance:** To assist first-time users with navigation, the interface displays a minimal text instruction: *"Swipe with two fingers to change fidgets."*
+
+### Navigation & Selector Menu Deliberations
+To resolve concerns that users may forget the custom **2-finger swipe gesture** after the initial onboarding text disappears, we are actively deliberating on an alternative or supplementary interactive selector menu:
+
+1.  **Gesture Cycling (Current Baseline):** 
+    - The user swipes horizontally with two fingers anywhere on the screen to cycle sequentially (previous/next) through the fidgets.
+2.  **Hold-to-Radial Menu (Proposed Alternative):**
+    - The user presses and holds a central menu button.
+    - A **circular progress bar** fills up around the button as they hold it.
+    - Once the progress bar is filled, a radial menu pops up displaying **4 circular selection targets** representing the other fidgets.
+    - **Radial Layout Geometry:** The circles are arranged along the upper/top side of the semicircle above the menu button, spaced equally in a $100\text{pt}$ radius. Standard mathematical angles place these at: Left ($180^\circ$), Top-Left ($120^\circ$), Top-Right ($60^\circ$), and Right ($0^\circ$). (In SwiftUI rotation coordinates where positive is clockwise: Left at $180^\circ$, Top-Left at $240^\circ$, Top-Right at $300^\circ$, and Right at $360^\circ$/$0^\circ$).
+    - **Selection Interaction:** Without lifting their finger, the user drags/swipes toward the desired circular selection. Hovering over a circle and releasing the finger completes the choice and switches the active fidget.
+    - **Cancellation Interaction:** If the user releases their finger without hovering over any of the four circular selections, the menu closes with no change.
+
+> [!NOTE]
+> **Figma Design Constraint:** The source Figma components do not have defined interactive states; they are static designs. Dynamic states (such as debossed recess overlays, elastic stretch coefficients, or the hold-to-radial progress animation) must be generated entirely in SwiftUI.
+
+---
+
+## 2. Fidget Interactivity & Design Specifications
+
+### 2.1 The Pen (Retractable Ballpoint Fidget)
+
+The Pen fidget simulates the tactile pleasure of clicking a real retractable ballpoint pen. It uses neumorphically rendered vector shapes (using extrusion and recess shadows) and depth-based movement animations combined with custom haptic transients.
+
+*   **Visual Representation:** Rendered programmatically using Neumorphic styling:
+    1.  **Outer Barrel:** An extruded vertical capsule blending into the background.
+    2.  **Inner Well:** A recessed circular area at the top of the barrel representing the button track.
+    3.  **Interactive Button:** A small circular button that sits inside the well, appearing extruded in its unclicked/extended state and recessed in its clicked/depressed state.
+*   **Animations:**
+    *   Smooth depth transitions (shifting shadow offsets and blur radii) based on interaction state.
+    *   Subtle vertical offset displacement (spring-back motion) on release.
+*   **Interaction Model:**
+    *   **Physical Buttons:** Can be interacted with via the iPhone's physical Volume buttons.
+    *   **On-Screen Interaction:** Playable by tapping/pressing the pen sprite on-screen.
+    *   **Latch Logic:** Long presses do *not* trigger the latch. The latch only engages when a long press is released.
+    *   **Click Sensations:**
+        *   While pressing down (screen/button down): Only *one* click is felt.
+        *   Upon letting go (screen/button up): *Another* click is felt.
+        *   Quick Taps: Two fast clicks are felt in rapid succession.
+
+#### Mid-Fi Design Reference (Pen)
+| Light Mode | Dark Mode |
+| :---: | :---: |
+| ![Pen Light Mode](MidFi/Pen_LightMode.svg) | ![Pen Dark Mode](MidFi/Pen_DarkMode.svg) |
+
+---
+
+### 2.2 The Dial (Rotary Inertial Fidget)
+
+The Dial simulates a heavy, physical rotary dial (like a safe dial or volume knob) featuring moment of inertia, angular momentum, and physical detents.
+
+*   **Interaction Model:**
+    *   Rotated via drag gesture on-screen.
+    *   **Leverage / Fulcrum Physics:** Rotational torque varies based on the distance of the finger from the center (fulcrum). If the finger is in the center, leverage is zero and the dial cannot be spun. The further out the finger is, the higher the leverage and the easier it is to spin.
+    *   **Momentum:** Flipping the finger adds angular momentum. The dial continues spinning and slows down gradually due to simulated friction.
+*   **Haptic Design:**
+    *   Vibrations are triggered as the dial crosses angular "detents" (ticks).
+    *   Detent frequency increases with rotation speed.
+*   **Audio Design:**
+    *   Sound pitch and volume are dynamically modulated based on the RPM (Revolutions Per Minute).
+    *   Faster RPM results in a higher pitch, mimicking a mechanical whirr or clicking ratchet.
+
+#### Mid-Fi Design Reference (Dial)
+| Light Mode | Dark Mode |
+| :---: | :---: |
+| ![Dial Light Mode](MidFi/Dial_LightMode.svg) | ![Dial Dark Mode](MidFi/Dial_DarkMode.svg) |
+
+---
+
+### 2.3 The Ticket (Tear-Off Arcade Fidget)
+
+The Ticket simulates the satisfying feeling of tearing a perforated cardboard arcade ticket.
+
+*   **Visual Representation:**
+    *   A neumorphic card that appears extruded from the background canvas.
+    *   Perforation lines represented by a series of small, evenly-spaced recessed circular slots.
+    *   Tear-off animation separating the bottom ticket from the top sheet using physical distance offset.
+*   **Interaction Model:**
+    *   The user drags the ticket downward to rip it along a perforated line.
+    *   As the ticket is pulled, the tension increases.
+    *   Once a ticket is completely torn off, the ticket sheet shifts down, generating a new ticket.
+*   **Haptic Design:**
+    *   Simulates the sequential tearing of paper fibers ("dud dud dud dud dud dud").
+    *   Provides a strong snap haptic at the moment of final separation.
+*   **Audio Design:**
+    *   A ripping sound effect synthesized dynamically or pitched according to the speed of the tear.
+
+#### Mid-Fi Design Reference (Ticket)
+| Light Mode | Dark Mode |
+| :---: | :---: |
+| ![Ticket Light Mode](MidFi/Ticket_LightMode.svg) | ![Ticket Dark Mode](MidFi/Ticket_DarkMode.svg) |
+
+---
+
+### 2.4 The Magnet (MagSafe & Field Physics Fidget)
+
+The Magnet simulates playing with magnets, mimicking the MagSafe ring on the back of an iPhone. It features a ring of fixed magnets and a free-floating magnet that follows the finger.
+
+*   **Visual Representation:**
+    *   A neumorphically styled circular puck (free magnet) and a series of recessed/extruded circular nodes arranged in a ring (fixed poles) to simulate polarity.
+    *   Visual field lines or ripple effects showing magnetic pull.
+*   **Interaction Model:**
+    *   The user drags a free magnet near a fixed circular ring of magnets.
+    *   **Elastic Pull:** The magnet doesn't stick perfectly to the finger; it acts as if attached by an elastic spring, lagging behind to convey mass and "force".
+    *   **Snap-to-Ring:** When close to the ring, the magnet snaps to the nearest magnetic node.
+    *   **Orbiting & Push-Pull:**
+        *   If pulled with enough velocity/force, it breaks free of the snap.
+        *   If moved with low force, it orbits the ring.
+        *   The ring contains alternating poles (N/S), creating alternating push and pull forces (Coulomb's Law) as the magnet moves around it.
+*   **Haptic Design:**
+    *   Continuous hum haptic that scales with magnetic force/tension.
+    *   Transient snaps when locking onto a magnetic node.
+    *   Repulsive pushback felt via high-frequency micro-haptics when passing repulsive poles.
+
+#### Mid-Fi Design Reference (Magnet)
+| Light Mode | Dark Mode |
+| :---: | :---: |
+| ![Magnet Light Mode](MidFi/Magnet_LightMode.svg) | ![Magnet Dark Mode](MidFi/Magnet_DarkMode.svg) |
+
+---
+
+### 2.5 The Blob (Elastic Viscous Fidget)
+
+The Blob is a squishy, jelly-like creature centered on a grid background.
+
+*   **Visual Representation:**
+    *   A deformable vector blob rendered with soft neumorphic highlights and shadows to give it a 3D organic quality.
+    *   Grid background that warps slightly to show gravitational/viscous pull.
+*   **Interaction Model:**
+    *   The user drags any part of the blob to stretch it.
+    *   **Mitosis Mechanism:** If stretched past a critical threshold length, the blob undergoes mitosis and splits into two independent blobs.
+    *   The two separate blobs can eventually merge back if they touch.
+*   **Haptic Design:**
+    *   Squishy, rubbery, low-frequency rumble that increases in amplitude as the blob stretches.
+    *   A clean pop/suction transient when the blob splits or merges.
+*   **Audio Design:**
+    *   Squelching audio effects pitch-shifted during stretching.
+    *   A satisfying "pop" sound effect upon division.
+
+#### Mid-Fi Design Reference (Blob)
+| Light Mode | Dark Mode |
+| :---: | :---: |
+| ![Blob Light Mode](MidFi/Blob_LightMode.svg) | ![Blob Dark Mode](MidFi/Blob_DarkMode.svg) |
+
+---
+
+## 3. Developer Tooling & Parameter Tuning (Debug Control Panel)
+
+To speed up the visual and physical tuning of interactive values, we introduce a dedicated developer overlay in the application interface:
+
+*   **Interactive Parameter Toggles & Sliders:** Floating panel providing sliders for adjusting physics variables (spring stiffness, friction decay, torque leverage, and stretch thresholds) and haptic/audio settings (transient intensity, sharpness, and audio base pitch) in real time.
+*   **Rapid Tuning Flow:** Rather than forcing developers to manually transcribe tuned parameters from the device screen to their codebase—which introduces typos and slow compile cycles—the panel includes a **"Copy Settings as Text"** button. This serializes all adjusted parameters into a structured text format (e.g., Swift Dictionary or JSON) and copies it directly to the system clipboard for immediate pasting into model source configurations.

@@ -9,7 +9,8 @@ import SwiftUI
 
 struct ContentView: View {
     var body: some View {
-        PenView()
+        // Launches the standalone radial fidget selector demo.
+        TicketView()
     }
 }
 
