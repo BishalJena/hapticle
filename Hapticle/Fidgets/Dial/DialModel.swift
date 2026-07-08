@@ -27,6 +27,7 @@ class DialModel: ObservableObject {
     
     private var startingFingerAngle: Double = 0.0
     private var startingRotationAngle: Double = 0.0
+    private var wasCoupled: Bool = false
     
     private var displayLink: CADisplayLink?
     private var lastFrameTimestamp: CFTimeInterval = 0
@@ -47,9 +48,16 @@ class DialModel: ObservableObject {
         let ry = point.y - dialCenter.y
         touchRadius = Double(hypot(rx, ry))
         
-        startingFingerAngle = calculateAngle(from: point, relativeTo: dialCenter)
-        startingRotationAngle = rotationAngle
-        fingerAngle = startingFingerAngle
+        let currentAngle = calculateAngle(from: point, relativeTo: dialCenter)
+        let rInner = 40.0
+        if touchRadius >= rInner {
+            startingFingerAngle = currentAngle
+            startingRotationAngle = rotationAngle
+            fingerAngle = startingFingerAngle
+            wasCoupled = true
+        } else {
+            wasCoupled = false
+        }
         
         // Start simulation loop if not already running
         startDisplayLink()
@@ -61,17 +69,31 @@ class DialModel: ObservableObject {
         touchRadius = Double(hypot(rx, ry))
         
         let currentFinger = calculateAngle(from: point, relativeTo: dialCenter)
-        // Normalize rotation angle difference to (-π, π) range to handle wrapping
-        var diff = currentFinger - startingFingerAngle
-        while diff > .pi { diff -= 2.0 * .pi }
-        while diff < -.pi { diff += 2.0 * .pi }
+        let rInner = 40.0
         
-        fingerAngle = startingRotationAngle + diff
+        if touchRadius >= rInner {
+            if !wasCoupled {
+                // Re-anchor when exiting the deadzone to prevent snapping
+                startingFingerAngle = currentFinger
+                startingRotationAngle = rotationAngle
+                fingerAngle = startingFingerAngle
+                wasCoupled = true
+            } else {
+                var diff = currentFinger - startingFingerAngle
+                while diff > .pi { diff -= 2.0 * .pi }
+                while diff < -.pi { diff += 2.0 * .pi }
+                
+                fingerAngle = startingRotationAngle + diff
+            }
+        } else {
+            wasCoupled = false
+        }
     }
     
     func handleDragEnded(velocity: CGSize, touchPoint: CGPoint, dialCenter: CGPoint) {
         isDragging = false
         isPressed = false
+        wasCoupled = false
         
         let rx = touchPoint.x - dialCenter.x
         let ry = touchPoint.y - dialCenter.y
@@ -84,9 +106,9 @@ class DialModel: ObservableObject {
         // Angular velocity: ω = (rx * vy - ry * vx) / r^2
         var computedAngularVelocity = (Double(rx) * vy - Double(ry) * vx) / Double(r2)
         
-        // Scale down the initial velocity if released inside the gradiented deadzone
-        let rInner = 35.0
-        let rOuter = 75.0
+        // Scale down the initial velocity if released inside or near the deadzone
+        let rInner = 40.0
+        let rOuter = 80.0
         var velocityMultiplier = 1.0
         if r < rInner {
             velocityMultiplier = 0.0
@@ -141,25 +163,21 @@ class DialModel: ObservableObject {
         
         // 1. Calculate Torques (Newton's 2nd Law for Rotation: τ = I * α)
         
-        // Torsion coupling spring torque (pulls dial toward finger angle during drag)
+        let rInner = 40.0
         var touchTorque = 0.0
+        var activeDamping = damping
+        
         if isDragging {
-            var diff = fingerAngle - rotationAngle
-            // Unwrapping/normalizing rotation angle difference to (-π, π) range
-            while diff > .pi { diff -= 2.0 * .pi }
-            while diff < -.pi { diff += 2.0 * .pi }
-            
-            // Apply gradiented deadzone scaling near the center
-            let rInner = 35.0
-            let rOuter = 75.0
-            var torqueMultiplier = 1.0
-            if touchRadius < rInner {
-                torqueMultiplier = 0.0
-            } else if touchRadius < rOuter {
-                torqueMultiplier = (touchRadius - rInner) / (rOuter - rInner)
+            if touchRadius >= rInner {
+                var diff = fingerAngle - rotationAngle
+                while diff > .pi { diff -= 2.0 * .pi }
+                while diff < -.pi { diff += 2.0 * .pi }
+                touchTorque = springConstant * diff
+            } else {
+                // In Deadzone: Temporarily act as finger-up (no spring torque)
+                // and apply heavy damping (braking) to rotation
+                activeDamping = damping * 4.0
             }
-            
-            touchTorque = springConstant * diff * torqueMultiplier
         }
         
         // Detent restoring torque (sinusoidal potential energy wells pulling to ticks)
@@ -167,7 +185,7 @@ class DialModel: ObservableObject {
         let detentTorque = -detentTorqueStrength * sin(n * rotationAngle)
         
         // Friction damping torque (opposes velocity)
-        let frictionTorque = -damping * angularVelocity
+        let frictionTorque = -activeDamping * angularVelocity
         
         // Net torque
         let netTorque = touchTorque + detentTorque + frictionTorque
