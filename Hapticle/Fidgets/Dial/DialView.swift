@@ -43,7 +43,6 @@ struct DialView: View {
                         // 24 Ticks (Rectangle 7) rotated in 15-degree increments at radius 149
                         ForEach(0..<24) { i in
                             let angle = Double(i) * 15.0
-                            let isKeyTick = (i == 9) // 135 degrees (Frame 10 in CSS is larger)
                             
                             Rectangle()
                                 .fill(LinearGradient(
@@ -52,10 +51,10 @@ struct DialView: View {
                                     startPoint: .top,
                                     endPoint: .bottom
                                 ))
-                                .frame(width: isKeyTick ? 4 : 3, height: isKeyTick ? 18 : 12)
+                                .frame(width: 3, height: 12)
                                 .cornerRadius(2)
                                 // Place ticks on the border of the 310px rim
-                                .offset(y: -149 + (isKeyTick ? -3 : 0))
+                                .offset(y: -149)
                                 .rotationEffect(.degrees(angle))
                         }
                         
