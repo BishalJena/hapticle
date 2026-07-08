@@ -49,13 +49,10 @@ struct ContentView: View {
             )
             
             // 2. Global Bottom-Anchored Radial Selector
-            if isMenuVisible {
-                RadialMenuView { selectedFidget in
-                    withAnimation(.spring(duration: 0.32, bounce: 0.12)) {
-                        activeFidget = selectedFidget
-                    }
+            RadialMenuView(isMenuVisible: $isMenuVisible) { selectedFidget in
+                withAnimation(.spring(duration: 0.32, bounce: 0.12)) {
+                    activeFidget = selectedFidget
                 }
-                .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
     }
