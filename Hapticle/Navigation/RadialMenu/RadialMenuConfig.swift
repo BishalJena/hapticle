@@ -130,3 +130,10 @@ struct SpringParams {
     let duration: Double
     let bounce: Double
 }
+
+extension Animation {
+    /// Convert our `SpringParams` into a SwiftUI spring (duration + bounce).
+    static func spring(_ p: SpringParams) -> Animation {
+        .spring(duration: p.duration, bounce: p.bounce)
+    }
+}

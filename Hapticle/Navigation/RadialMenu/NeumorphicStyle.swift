@@ -87,10 +87,3 @@ extension View {
         modifier(NeumorphicCircle(isPressed: isPressed, depth: depth, accent: accent))
     }
 }
-
-extension Animation {
-    /// Convert our `SpringParams` into a SwiftUI spring (duration + bounce).
-    static func spring(_ p: SpringParams) -> Animation {
-        .spring(duration: p.duration, bounce: p.bounce)
-    }
-}
