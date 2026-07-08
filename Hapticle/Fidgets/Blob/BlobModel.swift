@@ -6,18 +6,17 @@ import Combine
 /// A single blob instance — a soft body that lives on the canvas.
 ///
 /// Its shape is a ring of `ringCount` particles stored as **offsets from
-/// `center`** (so the existing center-based recoil/mitosis/merge logic moves
-/// the whole blob for free). Each particle is a Verlet point: we keep its
-/// current offset plus its previous offset, and velocity is implicit
-/// (`offset - offsetPrev`). That implicit velocity is what gives the jelly
+/// `center`** (so center-based motion moves the whole blob for free). Each
+/// particle is a Verlet point: current offset + previous offset, with implicit
+/// velocity (`offset - offsetPrev`). That implicit velocity gives the jelly
 /// real inertia — it lags, overshoots, and settles instead of snapping.
 struct BlobEntity: Identifiable {
     static let ringCount = 32
 
     var id: UUID = UUID()
     var center: CGPoint
-    var radius: CGFloat = 33          // 66pt diameter — fits one grid tile
-    var velocityX: CGFloat = 0        // post-mitosis recoil velocity (pt/s)
+    var radius: CGFloat = 33
+    var velocityX: CGFloat = 0        // free-motion / recoil velocity (pt/s)
     var velocityY: CGFloat = 0
 
     /// Perimeter particle offsets from `center` (current + previous frame).
@@ -32,6 +31,9 @@ struct BlobEntity: Identifiable {
         self.ringPrev = rest
     }
 
+    /// Mass ∝ area. Used so big blobs feel heavy and small ones feel snappy.
+    var mass: CGFloat { .pi * radius * radius }
+
     /// The undeformed circular ring — also the target every particle springs
     /// back toward, giving the blob "memory" of being round.
     static func restRing(radius: CGFloat, count: Int) -> [CGVector] {
@@ -45,103 +47,126 @@ struct BlobEntity: Identifiable {
     var ringPoints: [CGPoint] {
         ring.map { CGPoint(x: center.x + $0.dx, y: center.y + $0.dy) }
     }
+
+    /// Rescale the ring (keeping its current deformation) to a new radius.
+    mutating func rescaleRing(to newRadius: CGFloat) {
+        guard radius > 0 else { return }
+        let k = newRadius / radius
+        for i in ring.indices {
+            ring[i] = CGVector(dx: ring[i].dx * k, dy: ring[i].dy * k)
+            ringPrev[i] = CGVector(dx: ringPrev[i].dx * k, dy: ringPrev[i].dy * k)
+        }
+        radius = newRadius
+    }
 }
 
 // MARK: - BlobModel
 
-/// Physics model for the Blob fidget.
+/// Physics + haptics model for the Blob fidget game.
 ///
-/// Two coupled simulations run on the same CADisplayLink:
-///   1. **Center dynamics** — post-mitosis recoil velocity + damping + merge
-///      detection (unchanged: drives where each blob *is*).
-///   2. **Soft-body dynamics** — per-blob Verlet ring with shape springs,
-///      neighbour smoothing, a finger-grab pull, and a whisper of idle noise
-///      (drives what each blob *looks like*).
-///
-/// Follows the same ObservableObject + CADisplayLink pattern as DialModel.
+/// The core interaction is an **elastic tether**: the grabbed blob's center
+/// springs toward the finger, stiffness scaled by 1/mass. Drag slowly and the
+/// blob follows (so you can push blobs together to merge); whip fast and the
+/// tether stretches thin until the blob **sheds a droplet** off its tail.
+/// Size is the master modulator of the whole haptic palette — big blobs feel
+/// deep/dull/heavy, droplets feel crisp/light/quick.
 class BlobModel: ObservableObject {
 
     // MARK: - Published State
 
     @Published var blobs: [BlobEntity] = []
-
-    /// True while a finger is actively stretching a blob.
     @Published var isDragging: Bool = false
-
-    /// The id of the blob currently being stretched.
     @Published var dragBlobID: UUID? = nil
-
-    /// Current finger position in view-coordinate space.
     @Published var fingerPosition: CGPoint = .zero
 
-    // MARK: - Tunable Parameters — Center Dynamics
+    // MARK: - Tunable Parameters — Size & Mass
 
-    /// Distance (pt) from blob center at which mitosis fires. TDD spec: T > 180pt.
-    @Published var mitosisThreshold: CGFloat = 180
+    /// Smallest a blob can get; it won't shed below this.
+    private let rMin: CGFloat = 16
+    /// Largest a blob can merge to.
+    private let rMax: CGFloat = 110
+    /// Starting blob radius — deliberately big so the first thing you do is break it.
+    private let startRadius: CGFloat = 78
+    /// Cap on blob count (bounds perf + the O(n²) merge scan).
+    private let maxCount: Int = 14
+    /// Reference radius for mass scaling (the "neutral weight" blob).
+    private let refRadius: CGFloat = 45
 
-    /// Speed (pt/s) of each child blob's post-split recoil.
-    @Published var recoilSpeed: CGFloat = 95
+    // MARK: - Tunable Parameters — Tether (grab-to-move)
 
-    /// Per-frame velocity decay multiplier (at 60 fps).
-    @Published var dampingFactor: CGFloat = 0.80
+    /// Spring constant pulling a grabbed blob's center toward the finger.
+    private let tetherStiffness: CGFloat = 55
+    /// Per-60fps velocity retention of the tether (viscous follow).
+    private let tetherDamping: CGFloat = 0.72
+    /// Free-motion (recoil/droplet) velocity decay per 60fps frame.
+    private let dampingFactor: CGFloat = 0.86
 
-    /// Centers within this distance (pt) will merge on next physics tick.
-    @Published var mergeDistance: CGFloat = 52
+    // MARK: - Tunable Parameters — Shedding
+
+    /// Recoil speed of a shed droplet (scaled up for smaller droplets).
+    private let baseFlingSpeed: CGFloat = 150
+    /// Minimum seconds between two sheds within one drag.
+    private let shedCooldownDuration: CFTimeInterval = 0.10
+
+    /// Tension (finger↔center lag, pt) needed to shed, scaled by size:
+    /// a big blob resists; a small one lets go easily.
+    private func shedThreshold(_ r: CGFloat) -> CGFloat { max(r * 1.9, 58) }
 
     // MARK: - Tunable Parameters — Soft Body
 
-    /// How hard each particle springs back toward its resting circle. Lower =
-    /// looser, wobblier jelly that takes longer to reform. (0…1 per iteration)
     private let shapeStiffness: CGFloat = 0.09
-
-    /// How strongly each particle is pulled toward the midpoint of its two
-    /// neighbours. This smooths kinks and lets a local pull propagate around
-    /// the ring as a travelling wave — the essence of the jelly look.
     private let smoothStiffness: CGFloat = 0.24
-
-    /// Verlet velocity retention. High = lots of inertia / many wobbles before
-    /// settling; low = stiff and dead. 0.90 gives a lively, quick-settling jelly.
     private let vertexDamping: CGFloat = 0.90
-
-    /// How eagerly the grabbed region chases the finger. < 1 so the surface
-    /// lags behind the fingertip — this is the "thick, sticky" viscous feel.
     private let grabStiffness: CGFloat = 0.5
-
-    /// Exponent on the finger-facing weight. Higher = the pull concentrates
-    /// nearer the fingertip (pointier nose); lower = broader, rounder stretch.
     private let grabFocus: CGFloat = 1.6
-
-    /// Constraint solver iterations per frame. 2 is plenty for a smooth blob.
     private let constraintIterations: Int = 2
-
-    /// Peak radial idle displacement (pt) fed in each frame as a gentle force.
-    /// Filtered through the spring/damper system so it reads as a living
-    /// breathing surface, never a raw mechanical sine.
     private let idleAmplitude: CGFloat = 0.22
+
+    // MARK: - Tunable Parameters — Haptics
+
+    /// Crackle micro-transient probability scaling (per frame at full stretch/speed).
+    private let crackleRate: CGFloat = 1.1
 
     // MARK: - Private
 
     private var displayLink: CADisplayLink?
     private var lastTimestamp: CFTimeInterval = 0
-    private var isActive: Bool = false          // true while the Blob view is on screen
+    private var isActive: Bool = false
+    private var canvasSize: CGSize = .zero
+
+    private var prevFinger: CGPoint = .zero      // for frame-based finger speed
+    private var fingerSpeed: CGFloat = 0
+    private var shedCooldownUntil: CFTimeInterval = 0
+    private var settleEnergy: CGFloat = 0         // decaying "boing" envelope after release
+
+    // MARK: - Size → Haptic Character
+
+    /// 0 for the smallest blob, 1 for the biggest — the "bigness" axis.
+    private func bigness(_ r: CGFloat) -> Double {
+        Double(min(max((r - rMin) / (rMax - rMin), 0), 1))
+    }
+    /// Crispness: small blobs feel sharp/high, big blobs feel dull/low.
+    private func sharpBias(_ r: CGFloat) -> Double {
+        0.7 - 0.55 * bigness(r)          // 0.7 (crisp) … 0.15 (dull)
+    }
 
     // MARK: - View Lifecycle
 
-    /// Call from the view's `onAppear`. Centers the first blob and starts the
-    /// simulation so the resting jelly breathes even before it's touched.
     func activate(in size: CGSize) {
         isActive = true
+        canvasSize = size
         if blobs.isEmpty {
-            blobs = [BlobEntity(center: CGPoint(x: size.width / 2, y: size.height / 2))]
+            blobs = [BlobEntity(center: CGPoint(x: size.width / 2, y: size.height / 2),
+                                radius: startRadius)]
         }
         startDisplayLink()
     }
 
-    /// Call from the view's `onDisappear` to stop burning CPU off-screen.
     func deactivate() {
         isActive = false
         isDragging = false
         dragBlobID = nil
+        settleEnergy = 0
         stopDisplayLink()
         HapticsManager.shared.stopContinuousFeedback()
         SoundManager.shared.stopOscillator()
@@ -150,126 +175,112 @@ class BlobModel: ObservableObject {
     // MARK: - Gesture Entry Points
 
     func handleDragStart(at location: CGPoint) {
-        // Only pick up a blob whose center is within ~2× radius of the touch.
         guard let blob = nearestBlob(to: location, maxDistance: 66) else { return }
         dragBlobID = blob.id
         fingerPosition = location
+        prevFinger = location
+        fingerSpeed = 0
         isDragging = true
+        settleEnergy = 0
         startDisplayLink()
 
-        // Begin a gentle continuous rumble at low intensity.
-        HapticsManager.shared.startContinuousFeedback(intensity: 0.08, sharpness: 0.2)
+        // Contact tick: soft, dull, size-aware "I've got it".
+        HapticsManager.shared.playClick(intensity: 0.3 + 0.25 * bigness(blob.radius),
+                                        sharpness: 0.6 * sharpBias(blob.radius))
+        // Start the continuous viscous rumble + audio (updated smoothly per frame).
+        HapticsManager.shared.startContinuousFeedback(intensity: 0.05, sharpness: 0.2)
+        SoundManager.shared.startOscillator(frequency: 80, volume: 0)
     }
 
+    /// The gesture only reports the finger position; all physics + haptics are
+    /// driven from the display link so they run at a steady 60/120 Hz.
     func handleDragChanged(to location: CGPoint) {
-        guard isDragging,
-              let id = dragBlobID,
-              let idx = blobs.firstIndex(where: { $0.id == id }) else { return }
-
         fingerPosition = location
-
-        let blob = blobs[idx]
-        let tension = hypot(location.x - blob.center.x,
-                            location.y - blob.center.y)
-        // Normalised stretch ratio 0…1
-        let t = min(tension / mitosisThreshold, 1.0)
-
-        // Scale haptic rumble with tension — feels like pulling taffy.
-        HapticsManager.shared.updateContinuousFeedback(
-            intensity: Double(t) * 0.72,
-            sharpness: 0.15
-        )
-
-        // Squelch audio: pitch rises smoothly from 80 Hz → 400 Hz as stretch grows.
-        SoundManager.shared.startOscillator(
-            frequency: Float(80 + t * 320),
-            volume: Float(t * 0.025)
-        )
-
-        // Snap into mitosis the moment threshold is crossed.
-        if tension >= mitosisThreshold {
-            performMitosis(at: idx)
-        }
     }
 
     func handleDragEnd() {
-        HapticsManager.shared.stopContinuousFeedback()
-        SoundManager.shared.stopOscillator()
         isDragging = false
         dragBlobID = nil
-        fingerPosition = .zero
-        // The soft body keeps wobbling and settles on its own via the ring
-        // simulation; the display link keeps running while the view is active.
+        fingerSpeed = 0
+        SoundManager.shared.stopOscillator()
+        // Hand off to the settle "boing" — the continuous rumble decays with the
+        // blob's visible wobble rather than cutting out abruptly.
+        settleEnergy = 0.7
     }
 
-    // MARK: - Mitosis
+    // MARK: - Shedding (mass-conserving break)
 
-    private func performMitosis(at idx: Int) {
-        let blob = blobs[idx]
-        let finger = fingerPosition
+    /// Break a small droplet off the tail of the dragged blob, conserving area:
+    /// `rParent' = sqrt(r² − rDrop²)`. The parent stays grabbed so you can keep
+    /// shedding until it hits `rMin`.
+    @discardableResult
+    private func shedDroplet(at idx: Int, now: CFTimeInterval) -> Bool {
+        guard blobs.count < maxCount else { return false }
+        var parent = blobs[idx]
 
-        let dx = finger.x - blob.center.x
-        let dy = finger.y - blob.center.y
-        let dist = hypot(dx, dy)
-        guard dist > 0 else { return }
+        let ux: CGFloat, uy: CGFloat
+        let dx = fingerPosition.x - parent.center.x
+        let dy = fingerPosition.y - parent.center.y
+        let d = hypot(dx, dy)
+        guard d > 0.5 else { return false }
+        ux = dx / d; uy = dy / d
 
-        // Unit vector pointing from anchor → finger.
-        let ux = dx / dist
-        let uy = dy / dist
+        // Droplet takes ~45% of the parent's radius; enforce both floors.
+        let dropletR = min(max(parent.radius * 0.45, rMin), parent.radius * 0.85)
+        let newParentR = sqrt(max(parent.radius * parent.radius - dropletR * dropletR, 0))
+        guard dropletR >= rMin, newParentR >= rMin else { return false }
 
-        // Per TDD spec §2.4: C₁ = anchor + r/4 along stretch axis,
-        //                     C₂ = finger  − r/4 along stretch axis.
-        let c1 = CGPoint(x: blob.center.x + ux * dist * 0.25,
-                         y: blob.center.y + uy * dist * 0.25)
-        let c2 = CGPoint(x: finger.x - ux * dist * 0.25,
-                         y: finger.y - uy * dist * 0.25)
+        let parentBigness = bigness(parent.radius)
 
-        // Opposite recoil velocities so the two babies bounce apart.
-        var b1 = BlobEntity(center: c1)
-        var b2 = BlobEntity(center: c2)
-        b1.velocityX = -ux * recoilSpeed
-        b1.velocityY = -uy * recoilSpeed
-        b2.velocityX =  ux * recoilSpeed
-        b2.velocityY =  uy * recoilSpeed
+        // Shrink the parent (keeping its current deformation) and reset its lag so
+        // you must whip again to shed the next one.
+        parent.rescaleRing(to: newParentR)
+        parent.center = CGPoint(x: fingerPosition.x - ux * newParentR,
+                                y: fingerPosition.y - uy * newParentR)
+        parent.velocityX = 0
+        parent.velocityY = 0
+        blobs[idx] = parent
 
-        // Seed the children mid-stretch so they *spring* back to round rather
-        // than popping in as perfect circles — the ring recoil sells the split.
-        stretchChild(&b1, along: (-ux, -uy))
-        stretchChild(&b2, along: (ux, uy))
+        // Spawn the droplet behind the parent, flung backward. Smaller = faster.
+        let flingSpeed = baseFlingSpeed * min(sqrt(refRadius / dropletR), 2.2)
+        let dropCenter = CGPoint(x: parent.center.x - ux * (newParentR + dropletR + 2),
+                                 y: parent.center.y - uy * (newParentR + dropletR + 2))
+        var droplet = BlobEntity(center: dropCenter, radius: dropletR)
+        droplet.velocityX = -ux * flingSpeed
+        droplet.velocityY = -uy * flingSpeed
+        stretchChild(&droplet, along: (-ux, -uy))
+        blobs.append(droplet)
 
-        blobs.remove(at: idx)
-        blobs.append(b1)
-        blobs.append(b2)
+        shedCooldownUntil = now + shedCooldownDuration
 
-        // End the active drag immediately.
-        isDragging = false
-        dragBlobID = nil
-        fingerPosition = .zero
-
-        // Organic "pop" — low sharpness, dull transient (not a crisp click).
-        HapticsManager.shared.stopContinuousFeedback()
-        HapticsManager.shared.playClick(intensity: 0.9, sharpness: 0.2)
-        SoundManager.shared.stopOscillator()
+        // Snap/shed pop: deep dull suction release (deeper for a bigger parent),
+        // chased ~30ms later by a crisp little recoil tick. Punctuate by dropping
+        // the continuous rumble to near-silence for the moment.
+        HapticsManager.shared.updateContinuousFeedback(intensity: 0.02, sharpness: 0.1)
+        HapticsManager.shared.playClick(intensity: 0.6 + 0.35 * parentBigness, sharpness: 0.12)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.03) {
+            HapticsManager.shared.playClick(intensity: 0.4,
+                                            sharpness: 0.6 * self.sharpBias(dropletR))
+        }
         SoundManager.shared.playSystemClick()
+        return true
     }
 
-    /// Give a freshly-split blob an initial elongation along the split axis so
-    /// its Verlet ring springs back and jiggles instead of appearing round.
+    /// Elongate a fresh droplet along its fling axis so its ring springs back
+    /// and jiggles instead of appearing as a rigid circle.
     private func stretchChild(_ blob: inout BlobEntity, along dir: (CGFloat, CGFloat)) {
         for i in blob.ring.indices {
             let o = blob.ring[i]
             let mag = hypot(o.dx, o.dy)
             guard mag > 0 else { continue }
-            // Points facing the split direction get pushed out; sides pull in.
             let dot = (o.dx / mag) * dir.0 + (o.dy / mag) * dir.1
             let scale = 1 + 0.35 * dot
             blob.ring[i] = CGVector(dx: o.dx * scale, dy: o.dy * scale)
         }
-        // Zero relative velocity so the spring-back starts from the stretch.
         blob.ringPrev = blob.ring
     }
 
-    // MARK: - Merge Detection
+    // MARK: - Merge Detection (area-conserving)
 
     private func checkMerge() {
         guard blobs.count > 1 else { return }
@@ -282,22 +293,29 @@ class BlobModel: ObservableObject {
             while j < blobs.count {
                 if blobs[j].id == dragBlobID { j += 1; continue }
 
-                let dx = blobs[j].center.x - blobs[i].center.x
-                let dy = blobs[j].center.y - blobs[i].center.y
+                let a = blobs[i], b = blobs[j]
+                let dx = b.center.x - a.center.x
+                let dy = b.center.y - a.center.y
+                // Merge once the two soft bodies actually overlap.
+                if hypot(dx, dy) < (a.radius + b.radius) * 0.72 {
+                    let mergedR = min(sqrt(a.radius * a.radius + b.radius * b.radius), rMax)
+                    // Mass-weighted center + momentum conservation.
+                    let ma = a.mass, mb = b.mass, mt = ma + mb
+                    let center = CGPoint(x: (a.center.x * ma + b.center.x * mb) / mt,
+                                         y: (a.center.y * ma + b.center.y * mb) / mt)
+                    var merged = BlobEntity(center: center, radius: mergedR)
+                    merged.velocityX = (a.velocityX * ma + b.velocityX * mb) / mt
+                    merged.velocityY = (a.velocityY * ma + b.velocityY * mb) / mt
 
-                if hypot(dx, dy) < mergeDistance {
-                    let merged = CGPoint(
-                        x: (blobs[i].center.x + blobs[j].center.x) / 2,
-                        y: (blobs[i].center.y + blobs[j].center.y) / 2
-                    )
                     blobs.remove(at: j)
                     blobs.remove(at: i)
-                    blobs.append(BlobEntity(center: merged))
+                    blobs.append(merged)
 
-                    // Same organic pop — mirrors mitosis but softer.
-                    HapticsManager.shared.playClick(intensity: 0.78, sharpness: 0.2)
+                    // Merge gloop: a soft, dull thud — deeper the bigger the result.
+                    HapticsManager.shared.playClick(intensity: 0.5 + 0.4 * bigness(mergedR),
+                                                    sharpness: 0.12)
                     SoundManager.shared.playSystemClick()
-                    return  // indices invalidated — let next tick handle remaining pairs
+                    return
                 }
                 j += 1
             }
@@ -323,64 +341,134 @@ class BlobModel: ObservableObject {
     @objc private func stepPhysics(_ link: CADisplayLink) {
         let now = link.timestamp
         var dt = now - lastTimestamp
-        if dt <= 0 || dt > 0.1 { dt = 1.0 / 60.0 }  // guard against cold-start spikes
+        if dt <= 0 || dt > 0.1 { dt = 1.0 / 60.0 }
         lastTimestamp = now
 
-        let dtScale = CGFloat(dt) * 60.0             // 1.0 at 60fps, 0.5 at 120fps
-        let damp = CGFloat(pow(Double(dampingFactor), dt * 60.0))
-        let elapsed = now
+        let dtScale = CGFloat(dt) * 60.0
+        let recoilDamp = CGFloat(pow(Double(dampingFactor), dt * 60.0))
+        let tetherDamp = CGFloat(pow(Double(tetherDamping), dt * 60.0))
+
+        // Track finger speed (frame-based) for the stringy crackle.
+        if isDragging {
+            fingerSpeed = hypot(fingerPosition.x - prevFinger.x,
+                                fingerPosition.y - prevFinger.y) / CGFloat(dt)
+            prevFinger = fingerPosition
+        }
+
+        var draggedTension: CGFloat = 0
+        var draggedIdx: Int? = nil
 
         for i in blobs.indices {
-            // 1. Center recoil (post-mitosis) — unchanged.
-            let speed = hypot(blobs[i].velocityX, blobs[i].velocityY)
-            if speed > 0.5 {
-                blobs[i].velocityX *= damp
-                blobs[i].velocityY *= damp
-                blobs[i].center.x  += blobs[i].velocityX * CGFloat(dt)
-                blobs[i].center.y  += blobs[i].velocityY * CGFloat(dt)
+            let isDragged = isDragging && blobs[i].id == dragBlobID
+
+            if isDragged {
+                // Elastic tether: spring the center toward the finger, mass-scaled.
+                let massFactor = pow(blobs[i].radius / refRadius, 2)
+                let ox = fingerPosition.x - blobs[i].center.x
+                let oy = fingerPosition.y - blobs[i].center.y
+                let ax = ox * tetherStiffness / massFactor
+                let ay = oy * tetherStiffness / massFactor
+                blobs[i].velocityX = (blobs[i].velocityX + ax * CGFloat(dt)) * tetherDamp
+                blobs[i].velocityY = (blobs[i].velocityY + ay * CGFloat(dt)) * tetherDamp
+                blobs[i].center.x += blobs[i].velocityX * CGFloat(dt)
+                blobs[i].center.y += blobs[i].velocityY * CGFloat(dt)
+
+                draggedTension = hypot(fingerPosition.x - blobs[i].center.x,
+                                       fingerPosition.y - blobs[i].center.y)
+                draggedIdx = i
             } else {
-                blobs[i].velocityX = 0
-                blobs[i].velocityY = 0
+                // Free motion: recoil / droplet drift, decaying to rest.
+                let speed = hypot(blobs[i].velocityX, blobs[i].velocityY)
+                if speed > 0.5 {
+                    blobs[i].velocityX *= recoilDamp
+                    blobs[i].velocityY *= recoilDamp
+                    blobs[i].center.x += blobs[i].velocityX * CGFloat(dt)
+                    blobs[i].center.y += blobs[i].velocityY * CGFloat(dt)
+                } else {
+                    blobs[i].velocityX = 0
+                    blobs[i].velocityY = 0
+                }
             }
 
-            // 2. Soft-body ring simulation.
-            let isDragged = isDragging && blobs[i].id == dragBlobID
+            // Soft-body ring update.
             let fingerOffset: CGVector? = isDragged
                 ? CGVector(dx: fingerPosition.x - blobs[i].center.x,
                            dy: fingerPosition.y - blobs[i].center.y)
                 : nil
-            stepRing(&blobs[i], dt: dtScale, time: elapsed, fingerOffset: fingerOffset)
+            stepRing(&blobs[i], dt: dtScale, time: now, fingerOffset: fingerOffset)
+        }
+
+        // Drive the drag haptics (rumble + crackle) and shed trigger.
+        if let idx = draggedIdx {
+            driveDragHaptics(radius: blobs[idx].radius, tension: draggedTension, dt: dt)
+            if draggedTension >= shedThreshold(blobs[idx].radius), now >= shedCooldownUntil {
+                shedDroplet(at: idx, now: now)
+            }
+        } else {
+            settleStep(now: now, dt: dt)
         }
 
         checkMerge()
 
-        // Keep breathing while the view is on screen; stop only when off-screen.
-        if !isActive {
-            stopDisplayLink()
+        if !isActive { stopDisplayLink() }
+    }
+
+    // MARK: - Drag Haptics
+
+    private func driveDragHaptics(radius: CGFloat, tension: CGFloat, dt: CFTimeInterval) {
+        let t = Double(min(tension / shedThreshold(radius), 1.0))
+        let bias = sharpBias(radius)
+
+        // Viscous rumble: swells with stretch and *tightens* (sharper) as it thins.
+        HapticsManager.shared.updateContinuousFeedback(
+            intensity: 0.06 + 0.6 * t,
+            sharpness: (0.1 + 0.5 * t) * bias
+        )
+        // Audio squelch: pitch rises with stretch, lower overall for bigger blobs.
+        let pitch = Float((80 + 320 * t) * (0.6 + 0.4 * bias))
+        SoundManager.shared.updateOscillator(frequency: pitch, volume: Float(t * 0.03))
+
+        // Stringy crackle: micro-transients whose rate ∝ tension × finger speed —
+        // the felt sensation of slime fibres snapping as it stretches.
+        let speedNorm = Double(min(fingerSpeed / 1500, 1))
+        let prob = Double(crackleRate) * t * speedNorm * dt * 60
+        if Double.random(in: 0...1) < prob {
+            HapticsManager.shared.playClick(intensity: 0.15 + 0.15 * t,
+                                            sharpness: 0.8 * bias)
         }
     }
 
-    /// One Verlet step + constraint-solve for a single blob's ring.
-    ///
-    /// `fingerOffset` (finger position relative to `center`) is non-nil while
-    /// this blob is being dragged.
+    /// After release, decay the continuous rumble in time with the visible
+    /// wobble so it "boings" out instead of cutting off.
+    private func settleStep(now: CFTimeInterval, dt: CFTimeInterval) {
+        guard settleEnergy > 0 else { return }
+        settleEnergy *= CGFloat(pow(0.90, dt * 60))
+        if settleEnergy > 0.03 {
+            let wobble = 0.5 + 0.5 * sin(now * 34)
+            HapticsManager.shared.updateContinuousFeedback(
+                intensity: Double(settleEnergy) * 0.3 * wobble,
+                sharpness: 0.25
+            )
+        } else {
+            settleEnergy = 0
+            HapticsManager.shared.stopContinuousFeedback()
+        }
+    }
+
+    // MARK: - Soft-Body Ring
+
     private func stepRing(_ blob: inout BlobEntity, dt: CGFloat, time: CFTimeInterval,
                           fingerOffset: CGVector?) {
         let n = blob.ring.count
         guard n >= 3 else { return }
         let rest = BlobEntity.restRing(radius: blob.radius, count: n)
 
-        // Precompute the per-vertex grab target: extend each particle along the
-        // finger direction in proportion to how much it *faces* the finger. The
-        // fingertip-facing vertex reaches the finger; the sides follow less and
-        // the far side stays put — a smooth taffy teardrop with a natural waist,
-        // instead of the thin spike you get from yanking one lone vertex.
         var grabTargets: [CGVector]? = nil
         if let f = fingerOffset {
             let fMag = hypot(f.dx, f.dy)
             if fMag > 0.5 {
                 let fx = f.dx / fMag, fy = f.dy / fMag
-                let pullDist = max(fMag - blob.radius, 0)   // how far past the rim
+                let pullDist = max(fMag - blob.radius, 0)
                 grabTargets = (0..<n).map { i in
                     let r = rest[i]
                     let rMag = hypot(r.dx, r.dy)
@@ -393,16 +481,12 @@ class BlobModel: ObservableObject {
             }
         }
 
-        // — Verlet integration: advance by implicit velocity, add idle breath —
         for i in 0..<n {
             let cur = blob.ring[i]
             let prev = blob.ringPrev[i]
             var vx = (cur.dx - prev.dx) * vertexDamping
             var vy = (cur.dy - prev.dy) * vertexDamping
 
-            // Idle breath: a two-octave, per-vertex-phased noise pushed along
-            // the radial direction. Injected as a force, so the spring/damper
-            // network turns it into smooth living undulation, not a visible sine.
             if grabTargets == nil {
                 let phase = Double(i) * 0.55
                 let noise = sin(time * 1.3 + phase) + 0.55 * sin(time * 2.17 + phase * 1.7)
@@ -418,12 +502,8 @@ class BlobModel: ObservableObject {
             blob.ring[i] = CGVector(dx: cur.dx + vx, dy: cur.dy + vy)
         }
 
-        // — Constraint solve —
-        // When grabbed, relax the pull-to-circle so the finger can win; the
-        // grab targets already carry the round rest shape as their baseline.
         let shapeK = grabTargets == nil ? shapeStiffness : shapeStiffness * 0.35
         for _ in 0..<constraintIterations {
-            // Shape memory: spring every particle back toward its rest circle.
             for i in 0..<n {
                 let o = blob.ring[i]
                 blob.ring[i] = CGVector(
@@ -431,8 +511,6 @@ class BlobModel: ObservableObject {
                     dy: o.dy + (rest[i].dy - o.dy) * shapeK
                 )
             }
-            // Neighbour smoothing: pull each particle toward the midpoint of its
-            // two neighbours so pulls propagate as waves and kinks vanish.
             let snapshot = blob.ring
             for i in 0..<n {
                 let a = snapshot[(i - 1 + n) % n]
@@ -444,7 +522,6 @@ class BlobModel: ObservableObject {
                     dy: o.dy + (mid.dy - o.dy) * smoothStiffness
                 )
             }
-            // Finger grab: pull the whole finger-facing arc toward its target.
             if let targets = grabTargets {
                 for i in 0..<n {
                     let o = blob.ring[i]
@@ -461,7 +538,7 @@ class BlobModel: ObservableObject {
 
     private func nearestBlob(to point: CGPoint, maxDistance: CGFloat) -> BlobEntity? {
         blobs
-            .filter { hypot($0.center.x - point.x, $0.center.y - point.y) <= maxDistance }
+            .filter { hypot($0.center.x - point.x, $0.center.y - point.y) <= max(maxDistance, $0.radius + 20) }
             .min   { hypot($0.center.x - point.x, $0.center.y - point.y)
                    < hypot($1.center.x - point.x, $1.center.y - point.y) }
     }
