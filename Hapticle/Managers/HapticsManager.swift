@@ -143,7 +143,8 @@ class HapticsManager {
             let sharpnessParam = CHHapticDynamicParameter(parameterID: .hapticSharpnessControl, value: Float(sharpness), relativeTime: 0)
             try player.sendParameters([intensityParam, sharpnessParam], atTime: CHHapticTimeImmediate)
         } catch {
-            print("Failed to update continuous haptics: \(error)")
+            print("Failed to update continuous haptics, invalidating player: \(error)")
+            continuousPlayer = nil // Invalidate player so it is recreated on the next frame
         }
     }
     

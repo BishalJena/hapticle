@@ -228,10 +228,10 @@ class DialModel: ObservableObject {
         
         if speed > 0.05 {
             // Modulate continuous haptic rumble (surface friction + whirr intensity)
-            // Even at slow speeds, we want a base surface friction rumble (intensity ~0.08)
-            let frictionIntensity = min((speed / 15.0) * 0.12 + 0.08, 0.3)
-            let intensity = frictionIntensity + (speed / 15.0) * alpha * 0.4
-            let sharpness = baseHapticSharpness + 0.3 * alpha
+            // Even at slow speeds, we want a base surface friction rumble (intensity ~0.15)
+            let frictionIntensity = min((speed / 15.0) * 0.2 + 0.15, 0.4)
+            let intensity = frictionIntensity + (speed / 10.0) * alpha * 0.6
+            let sharpness = baseHapticSharpness + 0.4 * alpha
             HapticsManager.shared.startContinuousFeedback(intensity: min(intensity, 1.0), sharpness: min(sharpness, 1.0))
             
             if alpha > 0.0 {
