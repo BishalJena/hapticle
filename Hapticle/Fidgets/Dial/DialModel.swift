@@ -237,8 +237,8 @@ class DialModel: ObservableObject {
             
             if alpha > 0.0 {
                 // Modulate continuous audio pitch whirr
-                let volume = Float(alpha * min(speed / 15.0, 1.0) * 0.05)
-                SoundManager.shared.startOscillator(frequency: Float(f_rep * 4.0), volume: volume)
+                let volume = Float(alpha * min(speed / 15.0, 1.0) * 0.18)
+                SoundManager.shared.startOscillator(frequency: Float(f_rep), volume: volume)
             } else {
                 SoundManager.shared.stopOscillator()
             }
