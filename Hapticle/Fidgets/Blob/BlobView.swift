@@ -15,43 +15,19 @@ struct BlobView: View {
                 BlobBackgroundGrid(size: geo.size, colorScheme: colorScheme)
                     .allowsHitTesting(false)
 
-                // ── 3. Jelly blobs — one continuous soft-body shape each, no
-                //      seam between "resting circle" and "stretch connector".
-                //      TimelineView drives a continuous idle wobble so a blob
-                //      never looks static, even untouched.
-                TimelineView(.animation) { context in
-                    let wobblePhase = CGFloat(
-                        context.date.timeIntervalSinceReferenceDate * 0.6
-                    )
-
-                    ForEach(model.blobs) { blob in
-                        let isActiveDrag = model.isDragging && model.dragBlobID == blob.id
-                        let tip = isActiveDrag ? model.visualTipPosition : blob.center
-                        let tension: CGFloat = isActiveDrag
-                            ? min(hypot(model.fingerPosition.x - blob.center.x,
-                                        model.fingerPosition.y - blob.center.y)
-                                  / model.mitosisThreshold, 1.0)
-                            : 0
-
-                        JellyBlobShape(anchor: blob.center,
-                                       tip: tip,
-                                       baseRadius: blob.radius,
-                                       tension: tension,
-                                       wobblePhase: wobblePhase)
-                            .fill(Color.accent)
-                            // Top-left highlight → lower-right shadow gives the blob weight.
-                            .shadow(color: Color.white.opacity(0.28), radius: 4, x: -2, y: -2)
-                            .shadow(color: Color(red: 0.537, green: 0.141, blue: 0.141).opacity(0.50),
-                                    radius: 7, x: 3, y: 4)
-                    }
-                    .animation(.easeOut(duration: 0.12), value: model.blobs.map(\.id))
+                // ── 3. Soft-body jelly blobs ─────────────────────────────────
+                //  Each blob is a Verlet ring simulated in BlobModel; the view
+                //  just draws whatever perimeter the physics produces. The ring
+                //  breathes at rest and jiggles/settles when stretched, so no
+                //  procedural wobble or separate stretch connector is needed.
+                ForEach(model.blobs) { blob in
+                    JellyBlobRender(points: blob.ringPoints)
                 }
             }
             .contentShape(Rectangle())     // entire canvas receives touch events
             .gesture(dragGesture)
-            .onAppear {
-                model.initializeBlobs(in: geo.size)
-            }
+            .onAppear { model.activate(in: geo.size) }
+            .onDisappear { model.deactivate() }
         }
     }
 
@@ -69,6 +45,32 @@ struct BlobView: View {
             }
             .onEnded { _ in
                 model.handleDragEnd()
+            }
+    }
+}
+
+// MARK: - Jelly Blob Render
+
+/// Draws one soft-body blob from its perimeter points, layering a neumorphic
+/// drop shadow, the body fill, and a soft inner rim so it reads as a glossy,
+/// slightly translucent piece of jelly rather than a flat sticker.
+private struct JellyBlobRender: View {
+    let points: [CGPoint]
+
+    var body: some View {
+        let shape = JellyBlobShape(points: points)
+        shape
+            .fill(Color.accent)
+            // Top-left highlight → lower-right shadow gives the blob weight.
+            .shadow(color: Color.white.opacity(0.28), radius: 4, x: -2, y: -2)
+            .shadow(color: Color(red: 0.537, green: 0.141, blue: 0.141).opacity(0.50),
+                    radius: 7, x: 3, y: 4)
+            // Soft glossy rim — a faint bright edge that catches the light and
+            // sells the wet, gelatinous surface as the outline flexes.
+            .overlay {
+                shape.stroke(Color.white.opacity(0.22), lineWidth: 2)
+                    .blur(radius: 1.5)
+                    .blendMode(.plusLighter)
             }
     }
 }
