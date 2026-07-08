@@ -54,7 +54,7 @@ enum RadialMenuConfig {
     /// Diameter of each satellite node.
     static let satelliteDiameter: CGFloat = 46
     /// Diameter of charge indicator
-    static let chargeIndicatorDiameter: CGFloat = 64
+    static let chargeIndicatorDiameter: CGFloat = 72
     /// Distance from ring center to each satellite center when fully bloomed.
     static let bloomRadius: CGFloat = 100
     /// How far above the bottom safe area the ring center sits.
@@ -141,5 +141,32 @@ struct HapticsAdapter: HapticFeedback {
 struct SpringParams {
     let duration: Double
     let bounce: Double
+}
+
+extension Animation {
+    /// Convert our `SpringParams` into a SwiftUI spring (duration + bounce).
+    static func spring(_ p: SpringParams) -> Animation {
+        .spring(duration: p.duration, bounce: p.bounce)
+    }
+}
+
+extension View {
+    /// Applies a customizable inner shadow effect using an overlay and mask combination.
+    func innerShadowShift<Mask: View>(
+        mask maskView: Mask,
+        color: Color,
+        blur: CGFloat = 8,
+        x: CGFloat = 0,
+        y: CGFloat = 0
+    ) -> some View {
+        self.overlay(
+            Rectangle()
+                .fill(color)
+                .mask(maskView)
+                .blur(radius: blur)
+                .offset(x: x, y: y)
+                .mask(maskView)
+        )
+    }
 }
 

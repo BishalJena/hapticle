@@ -15,49 +15,6 @@
 
 import SwiftUI
 
-extension View {
-    /// Approximates Figma's directional "inner shadow" effect for a
-    /// vector `Image`, which — unlike a native SwiftUI `Shape` — cannot be
-    /// stroked, so a mask-based technique is used instead.
-    ///
-    /// How it works: a solid-color duplicate of `maskView`'s silhouette is
-    /// created, blurred as a whole shape, then shifted by `(x, y)`. Where
-    /// the shifted, blurred copy no longer reaches, the original content
-    /// underneath shows through once re-clipped to `maskView`'s silhouette
-    /// — producing a soft light/shadow gradient that appears to originate
-    /// from inside the shape, falling off toward the opposite edge.
-    ///
-    /// - Parameters:
-    ///   - maskView: The same image/shape being decorated, reused as both
-    ///     the fill mask and the final re-clip mask. Must be visually
-    ///     identical (same asset, same frame) to the view this modifier is
-    ///     applied to, or the effect will misalign.
-    ///   - color: The inner shadow's color (matches Figma's shadow color
-    ///     swatch, e.g. `#A3B1C6`).
-    ///   - blur: Blur radius applied to the solid-color duplicate before
-    ///     offsetting. Figma's `Blur` value is roughly 2× this SwiftUI radius.
-    ///   - x: Horizontal shift of the shadow's origin. Matches Figma's inner
-    ///     shadow `X` position field.
-    ///   - y: Vertical shift of the shadow's origin. Matches Figma's inner
-    ///     shadow `Y` position field.
-    func innerShadowShift<Mask: View>(
-        mask maskView: Mask,
-        color: Color,
-        blur: CGFloat = 8,
-        x: CGFloat = 0,
-        y: CGFloat = 0
-    ) -> some View {
-        self.overlay(
-            Rectangle()
-                .fill(color)
-                .mask(maskView)          // clip solid fill to the shape's silhouette
-                .blur(radius: blur)      // blur the whole filled shape
-                .offset(x: x, y: y)      // shift it toward the shadow's origin
-                .mask(maskView)          // re-clip so nothing spills outside the original shape
-        )
-    }
-}
-
 /// The Pen fidget's root view. Composes five layered vector assets into a
 /// single neumorphic pen illustration, and forwards raw touch events to
 /// `PenModel` for state resolution and physics-driven feedback dispatch.

@@ -68,26 +68,6 @@ struct Ticket: View {
     }
 }
 
-extension View {
-    /// Applies a customizable inner shadow effect using an overlay and mask combination.
-    func innerShadowShift<Mask: View>(
-        mask maskView: Mask,
-        color: Color,
-        blur: CGFloat = 8,
-        x: CGFloat = 0,
-        y: CGFloat = 0
-    ) -> some View {
-        self.overlay(
-            Rectangle()
-                .fill(color)
-                .mask(maskView)
-                .blur(radius: blur)
-                .offset(x: x, y: y)
-                .mask(maskView)
-        )
-    }
-}
-
 struct TicketView: View {
     @StateObject private var model = TicketModel()
     
