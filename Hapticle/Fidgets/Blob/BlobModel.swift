@@ -108,6 +108,19 @@ class BlobModel: ObservableObject {
     /// Minimum seconds between two sheds within one drag.
     private let shedCooldownDuration: CFTimeInterval = 0.10
 
+    // MARK: - Tunable Parameters — Walls
+
+    /// Fraction of speed retained when a blob bounces off a screen edge.
+    private let wallRestitution: CGFloat = 0.6
+    /// Minimum impact speed (pt/s) for a wall bounce to fire a haptic tick.
+    private let wallTickMinSpeed: CGFloat = 140
+
+    // MARK: - Tunable Parameters — Collecting
+
+    /// Above this finger speed the dragged blob is "whipping" (it sheds); below
+    /// it, moving slowly, it collects/absorbs droplets it rolls over.
+    private let collectMaxSpeed: CGFloat = 900
+
     /// Tension (finger↔center lag, pt) needed to shed, scaled by size:
     /// a big blob resists; a small one lets go easily.
     private func shedThreshold(_ r: CGFloat) -> CGFloat { max(r * 1.9, 58) }
@@ -280,6 +293,42 @@ class BlobModel: ObservableObject {
         blob.ringPrev = blob.ring
     }
 
+    // MARK: - Collecting (slow-drag absorb)
+
+    /// While dragging slowly, the held blob rolls over droplets on its path and
+    /// absorbs them, conserving area (`r = sqrt(r² + rOther²)`). Grabbed blob
+    /// keeps its id and stays under the finger, just growing heavier.
+    private func absorbOverlaps() {
+        guard let id = dragBlobID else { return }
+        while true {
+            guard let d = blobs.firstIndex(where: { $0.id == id }),
+                  blobs[d].radius < rMax else { return }
+            let dragged = blobs[d]
+
+            var target: Int? = nil
+            for j in blobs.indices where blobs[j].id != id {
+                // Don't vacuum up a droplet that's still flying away from a fresh
+                // shed — only settled puddles get collected.
+                if hypot(blobs[j].velocityX, blobs[j].velocityY) > 90 { continue }
+                let dist = hypot(blobs[j].center.x - dragged.center.x,
+                                 blobs[j].center.y - dragged.center.y)
+                if dist < (dragged.radius + blobs[j].radius) * 0.7 { target = j; break }
+            }
+            guard let j = target else { return }
+
+            let other = blobs[j]
+            let newR = min(sqrt(dragged.radius * dragged.radius + other.radius * other.radius), rMax)
+            var grown = dragged
+            grown.rescaleRing(to: newR)
+            blobs[d] = grown
+            blobs.remove(at: j)
+
+            // Absorb gloop: a soft, wet swallow — deeper as the blob grows.
+            HapticsManager.shared.playClick(intensity: 0.4 + 0.4 * bigness(newR), sharpness: 0.14)
+            SoundManager.shared.playSystemClick()
+        }
+    }
+
     // MARK: - Merge Detection (area-conserving)
 
     private func checkMerge() {
@@ -390,6 +439,9 @@ class BlobModel: ObservableObject {
                 }
             }
 
+            // Keep the blob on-screen — bounce off the walls.
+            containWithinWalls(&blobs[i], isDragged: isDragged)
+
             // Soft-body ring update.
             let fingerOffset: CGVector? = isDragged
                 ? CGVector(dx: fingerPosition.x - blobs[i].center.x,
@@ -398,11 +450,14 @@ class BlobModel: ObservableObject {
             stepRing(&blobs[i], dt: dtScale, time: now, fingerOffset: fingerOffset)
         }
 
-        // Drive the drag haptics (rumble + crackle) and shed trigger.
+        // Drive the drag haptics (rumble + crackle), then either shed (fast
+        // whip) or collect (slow drag) — the two halves of the loop.
         if let idx = draggedIdx {
             driveDragHaptics(radius: blobs[idx].radius, tension: draggedTension, dt: dt)
             if draggedTension >= shedThreshold(blobs[idx].radius), now >= shedCooldownUntil {
                 shedDroplet(at: idx, now: now)
+            } else if fingerSpeed < collectMaxSpeed {
+                absorbOverlaps()
             }
         } else {
             settleStep(now: now, dt: dt)
@@ -531,6 +586,62 @@ class BlobModel: ObservableObject {
                     )
                 }
             }
+        }
+    }
+
+    // MARK: - Walls
+
+    /// Clamp a blob's center so it stays fully on-screen. Free-moving blobs
+    /// bounce (velocity inverted × restitution) and tick on a hard impact; the
+    /// dragged blob just stops at the edge so it doesn't fight the finger.
+    private func containWithinWalls(_ blob: inout BlobEntity, isDragged: Bool) {
+        guard canvasSize.width > 0, canvasSize.height > 0 else { return }
+        let r = blob.radius
+        var impact: CGFloat = 0
+
+        if r * 2 <= canvasSize.width {
+            let minX = r, maxX = canvasSize.width - r
+            if blob.center.x < minX {
+                blob.center.x = minX
+                if blob.velocityX < 0 {
+                    impact = max(impact, -blob.velocityX)
+                    blob.velocityX = isDragged ? 0 : -blob.velocityX * wallRestitution
+                }
+            } else if blob.center.x > maxX {
+                blob.center.x = maxX
+                if blob.velocityX > 0 {
+                    impact = max(impact, blob.velocityX)
+                    blob.velocityX = isDragged ? 0 : -blob.velocityX * wallRestitution
+                }
+            }
+        } else {
+            blob.center.x = canvasSize.width / 2
+        }
+
+        if r * 2 <= canvasSize.height {
+            let minY = r, maxY = canvasSize.height - r
+            if blob.center.y < minY {
+                blob.center.y = minY
+                if blob.velocityY < 0 {
+                    impact = max(impact, -blob.velocityY)
+                    blob.velocityY = isDragged ? 0 : -blob.velocityY * wallRestitution
+                }
+            } else if blob.center.y > maxY {
+                blob.center.y = maxY
+                if blob.velocityY > 0 {
+                    impact = max(impact, blob.velocityY)
+                    blob.velocityY = isDragged ? 0 : -blob.velocityY * wallRestitution
+                }
+            }
+        } else {
+            blob.center.y = canvasSize.height / 2
+        }
+
+        // A droplet smacking the wall gets a light tick — crisp for small ones.
+        if !isDragged && impact > wallTickMinSpeed {
+            HapticsManager.shared.playClick(intensity: min(Double(impact) / 900, 0.5),
+                                            sharpness: 0.5 * sharpBias(r))
+            SoundManager.shared.playSystemClick()
         }
     }
 
