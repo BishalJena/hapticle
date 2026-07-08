@@ -228,8 +228,8 @@ struct CircularTextView: View {
         }
         .rotationEffect(.degrees(rotation))
         .onAppear {
-            // Animate local state for a smooth continuous 0.25 rev/sec rotation
-            withAnimation(.linear(duration: 4.0).repeatForever(autoreverses: false)) {
+            // Animate local state for a smooth continuous 0.1 rev/sec rotation
+            withAnimation(.linear(duration:10.0).repeatForever(autoreverses: false)) {
                 rotation = 360.0
             }
         }
