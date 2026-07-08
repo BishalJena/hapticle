@@ -32,8 +32,6 @@ struct RadialMenuView: View {
                 ringButton(at: ringCenter)
             }
             .coordinateSpace(.named(Self.space))
-            .contentShape(Rectangle())
-            .gesture(drag(ringCenter: ringCenter))
         }
         .ignoresSafeArea()
         .onAppear {
@@ -65,7 +63,7 @@ struct RadialMenuView: View {
         let committing = model.committingID != nil
 
         return SatelliteNode(
-            label: id.label,
+            assetName: id.assetName,
             isHovered: model.hoveredID == id,
             recede: model.hoveredID != nil && model.hoveredID != id
         )
@@ -115,30 +113,69 @@ struct RadialMenuView: View {
 
     private func ringButton(at center: CGPoint) -> some View {
         ZStack {
-            // Resting/pressed neumorphic ring with an inner recessed detail
-            // (echoes the idle ring glyph in the reference).
-            Circle()
-                .fill(Color.hpBase)
-                .frame(width: RadialMenuConfig.ringDiameter,
-                       height: RadialMenuConfig.ringDiameter)
-                .neumorphicCircle(isPressed: model.isCharging || model.isOpen)
-                .overlay(
+            // Liquid Glass Toggle Button - exactly 46x46
+            ZStack {
+                // Glass Base
+//                Circle()
+//                    .fill(.thinMaterial)
+//                    
+//                // Inner Shadow (recessed peephole look)
+//                Circle()
+//                    .stroke(Color.black.opacity(0.18), lineWidth: 3)
+//                    .blur(radius: 2)
+//                    .offset(x: 1.5, y: 1.5)
+//                    .mask(Circle())
+//                
+//                // Outer Bezel Stroke
+//                Circle()
+//                    .stroke(
+//                        LinearGradient(
+//                            colors: [.white.opacity(0.55), .clear, .black.opacity(0.15)],
+//                            startPoint: .topLeading,
+//                            endPoint: .bottomTrailing
+//                        ),
+//                        lineWidth: 1.0
+//                    )
+                
+                // Red Charge Indicators (Behind Menu Image)
+                if model.isCharging || model.isOpen {
+                    // A. Static target boundary ring
                     Circle()
-                        .stroke(Color.hpShadow.opacity(0.55), lineWidth: 2)
-                        .frame(width: RadialMenuConfig.ringDiameter * 0.42,
-                               height: RadialMenuConfig.ringDiameter * 0.42)
-                )
-                // Idle breathing — subtle, and skipped under Reduce Motion.
-                .scaleEffect(model.isResting && breathe && !reduceMotion
-                             ? RadialMenuConfig.breathScale : 1)
-                .animation(.easeInOut(duration: RadialMenuConfig.breathPeriod)
-                            .repeatForever(autoreverses: true),
-                           value: breathe)
-                // Charge feedback: the dot presses in (deboss above) and
-                // swells slightly while held. No colored progress ring.
-                .scaleEffect(model.isCharging ? 1 + CGFloat(model.chargeProgress) * 0.08 : 1)
-                .animation(.spring(RadialMenuConfig.hoverSpring), value: model.chargeProgress)
+                        .stroke(Color.accent, lineWidth: 1.5)
+                        .frame(width: RadialMenuConfig.chargeIndicatorDiameter,
+                               height: RadialMenuConfig.chargeIndicatorDiameter)
+                    
+                    // B. Linearly growing progress circle
+                    Circle()
+                        .fill(Color.accent)
+                        .frame(width: RadialMenuConfig.chargeIndicatorDiameter * CGFloat(model.chargeProgress),
+                               height: RadialMenuConfig.chargeIndicatorDiameter * CGFloat(model.chargeProgress))
+                    
+                    // C. Rotating Circular Instruction Text
+                    CircularTextView()
+                }
+                
+                // Scaled central toggle Icon/Menu
+                Image("Icon/Menu")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 24, height: 24)
+            }
+            .frame(width: RadialMenuConfig.satelliteDiameter,
+                   height: RadialMenuConfig.satelliteDiameter)
+            // Idle breathing — subtle, and skipped under Reduce Motion.
+            .scaleEffect(model.isResting && breathe && !reduceMotion
+                         ? RadialMenuConfig.breathScale : 1)
+            .animation(.easeInOut(duration: RadialMenuConfig.breathPeriod)
+                        .repeatForever(autoreverses: true),
+                       value: breathe)
+            // Charge feedback: the dot presses in (deboss above) and
+            // swells slightly while held. No colored progress ring.
+            .scaleEffect(model.isCharging ? 1 + CGFloat(model.chargeProgress) * 0.08 : 1)
+            .animation(.spring(RadialMenuConfig.hoverSpring), value: model.chargeProgress)
         }
+        .contentShape(Circle())
+        .gesture(drag(ringCenter: center))
         .position(center)
     }
 
@@ -163,7 +200,39 @@ struct RadialMenuView: View {
 
 #Preview {
     ZStack {
-        Color.hpBase.ignoresSafeArea()
+        Color.fidgetPrimary.ignoresSafeArea()
         RadialMenuView(onSelect: { print("selected \($0.label)") })
     }
 }
+
+/// Helper view that displays text characters evenly distributed along a circular boundary,
+/// rotating continuously to indicate the hold-to-charge action.
+struct CircularTextView: View {
+    private let characters = Array("HOLD FOR MENU · HOLD FOR MENU · ") // 32 characters total
+    private let radius: CGFloat = (RadialMenuConfig.chargeIndicatorDiameter/2)+12                          // Fits outside the 46x46 boundary
+    
+    @State private var rotation: Double = 0.0
+    
+    var body: some View {
+        ZStack {
+            ForEach(0..<characters.count, id: \.self) { index in
+                let char = String(characters[index])
+                let angle = Double(index) * (360.0 / Double(characters.count))
+                
+                Text(char)
+                    .font(.system(size: 12, weight: .medium, design: .monospaced))
+                    .foregroundColor(Color.accent)
+                    .offset(y: -radius)
+                    .rotationEffect(.degrees(angle))
+            }
+        }
+        .rotationEffect(.degrees(rotation))
+        .onAppear {
+            // Animate local state for a smooth continuous 0.1 rev/sec rotation
+            withAnimation(.linear(duration:10.0).repeatForever(autoreverses: false)) {
+                rotation = 360.0
+            }
+        }
+    }
+}
+
