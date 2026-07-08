@@ -3,7 +3,10 @@ import SwiftUI
 struct DialView: View {
     @StateObject private var model = DialModel()
     var onInteractionChange: ((Bool) -> Void)? = nil
+    
+    #if DEBUG
     @State private var showDebugPanel = false
+    #endif
     
     var body: some View {
         ZStack {
@@ -13,25 +16,6 @@ struct DialView: View {
             
             // Layout safe container (reproducing CSS 402px x 874px boundary)
             VStack {
-                // Header (Gear/Tuning Button)
-                HStack {
-                    Spacer()
-                    Button(action: {
-                        withAnimation(.spring(duration: 0.32, bounce: 0.12)) {
-                            showDebugPanel.toggle()
-                        }
-                    }) {
-                        Image(systemName: "gearshape.fill")
-                            .font(.system(size: 20, weight: .bold))
-                            .foregroundColor(.secondary.opacity(0.8))
-                            .padding(12)
-                            .background(Circle().fill(.thinMaterial))
-                            .shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 1)
-                    }
-                    .padding(.trailing, 24)
-                    .padding(.top, 24)
-                }
-                
                 Spacer()
                 
                 // Circle Dial Container (310px x 310px)
@@ -113,7 +97,8 @@ struct DialView: View {
             }
             .frame(width: 402, height: 874)
             
-            // Debug Tuning Panel Overlay
+            #if DEBUG
+            // Debug Tuning Panel Overlay - completely excluded from release builds
             if showDebugPanel {
                 VStack {
                     Spacer()
@@ -222,11 +207,7 @@ struct DialView: View {
                 }
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
-        }
-        .onTapGesture(count: 3) {
-            withAnimation(.spring(duration: 0.35, bounce: 0.15)) {
-                showDebugPanel.toggle()
-            }
+            #endif
         }
         .onReceive(model.$rotationAngle) { _ in
             let isActive = model.isDragging || abs(model.angularVelocity) > 0.05
@@ -235,6 +216,59 @@ struct DialView: View {
         .onChange(of: model.isDragging) { newValue in
             onInteractionChange?(newValue || abs(model.angularVelocity) > 0.05)
         }
+        #if DEBUG
+        // Toggle the debug panel via a 2-finger triple tap
+        .onMultiTouchTap(taps: 3, touches: 2) {
+            withAnimation(.spring(duration: 0.35, bounce: 0.15)) {
+                showDebugPanel.toggle()
+            }
+        }
+        #endif
+    }
+}
+
+#if DEBUG
+// MARK: - MultiTouch Tap Gesture Recognizer Bridge
+
+struct MultiTouchTapGesture: UIViewRepresentable {
+    var taps: Int = 3
+    var touches: Int = 2
+    var action: () -> Void
+
+    func makeUIView(context: Context) -> UIView {
+        let view = UIView()
+        view.backgroundColor = .clear
+        
+        let gesture = UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handleTap))
+        gesture.numberOfTapsRequired = taps
+        gesture.numberOfTouchesRequired = touches
+        view.addGestureRecognizer(gesture)
+        
+        return view
+    }
+
+    func updateUIView(_ uiView: UIView, context: Context) {}
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(action: action)
+    }
+
+    class Coordinator: NSObject {
+        var action: () -> Void
+
+        init(action: @escaping () -> Void) {
+            self.action = action
+        }
+
+        @objc func handleTap() {
+            action()
+        }
+    }
+}
+
+extension View {
+    func onMultiTouchTap(taps: Int = 3, touches: Int = 2, action: @escaping () -> Void) -> some View {
+        self.background(MultiTouchTapGesture(taps: taps, touches: touches, action: action))
     }
 }
 
@@ -261,6 +295,7 @@ struct TuningSlider: View {
         }
     }
 }
+#endif
 
 // MARK: - Previews
 
