@@ -466,7 +466,7 @@ This framework connects the physics loop directly to hardware outputs, convertin
 
 ## 11. Current Implementation Details
 
-The current implementation of the dial in the codebase under [Hapticle/Fidgets/Dial/](/hapticle/Hapticle/Fidgets/Dial/) has been optimized to match these specifications:
+The current implementation of the dial in the codebase under [Hapticle/Fidgets/Dial/](file:///Users/moreno_m5/Projects/hapticle/Hapticle/Fidgets/Dial/) has been optimized to match these specifications:
 
 ### 11.1 Visual Layer Refactoring (DialView.swift)
 *   **Shadow Stability Solution:** Rather than rotating any shadow-casting circles, we keep all background circular layers 100% static. The **Outer Circular Rim** is drawn as a static circle with diameter `300` and `stroke: 25`, holding static top-left highlight and bottom-right shadow modifiers.
@@ -481,7 +481,25 @@ The current implementation of the dial in the codebase under [Hapticle/Fidgets/D
     *   **Friction Damping:** Applies continuous damping opposing the speed: $-c \cdot \omega$ (default $c = 3.0$).
 *   **Newton Integration:** Computes acceleration $\alpha = \frac{\tau_{net}}{I}$ using Moment of Inertia $I = 0.5 \cdot m$ (default mass $m = 0.2$).
 *   **Self-Termination:** If the user releases the dial, the loop runs until velocity falls below $0.01$ and the angle settles in a potential well, automatically calling `.invalidate()` to save battery.
-*   **Hz Readout Communication:** Calculates the instantaneous frequency $f_{rep} = \frac{|\omega| \cdot N_{detents}}{2\pi}$ and invokes `HapticsManager.shared.update` and `SoundManager.shared.update` dynamically at the end of each frame step.
+
+### 11.3 Center-Zone Gradiented Deadzone & Heavy Braking
+*   **Center Sensitivity Issue:** Touching the center ($r \to 0$) makes angle math ($\Delta\theta = \Delta x / r$) extremely sensitive and erratic.
+*   **Touch Uncoupling & Braking Core:** If the user drags their finger inside the center deadzone ($r < 40\text{px}$):
+    *   The spring coupling torque is uncoupled (`touchTorque = 0.0`), acting as a virtual finger-up.
+    *   An extra heavy **4.0x braking friction** is applied (`activeDamping = damping * 4.0`) to absorb kinetic energy and slow down any spin.
+*   **Smooth Re-Anchoring:** When the finger slides back outside the deadzone ($r \ge 40\text{px}$), the model immediately **re-anchors** the starting touch metrics, preventing any abrupt snapping or jumping.
+
+### 11.4 High-Fidelity Physics-Based Haptic Handoff (16Hz – 28Hz)
+*   **Auto-Invalidation Recovery:** `HapticsManager` automatically invalidates the player reference (`continuousPlayer = nil`) on any update failures (e.g. app backgrounding/resets), triggering a zero-latency recreation on the next physics frame.
+*   **Maximum Click Limits:** Pushed discrete ticks to the absolute physical limits of the Taptic Engine (`16Hz` – `28Hz`), avoiding system drops under the `30ms` click throttle.
+*   **Non-Linear Handoff Curves:** To eliminate tactile "dead spots" or energy dips:
+    *   **Clicks Fade Out** quadratically: `1.0 - alpha * alpha` (keeping ticks crisp for longer).
+    *   **Rumble Fades In** with a square-root swell: `sqrt(alpha)` (raising the whirr volume rapidly early on).
+
+### 11.5 #IF DEBUG Tuning Panel Overlay
+*   **Tuning Controls:** Slide-up panel exposing real-time sliders for Mass, Damping, Spring Constant, Detent Count, Detent Spacing, and Haptic Intensity.
+*   **Clipboard Serialization:** Includes a "Copy Settings" button to write configuration structures directly to `UIPasteboard.general.string`.
+*   **Production Safety:** Wrapped completely in `#if DEBUG` compiler directives and positioned in a safe-area-aligned overlay, ensuring zero footprint in release builds.
 
 
 
