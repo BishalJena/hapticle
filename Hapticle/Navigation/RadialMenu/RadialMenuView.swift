@@ -16,7 +16,7 @@ struct RadialMenuView: View {
 
     @State private var model = RadialMenuModel()
     @State private var breathe = false
-    @State private var textRotation = 0.0
+    @State private var textRotation: Double = 0.0
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private static let space = "radialMenu"
@@ -40,7 +40,7 @@ struct RadialMenuView: View {
             breathe = true
             DispatchQueue.main.async {
                 withAnimation(.linear(duration: 4.0).repeatForever(autoreverses: false)) {
-                    textRotation = 360.0
+                    textRotation = 360
                 }
             }
         }
@@ -158,7 +158,7 @@ struct RadialMenuView: View {
                                height: RadialMenuConfig.chargeIndicatorDiameter * CGFloat(model.chargeProgress))
                     
                     // C. Rotating Circular Instruction Text
-                    CircularTextView(rotation: textRotation)
+                    CircularTextView(rotation: Double(textRotation))
                 }
                 
                 // Scaled central toggle Icon/Menu
