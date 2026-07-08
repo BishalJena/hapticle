@@ -23,6 +23,7 @@ class DialModel: ObservableObject {
     // MARK: - Motion State Variables
     var angularVelocity: Double = 0.0
     var fingerAngle: Double = 0.0
+    var touchRadius: Double = 0.0
     
     private var startingFingerAngle: Double = 0.0
     private var startingRotationAngle: Double = 0.0
@@ -41,6 +42,11 @@ class DialModel: ObservableObject {
     func handleDragStarted(at point: CGPoint, dialCenter: CGPoint) {
         isDragging = true
         isPressed = true
+        
+        let rx = point.x - dialCenter.x
+        let ry = point.y - dialCenter.y
+        touchRadius = Double(hypot(rx, ry))
+        
         startingFingerAngle = calculateAngle(from: point, relativeTo: dialCenter)
         startingRotationAngle = rotationAngle
         fingerAngle = startingFingerAngle
@@ -50,6 +56,10 @@ class DialModel: ObservableObject {
     }
     
     func handleDragUpdated(to point: CGPoint, dialCenter: CGPoint) {
+        let rx = point.x - dialCenter.x
+        let ry = point.y - dialCenter.y
+        touchRadius = Double(hypot(rx, ry))
+        
         let currentFinger = calculateAngle(from: point, relativeTo: dialCenter)
         // Normalize rotation angle difference to (-π, π) range to handle wrapping
         var diff = currentFinger - startingFingerAngle
@@ -65,13 +75,25 @@ class DialModel: ObservableObject {
         
         let rx = touchPoint.x - dialCenter.x
         let ry = touchPoint.y - dialCenter.y
+        let r = Double(hypot(rx, ry))
         let r2 = max(rx * rx + ry * ry, 100.0) // prevent division by zero
         
         let vx = Double(velocity.width)
         let vy = Double(velocity.height)
         
         // Angular velocity: ω = (rx * vy - ry * vx) / r^2
-        let computedAngularVelocity = (Double(rx) * vy - Double(ry) * vx) / Double(r2)
+        var computedAngularVelocity = (Double(rx) * vy - Double(ry) * vx) / Double(r2)
+        
+        // Scale down the initial velocity if released inside the gradiented deadzone
+        let rInner = 35.0
+        let rOuter = 75.0
+        var velocityMultiplier = 1.0
+        if r < rInner {
+            velocityMultiplier = 0.0
+        } else if r < rOuter {
+            velocityMultiplier = (r - rInner) / (rOuter - rInner)
+        }
+        computedAngularVelocity *= velocityMultiplier
         
         // Cap the maximum initial angular velocity to prevent extreme spinning
         let maxVelocity = 40.0 // rad/s (~6.3 rev/s)
@@ -126,7 +148,18 @@ class DialModel: ObservableObject {
             // Unwrapping/normalizing rotation angle difference to (-π, π) range
             while diff > .pi { diff -= 2.0 * .pi }
             while diff < -.pi { diff += 2.0 * .pi }
-            touchTorque = springConstant * diff
+            
+            // Apply gradiented deadzone scaling near the center
+            let rInner = 35.0
+            let rOuter = 75.0
+            var torqueMultiplier = 1.0
+            if touchRadius < rInner {
+                torqueMultiplier = 0.0
+            } else if touchRadius < rOuter {
+                torqueMultiplier = (touchRadius - rInner) / (rOuter - rInner)
+            }
+            
+            touchTorque = springConstant * diff * torqueMultiplier
         }
         
         // Detent restoring torque (sinusoidal potential energy wells pulling to ticks)
