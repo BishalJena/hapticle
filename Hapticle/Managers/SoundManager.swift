@@ -14,6 +14,7 @@ class SoundManager {
     private var isOscillatorRunning = false
     private var phase: Float = 0.0
     private var carrierPhase: Float = 0.0
+    private var shaftPhase: Float = 0.0
     
     init() {
         configureAudioSession()
@@ -53,6 +54,10 @@ class SoundManager {
             let carrierFreq: Float = 1600.0
             let carrierStep = (2.0 * Float.pi * carrierFreq) / Float(self.sampleRate)
             
+            // Shaft rotation rate LFO frequency (repetition rate divided by detent count of 24)
+            let shaftFreq = freq / 24.0
+            let shaftStep = (2.0 * Float.pi * shaftFreq) / Float(self.sampleRate)
+            
             // Loop over channels first to handle multi-channel layouts correctly
             for channel in 0..<ablPointer.count {
                 let buffer = ablPointer[channel]
@@ -60,14 +65,22 @@ class SoundManager {
                 
                 var channelPhase = self.phase
                 var channelCarrierPhase = self.carrierPhase
+                var channelShaftPhase = self.shaftPhase
                 
                 for frame in 0..<Int(frameCount) {
                     // Exponential decay envelope from 1.0 to near 0.0 inside the detent cycle [0, 2pi]
                     let progress = channelPhase / (2.0 * Float.pi)
                     let envelope = exp(-12.0 * progress)
                     
-                    // Synthesize mechanical casing impact
-                    buf[frame] = sin(channelCarrierPhase) * envelope * vol
+                    // LFO representing shaft rotation eccentricity (subtle 30% amplitude modulation)
+                    let lfo = 1.0 + 0.30 * sin(channelShaftPhase)
+                    
+                    // Add random micro-friction grit to mimic plastic/metallic teeth roughness
+                    let grit = Float.random(in: -0.15...0.15)
+                    let signal = sin(channelCarrierPhase) + grit
+                    
+                    // Synthesize final mechanical casing impact with LFO and texture grit
+                    buf[frame] = signal * envelope * lfo * vol
                     
                     channelPhase += step
                     if channelPhase >= 2.0 * Float.pi {
@@ -77,6 +90,11 @@ class SoundManager {
                     channelCarrierPhase += carrierStep
                     if channelCarrierPhase >= 2.0 * Float.pi {
                         channelCarrierPhase -= 2.0 * Float.pi
+                    }
+                    
+                    channelShaftPhase += shaftStep
+                    if channelShaftPhase >= 2.0 * Float.pi {
+                        channelShaftPhase -= 2.0 * Float.pi
                     }
                 }
             }
@@ -90,6 +108,11 @@ class SoundManager {
             self.carrierPhase += carrierStep * Float(frameCount)
             while self.carrierPhase >= 2.0 * Float.pi {
                 self.carrierPhase -= 2.0 * Float.pi
+            }
+            
+            self.shaftPhase += shaftStep * Float(frameCount)
+            while self.shaftPhase >= 2.0 * Float.pi {
+                self.shaftPhase -= 2.0 * Float.pi
             }
             
             return noErr

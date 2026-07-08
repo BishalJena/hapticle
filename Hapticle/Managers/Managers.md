@@ -45,14 +45,18 @@ For discrete clicks, rather than playing static wav/mp3 files (which require fil
 ### 2.2 Procedural Audio Synthesizer (Mechanical Casing Resonance & Impulse Train)
 To generate highly realistic, tactile whirrs during rapid rotation (avoiding artificial electronic-sounding pure sine waves):
 *   Initializes an **`AVAudioEngine`** and attaches a custom **`AVAudioSourceNode`** (running at $44.1\text{ kHz}$ standard sample rate).
-*   **Dual-Phase Structural Acoustics Model:** Instead of a simple oscillator, the rendering block tracks two independent phases:
+*   **Multi-Phase Structural Acoustics Model:** Instead of a simple oscillator, the rendering block tracks three independent phases:
     1.  **Detent Crossing Phase ($\phi_{detent}$):** Increments based on the detent crossing rate $f_{rep}$ (Hz) sent from the physics model.
     2.  **Casing Resonance Phase ($\phi_{carrier}$):** Increments at a fixed casing resonance frequency of $1600\text{ Hz}$ (representing the mechanical material sound).
+    3.  **Shaft Rotation Phase ($\phi_{shaft}$):** Increments at the full dial rotation rate ($f_{shaft} = f_{rep} / 24$) to model structural axis asymmetry.
 *   **Decaying Impulse Synthesis:** Each detent crossing cycle excites a casing resonance sample that decays exponentially:
     $$\text{Envelope}(\phi_{detent}) = e^{-12 \cdot \frac{\phi_{detent}}{2\pi}}$$
-    The output sample is synthesized sample-by-sample:
-    $$Waveform(t) = \sin(\phi_{carrier}) \cdot e^{-12 \cdot \frac{\phi_{detent}}{2\pi}} \cdot \text{Volume}$$
-*   **Perceptual Fusion:** At slow speeds, this structural model produces organic, periodic casing clicks (*tick... tick... tick*). At high speeds, the exponential tails naturally overlap, creating a rich mechanical rotary encoder buzz (*trrrrrr*!).
+*   **Rotational LFO Modulation:** To simulate natural hand acceleration asymmetry and physical shaft wobble, we apply a low-frequency amplitude modulation (LFO) at the shaft rotation rate:
+    $$\text{LFO} = 1.0 + 0.3 \cdot \sin(\phi_{shaft})$$
+*   **Micro-Friction Impact Grit:** We mix in a random noise offset ($\text{Grit} \in [-0.15, 0.15]$) directly to the carrier before applying the decay envelope, simulating physical surface roughness and plastic-on-metal teeth scraping.
+*   **Final Sample Synthesis:**
+    $$Waveform(t) = (\sin(\phi_{carrier}) + \text{Grit}) \cdot e^{-12 \cdot \frac{\phi_{detent}}{2\pi}} \cdot (1.0 + 0.3 \cdot \sin(\phi_{shaft})) \cdot \text{Volume}$$
+*   **Perceptual Fusion:** At slow speeds, this structural model produces organic, textured casing clicks (*tick... tick... tick*). At high speeds, the exponential tails naturally overlap, creating a rich mechanical rotary encoder buzz (*trrrrrr*!) with a satisfying rolling "rattle" texture.
 *   **On-Demand Laziness:** The engine and nodes are only started when active whirring begins (`volume > 0.0`) and are fully paused/stopped when rotation ceases, saving battery and CPU.
 
 ---
