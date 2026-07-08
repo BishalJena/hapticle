@@ -11,6 +11,7 @@
 import SwiftUI
 
 struct RadialMenuView: View {
+    @Binding var isMenuVisible: Bool
     /// Fired on commit with the chosen fidget.
     var onSelect: (FidgetID) -> Void
 
@@ -45,7 +46,7 @@ struct RadialMenuView: View {
     private var backdrop: some View {
         Rectangle()
             .fill(.ultraThinMaterial)
-            .opacity(model.isOpen ? 1 : 0)
+            .opacity(model.isOpen && isMenuVisible ? 1 : 0)
             .ignoresSafeArea()
             .allowsHitTesting(false)
             // Ease-out both ways, but exit is quicker than enter (asymmetric).
@@ -69,7 +70,8 @@ struct RadialMenuView: View {
         )
         .rotationEffect(.degrees(fanSwing(for: id)))          // hand-fan swing-in
         .scaleEffect(satelliteScale(id))
-        .opacity(model.isOpen && !committing ? 1 : 0)         // chosen dissolves as it flares
+        .opacity(model.isOpen && !committing && isMenuVisible ? 1 : 0)         // chosen dissolves as it flares
+        .disabled(!isMenuVisible)
         .position(committing && !isChosen ? siblingFallPosition(o, from: ringCenter)
                   : (model.isOpen ? target : ringCenter))    // emerge from / return to the dot
         .animation(satelliteAnimation(id), value: model.phase)
@@ -174,6 +176,7 @@ struct RadialMenuView: View {
             .scaleEffect(model.isCharging ? 1 + CGFloat(model.chargeProgress) * 0.08 : 1)
             .animation(.spring(RadialMenuConfig.hoverSpring), value: model.chargeProgress)
         }
+        .opacity(isMenuVisible ? 1.0 : 0.015)
         .contentShape(Circle())
         .gesture(drag(ringCenter: center))
         .position(center)
@@ -184,6 +187,12 @@ struct RadialMenuView: View {
     private func drag(ringCenter: CGPoint) -> some Gesture {
         DragGesture(minimumDistance: 0, coordinateSpace: .named(Self.space))
             .onChanged { value in
+                if !isMenuVisible {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        isMenuVisible = true
+                    }
+                }
+                
                 if model.isResting {
                     // Only begin charging if the touch started on the ring.
                     let d = hypot(value.startLocation.x - ringCenter.x,
@@ -201,7 +210,7 @@ struct RadialMenuView: View {
 #Preview {
     ZStack {
         Color.fidgetPrimary.ignoresSafeArea()
-        RadialMenuView(onSelect: { print("selected \($0.label)") })
+        RadialMenuView(isMenuVisible: .constant(true), onSelect: { print("selected \($0.label)") })
     }
 }
 
