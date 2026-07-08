@@ -24,6 +24,9 @@ class DialModel: ObservableObject {
     var angularVelocity: Double = 0.0
     var fingerAngle: Double = 0.0
     
+    private var startingFingerAngle: Double = 0.0
+    private var startingRotationAngle: Double = 0.0
+    
     private var displayLink: CADisplayLink?
     private var lastFrameTimestamp: CFTimeInterval = 0
     private var lastTriggeredDetentIndex: Int = 0
@@ -38,20 +41,41 @@ class DialModel: ObservableObject {
     func handleDragStarted(at point: CGPoint, dialCenter: CGPoint) {
         isDragging = true
         isPressed = true
-        fingerAngle = calculateAngle(from: point, relativeTo: dialCenter)
+        startingFingerAngle = calculateAngle(from: point, relativeTo: dialCenter)
+        startingRotationAngle = rotationAngle
+        fingerAngle = startingFingerAngle
         
         // Start simulation loop if not already running
         startDisplayLink()
     }
     
     func handleDragUpdated(to point: CGPoint, dialCenter: CGPoint) {
-        fingerAngle = calculateAngle(from: point, relativeTo: dialCenter)
+        let currentFinger = calculateAngle(from: point, relativeTo: dialCenter)
+        // Normalize rotation angle difference to (-π, π) range to handle wrapping
+        var diff = currentFinger - startingFingerAngle
+        while diff > .pi { diff -= 2.0 * .pi }
+        while diff < -.pi { diff += 2.0 * .pi }
+        
+        fingerAngle = startingRotationAngle + diff
     }
     
-    func handleDragEnded(velocity: CGSize) {
+    func handleDragEnded(velocity: CGSize, touchPoint: CGPoint, dialCenter: CGPoint) {
         isDragging = false
         isPressed = false
-        // Let it run free. CADisplayLink continues running until momentum decays.
+        
+        let rx = touchPoint.x - dialCenter.x
+        let ry = touchPoint.y - dialCenter.y
+        let r2 = max(rx * rx + ry * ry, 100.0) // prevent division by zero
+        
+        let vx = Double(velocity.width)
+        let vy = Double(velocity.height)
+        
+        // Angular velocity: ω = (rx * vy - ry * vx) / r^2
+        let computedAngularVelocity = (Double(rx) * vy - Double(ry) * vx) / Double(r2)
+        
+        // Cap the maximum initial angular velocity to prevent extreme spinning
+        let maxVelocity = 40.0 // rad/s (~6.3 rev/s)
+        self.angularVelocity = min(max(computedAngularVelocity, -maxVelocity), maxVelocity)
     }
     
     func resetPhysics() {
