@@ -1,6 +1,6 @@
 # Hapticle Sensory Managers Specification (Managers.md)
 
-This log documents the technical architecture and implementation details of the shared sensory feedback managers: **HapticsManager** and **SoundManager** located under [Hapticle/Managers/](file:///Users/moreno_m5/Projects/hapticle/Hapticle/Managers/).
+This log documents the technical architecture and implementation details of the shared sensory feedback managers: **HapticsManager** and **SoundManager** located under [Hapticle/Managers/](/hapticle/Hapticle/Managers/).
 
 These managers act as **actuators/renderers** (similar to a GPU rendering vertex streams). They hold zero physical state, perform no mechanical simulation, and carry no view references. Instead, they receive a unified physical state snapshot at each frame step and translate the raw numbers into low-latency hardware outputs.
 
@@ -8,7 +8,7 @@ These managers act as **actuators/renderers** (similar to a GPU rendering vertex
 
 ## 1. Haptics Actuator System (HapticsManager.swift)
 
-[HapticsManager.swift](file:///Users/moreno_m5/Projects/hapticle/Hapticle/Managers/HapticsManager.swift) implements a dual-engine architecture to ensure crisp feedback on physical iOS devices while maintaining compatibility inside Xcode Simulators.
+[HapticsManager.swift](/hapticle/Hapticle/Managers/HapticsManager.swift) implements a dual-engine architecture to ensure crisp feedback on physical iOS devices while maintaining compatibility inside Xcode Simulators.
 
 ### 1.1 CoreHaptics Engine (Physical Devices)
 For devices supporting the Taptic Engine, the manager initializes a `CHHapticEngine` and coordinates two types of events:
@@ -32,7 +32,7 @@ Since the Xcode iOS Simulator and some older devices do not support custom `CHHa
 
 ## 2. Low-Latency Audio Synthesizer (SoundManager.swift)
 
-[SoundManager.swift](file:///Users/moreno_m5/Projects/hapticle/Hapticle/Managers/SoundManager.swift) provides dual audio pipelines to support discrete impact clicks and continuous rotational whirrs.
+[SoundManager.swift](/hapticle/Hapticle/Managers/SoundManager.swift) provides dual audio pipelines to support discrete impact clicks and continuous rotational whirrs.
 
 ### 2.1 Low-Latency Mechanical Clicks
 For discrete clicks, rather than playing static wav/mp3 files (which require file decoding and introduce buffer-loading latency):
@@ -101,3 +101,68 @@ enum FidgetMaterial {
 }
 ```
 Expanding the managers with this enum allows the audio oscillators and LRA haptic players to scale their base frequencies and decay envelopes ($f_0$, $\lambda$, $t_{decay}$) dynamically—ensuring a unique, physically cohesive identity for each of the five fidgets.
+
+---
+
+## 5. Developer Integration Guide (For Coders)
+
+To make implementation as simple as possible, the managers support two levels of integration depending on your fidget's complexity. **You do not need a complex physics engine or state tracking for simple fidgets (like the Pen or the Blob).**
+
+---
+
+### 5.1 Level 1: The Simple One-Line API (Recommended for Pen, Blob, and Magnet)
+
+If your fidget only needs simple, discrete taps (like clicking the Pen button, splitting the Blob, or locking a Magnet pole), you can trigger haptics and sounds with **single-line calls directly inside your gesture handlers or tap actions**.
+
+#### A. Triggering Clicks (Discrete Events)
+For a button press, snap, or release:
+```swift
+// Trigger a crisp transient click (intensity: 0.0 to 1.0, sharpness: 0.0 to 1.0)
+HapticsManager.shared.playClick(intensity: 0.6, sharpness: 0.5)
+
+// Trigger the native digital-crown physical click sound
+SoundManager.shared.playSystemClick()
+```
+*Use case: Trigger this on Pen button down/up, Blob mitosis split, or Magnet pole lock.*
+
+#### B. Triggering Simple Friction (Continuous Textures)
+If you want a simple texture or rumble while dragging an object:
+```swift
+// In your drag gesture on-changed: start or update the continuous texture
+HapticsManager.shared.startContinuousFeedback(intensity: 0.3, sharpness: 0.2)
+
+// In your drag gesture on-ended: stop the texture immediately
+HapticsManager.shared.stopContinuousFeedback()
+```
+*Use case: Start rumble when stretching the Blob or sliding the Pen along its track; stop it when the finger is released.*
+
+---
+
+### 5.2 Level 2: The Advanced Physics-Bound API (Only for Dial & High-Speed Scrolling)
+
+This level is **only necessary** if your fidget is a high-speed free-spinning element (like the safe Dial) that needs real-time frequency-modulated whirrs and haptic cross-fades above $20\text{ Hz}$.
+
+If your fidget requires this:
+1.  Package your physical speed and state into `FidgetPhysicsState` every frame inside your `CADisplayLink` loop.
+2.  Pass it to the managers to let them calculate instantaneous frequency ($f_{rep}$) and handle the cross-fade:
+
+```swift
+// Inside your model's frame step update loop:
+let state = FidgetPhysicsState(
+    position: rotationAngle,
+    velocity: angularVelocity,
+    torque: netTorque,
+    crossedDetent: crossedBoundary,
+    detentIndex: currentIndex
+)
+
+HapticsManager.shared.update(with: state, model: self)
+SoundManager.shared.update(with: state, model: self)
+```
+
+### 5.3 Developer Best Practices
+*   **Keep simple things simple:** Do not write a `CADisplayLink` or compute angular frequency for the Pen or the Blob. Just use the Level 1 **One-Line API** inside your standard SwiftUI gestures.
+*   **Clean Up Damping:** Always ensure you call `HapticsManager.shared.stopContinuousFeedback()` and `SoundManager.shared.stopOscillator()` when a gesture ends, otherwise the phone will vibrate endlessly.
+*   **Prepare/Pre-Warm:** Both managers automatically pre-warm and handle fallbacks for the Xcode Simulator, so you can test your view code safely in Xcode Previews.
+
+

@@ -61,7 +61,7 @@ This keeps our logic clean, highly performant, and 100% testable.
 
 ## 4. Implementation Plan
 
-To implement the physics and interactive behaviors of the safe dial, we will execute a 4-phase plan in accordance with [DD.md](file:///Users/moreno_m5/Projects/hapticle/Documentation/DD.md) and [TDD.md](file:///Users/moreno_m5/Projects/hapticle/Documentation/TDD.md):
+To implement the physics and interactive behaviors of the safe dial, we will execute a 4-phase plan in accordance with [DD.md](/hapticle/Documentation/DD.md) and [TDD.md](/hapticle/Documentation/TDD.md):
 
 ### Phase 1: Touch Angle & Leverage Coordinate Mapping
 *   **Coordinate Translation:** In `DialView`, translate the drag coordinates relative to the dial center $(155, 155)$.
@@ -466,7 +466,7 @@ This framework connects the physics loop directly to hardware outputs, convertin
 
 ## 11. Current Implementation Details
 
-The current implementation of the dial in the codebase under [Hapticle/Fidgets/Dial/](file:///Users/moreno_m5/Projects/hapticle/Hapticle/Fidgets/Dial/) has been optimized to match these specifications:
+The current implementation of the dial in the codebase under [Hapticle/Fidgets/Dial/](/hapticle/Hapticle/Fidgets/Dial/) has been optimized to match these specifications:
 
 ### 11.1 Visual Layer Refactoring (DialView.swift)
 *   **Shadow Stability Solution:** Rather than rotating any shadow-casting circles, we keep all background circular layers 100% static. The **Outer Circular Rim** is drawn as a static circle with diameter `300` and `stroke: 25`, holding static top-left highlight and bottom-right shadow modifiers.
