@@ -15,31 +15,36 @@ struct BlobView: View {
                 BlobBackgroundGrid(size: geo.size, colorScheme: colorScheme)
                     .allowsHitTesting(false)
 
-                // ── 3. Stretch connector (stadium shape while dragging) ──────
-                if model.isDragging,
-                   let id = model.dragBlobID,
-                   let blob = model.blobs.first(where: { $0.id == id }) {
+                // ── 3. Jelly blobs — one continuous soft-body shape each, no
+                //      seam between "resting circle" and "stretch connector".
+                //      TimelineView drives a continuous idle wobble so a blob
+                //      never looks static, even untouched.
+                TimelineView(.animation) { context in
+                    let wobblePhase = CGFloat(
+                        context.date.timeIntervalSinceReferenceDate * 0.6
+                    )
 
-                    StadiumShape(from: blob.center,
-                                 to: model.fingerPosition,
-                                 radius: blob.radius)
-                        .fill(Color.accent)
-                        // Subtle neumorphic depth on the stretch body.
-                        .shadow(color: Color.white.opacity(0.28), radius: 4, x: -2, y: -2)
-                        .shadow(color: Color(red: 0.537, green: 0.141, blue: 0.141).opacity(0.50),
-                                radius: 7, x: 3, y: 4)
-                }
+                    ForEach(model.blobs) { blob in
+                        let isActiveDrag = model.isDragging && model.dragBlobID == blob.id
+                        let tip = isActiveDrag ? model.visualTipPosition : blob.center
+                        let tension: CGFloat = isActiveDrag
+                            ? min(hypot(model.fingerPosition.x - blob.center.x,
+                                        model.fingerPosition.y - blob.center.y)
+                                  / model.mitosisThreshold, 1.0)
+                            : 0
 
-                // ── 4. Blob circles ─────────────────────────────────────────
-                ForEach(model.blobs) { blob in
-                    Circle()
-                        .fill(Color.accent)
-                        .frame(width: blob.radius * 2, height: blob.radius * 2)
-                        // Top-left highlight → lower-right shadow gives the blob weight.
-                        .shadow(color: Color.white.opacity(0.28), radius: 4, x: -2, y: -2)
-                        .shadow(color: Color(red: 0.537, green: 0.141, blue: 0.141).opacity(0.50),
-                                radius: 7, x: 3, y: 4)
-                        .position(blob.center)
+                        JellyBlobShape(anchor: blob.center,
+                                       tip: tip,
+                                       baseRadius: blob.radius,
+                                       tension: tension,
+                                       wobblePhase: wobblePhase)
+                            .fill(Color.accent)
+                            // Top-left highlight → lower-right shadow gives the blob weight.
+                            .shadow(color: Color.white.opacity(0.28), radius: 4, x: -2, y: -2)
+                            .shadow(color: Color(red: 0.537, green: 0.141, blue: 0.141).opacity(0.50),
+                                    radius: 7, x: 3, y: 4)
+                    }
+                    .animation(.easeOut(duration: 0.12), value: model.blobs.map(\.id))
                 }
             }
             .contentShape(Rectangle())     // entire canvas receives touch events
@@ -137,74 +142,6 @@ struct BlobBackgroundGrid: View {
         .opacity(0.5)
         .drawingGroup()     // flatten the grid to a single Metal texture — avoids
                             // 60+ individual shadow composites on every frame.
-    }
-}
-
-// MARK: - Stadium Shape
-
-/// A smooth convex hull connecting two circles: the anchor (blob.center) and
-/// the fingertip. Mathematically: two tangent arcs joined by straight tangent
-/// lines — equivalent to a variable-length capsule rotated toward the finger.
-///
-/// Implements `animatableData` so SwiftUI can interpolate the shape smoothly
-/// when `from` or `to` move frame-to-frame, eliminating any jumpiness.
-struct StadiumShape: Shape {
-    var from: CGPoint
-    var to: CGPoint
-    var radius: CGFloat
-
-    // Smooth shape morphing via SwiftUI's implicit animation system.
-    var animatableData: AnimatablePair<AnimatablePair<CGFloat, CGFloat>,
-                                       AnimatablePair<CGFloat, CGFloat>> {
-        get {
-            AnimatablePair(AnimatablePair(from.x, from.y),
-                           AnimatablePair(to.x, to.y))
-        }
-        set {
-            from = CGPoint(x: newValue.first.first,  y: newValue.first.second)
-            to   = CGPoint(x: newValue.second.first, y: newValue.second.second)
-        }
-    }
-
-    func path(in rect: CGRect) -> Path {
-        let dx   = to.x - from.x
-        let dy   = to.y - from.y
-        let dist = hypot(dx, dy)
-
-        // Degenerate case — collapsed to a single circle.
-        guard dist > 0.5 else {
-            return Path(ellipseIn: CGRect(
-                x: from.x - radius, y: from.y - radius,
-                width: radius * 2,  height: radius * 2
-            ))
-        }
-
-        // Perpendicular unit offset (rotated 90° from the stretch direction).
-        let px = -dy / dist * radius
-        let py =  dx / dist * radius
-        let angle = atan2(dy, dx)
-
-        // Stadium construction:
-        //   1. Move to the perpendicular-offset of `from` (left side, screen coords).
-        //   2. Line along the left tangent to the perpendicular-offset of `to`.
-        //   3. Arc around `to` clockwise (far cap, CW in screen coords).
-        //   4. Line along the right tangent back toward `from`.
-        //   5. Arc around `from` counter-clockwise (near cap, CCW in screen coords).
-        //   6. closeSubpath — zero-length line back to step 1.
-        var path = Path()
-        path.move(to: CGPoint(x: from.x + px, y: from.y + py))
-        path.addLine(to: CGPoint(x: to.x + px, y: to.y + py))
-        path.addArc(center: to, radius: radius,
-                    startAngle: .radians(angle + .pi / 2),
-                    endAngle:   .radians(angle - .pi / 2),
-                    clockwise: true)
-        path.addLine(to: CGPoint(x: from.x - px, y: from.y - py))
-        path.addArc(center: from, radius: radius,
-                    startAngle: .radians(angle - .pi / 2),
-                    endAngle:   .radians(angle + .pi / 2),
-                    clockwise: false)
-        path.closeSubpath()
-        return path
     }
 }
 

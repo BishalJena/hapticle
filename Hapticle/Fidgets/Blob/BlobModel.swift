@@ -39,6 +39,12 @@ class BlobModel: ObservableObject {
     /// Current finger position in view-coordinate space.
     @Published var fingerPosition: CGPoint = .zero
 
+    /// Spring-lagged visual tip used only for rendering the jelly stretch —
+    /// purely cosmetic viscosity. Tension/haptics/mitosis math continues to
+    /// use raw `fingerPosition` so gameplay feel is unchanged.
+    @Published var visualTipPosition: CGPoint = .zero
+    private var visualTipVelocity: CGPoint = .zero
+
     // MARK: - Tunable Parameters
 
     /// Distance (pt) from blob center at which mitosis fires.
@@ -77,6 +83,8 @@ class BlobModel: ObservableObject {
         guard let blob = nearestBlob(to: location, maxDistance: 66) else { return }
         dragBlobID = blob.id
         fingerPosition = location
+        visualTipPosition = location   // snap-init so it doesn't spring in from .zero
+        visualTipVelocity = .zero
         isDragging = true
         startDisplayLink()
 
@@ -121,6 +129,8 @@ class BlobModel: ObservableObject {
         isDragging = false
         dragBlobID = nil
         fingerPosition = .zero
+        visualTipPosition = .zero
+        visualTipVelocity = .zero
         // Display link keeps running to damp any post-mitosis recoil.
     }
 
@@ -162,6 +172,8 @@ class BlobModel: ObservableObject {
         isDragging = false
         dragBlobID = nil
         fingerPosition = .zero
+        visualTipPosition = .zero
+        visualTipVelocity = .zero
 
         // Organic "pop" — low sharpness, dull transient (not a crisp click).
         HapticsManager.shared.stopContinuousFeedback()
@@ -249,6 +261,22 @@ class BlobModel: ObservableObject {
             blobs[i].velocityY *= damp
             blobs[i].center.x  += blobs[i].velocityX * CGFloat(dt)
             blobs[i].center.y  += blobs[i].velocityY * CGFloat(dt)
+        }
+
+        // Overdamped spring pulling the visual tip toward the raw finger
+        // position — purely cosmetic viscosity ("thick honey" drag lag).
+        // Does not affect tension/haptics/mitosis, which use fingerPosition.
+        if isDragging {
+            let stiffness: CGFloat = 220
+            let dampingRatio: CGFloat = 1.4   // > 1 = overdamped = slow, sticky settle
+            let damping = dampingRatio * 2 * sqrt(stiffness)
+
+            let ddx = fingerPosition.x - visualTipPosition.x
+            let ddy = fingerPosition.y - visualTipPosition.y
+            visualTipVelocity.x += (stiffness * ddx - damping * visualTipVelocity.x) * CGFloat(dt)
+            visualTipVelocity.y += (stiffness * ddy - damping * visualTipVelocity.y) * CGFloat(dt)
+            visualTipPosition.x += visualTipVelocity.x * CGFloat(dt)
+            visualTipPosition.y += visualTipVelocity.y * CGFloat(dt)
         }
 
         checkMerge()
