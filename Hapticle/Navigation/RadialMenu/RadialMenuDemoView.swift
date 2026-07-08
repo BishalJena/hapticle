@@ -10,7 +10,7 @@
 import SwiftUI
 
 struct RadialMenuDemoView: View {
-    @State private var current: FidgetID = .dial
+    @State private var current: FidgetID = .pen
 
     var body: some View {
         ZStack {
