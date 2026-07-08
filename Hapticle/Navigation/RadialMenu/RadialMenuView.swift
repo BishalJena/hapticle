@@ -38,8 +38,10 @@ struct RadialMenuView: View {
         .onAppear {
             model.onSelect = onSelect
             breathe = true
-            withAnimation(.linear(duration: 4.0).repeatForever(autoreverses: false)) {
-                textRotation = 360.0
+            DispatchQueue.main.async {
+                withAnimation(.linear(duration: 4.0).repeatForever(autoreverses: false)) {
+                    textRotation = 360.0
+                }
             }
         }
     }
@@ -156,8 +158,7 @@ struct RadialMenuView: View {
                                height: RadialMenuConfig.chargeIndicatorDiameter * CGFloat(model.chargeProgress))
                     
                     // C. Rotating Circular Instruction Text
-                    CircularTextView()
-                        .rotationEffect(.degrees(textRotation))
+                    CircularTextView(rotation: textRotation)
                 }
                 
                 // Scaled central toggle Icon/Menu
@@ -211,10 +212,16 @@ struct RadialMenuView: View {
 }
 
 /// Helper view that displays text characters evenly distributed along a circular boundary,
-/// indicating the hold-to-charge action.
-struct CircularTextView: View {
+/// rotating continuously to indicate the hold-to-charge action.
+struct CircularTextView: View, Animatable {
     private let characters = Array("HOLD FOR MENU · HOLD FOR MENU · ") // 32 characters total
-    private let radius: CGFloat = 42.0                                // Stays 12px above the 46x46 indicator (radius 23 + 12 + font offset)
+    private let radius: CGFloat = (RadialMenuConfig.chargeIndicatorDiameter/2)+12                          // Fits outside the 46x46 boundary
+    var rotation: Double
+    
+    var animatableData: Double {
+        get { rotation }
+        set { rotation = newValue }
+    }
     
     var body: some View {
         ZStack {
@@ -223,12 +230,13 @@ struct CircularTextView: View {
                 let angle = Double(index) * (360.0 / Double(characters.count))
                 
                 Text(char)
-                    .font(.system(size: 9.5, weight: .bold, design: .monospaced))
+                    .font(.system(size: 12, weight: .medium, design: .monospaced))
                     .foregroundColor(Color.accent)
                     .offset(y: -radius)
                     .rotationEffect(.degrees(angle))
             }
         }
+        .rotationEffect(.degrees(rotation))
     }
 }
 
