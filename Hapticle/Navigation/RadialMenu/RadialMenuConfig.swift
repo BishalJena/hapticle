@@ -8,28 +8,38 @@
 
 import CoreGraphics
 import Foundation
+import SwiftUI
 
-/// The five fidget slots the menu selects between. Placeholder labels for now
-/// (A–E); these map to Pen / Dial / Ticket / Magnet / Blob once those exist.
 enum FidgetID: Int, CaseIterable, Identifiable {
-    case a, b, c, d, e
+    case pen, dial, ticket, magnet, blob
 
     var id: Int { rawValue }
 
-    /// Placeholder glyph shown inside the satellite and on the demo screen.
+    /// Asset name shown inside the satellite.
+    var assetName: String {
+        switch self {
+        case .pen: "Icon/Pen"
+        case .dial: "Icon/Dial"
+        case .ticket: "Icon/Ticket"
+        case .magnet: "Icon/Magnet"
+        case .blob: "Icon/Blob"
+        }
+    }
+
+    /// Display label.
     var label: String {
         switch self {
-        case .a: "A"
-        case .b: "B"
-        case .c: "C"
-        case .d: "D"
-        case .e: "E"
+        case .pen: "Pen"
+        case .dial: "Dial"
+        case .ticket: "Ticket"
+        case .magnet: "Magnet"
+        case .blob: "Blob"
         }
     }
 
     /// Angle (degrees, standard math convention: 0° = right, CCW positive) at
     /// which this node sits on the dome. Evenly spaced every 45° across 180°,
-    /// so every node lands above the home ring: A=180 (left) … E=0 (right).
+    /// so every node lands above the home ring: Pen=180 (left) … Blob=0 (right).
     var domeAngleDegrees: Double {
         180 - Double(rawValue) * 45
     }
@@ -42,9 +52,11 @@ enum RadialMenuConfig {
     /// Diameter of the resting/home ring button.
     static let ringDiameter: CGFloat = 64
     /// Diameter of each satellite node.
-    static let satelliteDiameter: CGFloat = 56
+    static let satelliteDiameter: CGFloat = 46
+    /// Diameter of charge indicator
+    static let chargeIndicatorDiameter: CGFloat = 64
     /// Distance from ring center to each satellite center when fully bloomed.
-    static let bloomRadius: CGFloat = 115
+    static let bloomRadius: CGFloat = 100
     /// How far above the bottom safe area the ring center sits.
     static let bottomInset: CGFloat = 96
     /// A drag point within this distance of a node's center counts as hovering it.
@@ -75,7 +87,7 @@ enum RadialMenuConfig {
     /// appears from nothing; the dot is their spatial origin).
     static let satelliteStartScale: CGFloat = 0.5
     /// Scale applied to the satellite the finger is hovering (magnetize).
-    static let hoverScale: CGFloat = 1.18
+    static let hoverScale: CGFloat = 1.25
     /// Scale applied to non-hovered siblings while another is hovered (recede).
     static let siblingScale: CGFloat = 0.9
     /// Chosen node flares to this scale as it commits (hero into the screen).
@@ -130,3 +142,4 @@ struct SpringParams {
     let duration: Double
     let bounce: Double
 }
+
