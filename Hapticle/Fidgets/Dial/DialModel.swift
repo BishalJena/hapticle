@@ -210,8 +210,8 @@ class DialModel: ObservableObject {
             let f_rep = (speed * Double(detentCount)) / (2.0 * .pi)
             
             // Apply transient-to-continuous cross-fade factor (alpha)
-            // Discrete under 10Hz, morphs to continuous between 10Hz and 20Hz
-            let alpha = min(max((f_rep - 10.0) / 10.0, 0.0), 1.0)
+            // Discrete under 4Hz, morphs to continuous between 4Hz and 12Hz
+            let alpha = min(max((f_rep - 4.0) / 8.0, 0.0), 1.0)
             
             if alpha < 1.0 {
                 // Synthesize transient click
@@ -224,7 +224,7 @@ class DialModel: ObservableObject {
         // 4. Process Continuous Friction & Whirr modulation
         let speed = abs(angularVelocity)
         let f_rep = (speed * Double(detentCount)) / (2.0 * .pi)
-        let alpha = min(max((f_rep - 10.0) / 10.0, 0.0), 1.0)
+        let alpha = min(max((f_rep - 4.0) / 8.0, 0.0), 1.0)
         
         if speed > 0.05 {
             // Modulate continuous haptic rumble (surface friction + whirr intensity)
