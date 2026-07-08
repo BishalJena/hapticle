@@ -226,18 +226,24 @@ class DialModel: ObservableObject {
         let f_rep = (speed * Double(detentCount)) / (2.0 * .pi)
         let alpha = min(max((f_rep - 10.0) / 10.0, 0.0), 1.0)
         
-        if alpha > 0.0 && speed > 0.05 {
-            // Modulate continuous haptic rumble
-            let intensity = (speed / 15.0) * alpha * 0.4
+        if speed > 0.05 {
+            // Modulate continuous haptic rumble (surface friction + whirr intensity)
+            // Even at slow speeds, we want a base surface friction rumble (intensity ~0.08)
+            let frictionIntensity = min((speed / 15.0) * 0.12 + 0.08, 0.3)
+            let intensity = frictionIntensity + (speed / 15.0) * alpha * 0.4
             let sharpness = baseHapticSharpness + 0.3 * alpha
             HapticsManager.shared.startContinuousFeedback(intensity: min(intensity, 1.0), sharpness: min(sharpness, 1.0))
             
-            // Modulate continuous audio pitch whirr (fundamental frequency maps to f_rep)
-            // Multiple resonances simulated by shifting pitch by a multiplier
-            let volume = Float(alpha * min(speed / 15.0, 1.0) * 0.05)
-            SoundManager.shared.startOscillator(frequency: Float(f_rep * 4.0), volume: volume)
+            if alpha > 0.0 {
+                // Modulate continuous audio pitch whirr
+                let volume = Float(alpha * min(speed / 15.0, 1.0) * 0.05)
+                SoundManager.shared.startOscillator(frequency: Float(f_rep * 4.0), volume: volume)
+            } else {
+                SoundManager.shared.stopOscillator()
+            }
         } else {
-            HapticsManager.shared.stopContinuousFeedback()
+            // Mute continuous rumble instead of destroying the player immediately
+            HapticsManager.shared.startContinuousFeedback(intensity: 0.0, sharpness: 0.0)
             SoundManager.shared.stopOscillator()
         }
         

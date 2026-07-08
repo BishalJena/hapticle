@@ -26,16 +26,16 @@ struct DialView: View {
                         .stroke(Color.fidgetPrimary, lineWidth: 25)
                         .frame(width: 300, height: 300)
                         .shadow(
-                            color: Color.shadow.opacity(model.isPressed ? 0.5 : 0.8),
-                            radius: model.isPressed ? 3.5 : 5.0,
-                            x: model.isPressed ? 3.5 : 5.0,
-                            y: model.isPressed ? 3.5 : 5.0
+                            color: Color.shadow.opacity(0.8),
+                            radius: 5.0,
+                            x: 5.0,
+                            y: 5.0
                         )
                         .shadow(
-                            color: Color.highlight.opacity(model.isPressed ? 0.6 : 0.9),
-                            radius: model.isPressed ? 3.5 : 5.0,
-                            x: model.isPressed ? -3.5 : -5.0,
-                            y: model.isPressed ? -3.5 : -5.0
+                            color: Color.highlight.opacity(0.9),
+                            radius: 5.0,
+                            x: -5.0,
+                            y: -5.0
                         )
                     
                     // 2. Rotating Foreground Markings (Only the ticks and Red Dot spin)
@@ -231,7 +231,7 @@ struct DialView: View {
             let isActive = model.isDragging || abs(model.angularVelocity) > 0.05
             onInteractionChange?(isActive)
         }
-        .onChange(of: model.isDragging) { newValue in
+        .onChange(of: model.isDragging) { oldValue, newValue in
             onInteractionChange?(newValue || abs(model.angularVelocity) > 0.05)
         }
     }
