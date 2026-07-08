@@ -2,6 +2,7 @@ import SwiftUI
 
 struct DialView: View {
     @StateObject private var model = DialModel()
+    var onInteractionChange: ((Bool) -> Void)? = nil
     
     var body: some View {
         ZStack {
@@ -90,6 +91,13 @@ struct DialView: View {
                 Spacer()
             }
             .frame(width: 402, height: 874)
+        }
+        .onReceive(model.$rotationAngle) { _ in
+            let isActive = model.isDragging || abs(model.angularVelocity) > 0.05
+            onInteractionChange?(isActive)
+        }
+        .onChange(of: model.isDragging) { newValue in
+            onInteractionChange?(newValue || abs(model.angularVelocity) > 0.05)
         }
     }
 }
