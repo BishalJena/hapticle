@@ -156,7 +156,8 @@ struct RadialMenuView: View {
                                height: RadialMenuConfig.chargeIndicatorDiameter * CGFloat(model.chargeProgress))
                     
                     // C. Rotating Circular Instruction Text
-                    CircularTextView(rotation: textRotation)
+                    CircularTextView()
+                        .rotationEffect(.degrees(textRotation))
                 }
                 
                 // Scaled central toggle Icon/Menu
@@ -210,11 +211,10 @@ struct RadialMenuView: View {
 }
 
 /// Helper view that displays text characters evenly distributed along a circular boundary,
-/// rotating continuously to indicate the hold-to-charge action.
+/// indicating the hold-to-charge action.
 struct CircularTextView: View {
     private let characters = Array("HOLD FOR MENU · HOLD FOR MENU · ") // 32 characters total
-    private let radius: CGFloat = 34.5                                // Fits outside the 46x46 boundary
-    let rotation: Double
+    private let radius: CGFloat = 42.0                                // Stays 12px above the 46x46 indicator (radius 23 + 12 + font offset)
     
     var body: some View {
         ZStack {
@@ -223,13 +223,12 @@ struct CircularTextView: View {
                 let angle = Double(index) * (360.0 / Double(characters.count))
                 
                 Text(char)
-                    .font(.system(size: 7.2, weight: .black, design: .monospaced))
+                    .font(.system(size: 9.5, weight: .bold, design: .monospaced))
                     .foregroundColor(Color.accent)
                     .offset(y: -radius)
                     .rotationEffect(.degrees(angle))
             }
         }
-        .rotationEffect(.degrees(rotation))
     }
 }
 
