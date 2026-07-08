@@ -137,6 +137,21 @@ struct RadialMenuView: View {
 //                        lineWidth: 1.0
 //                    )
                 
+                // Red Charge Indicators (Behind Menu Image)
+                if model.isCharging || model.isOpen {
+                    // A. Static target boundary ring
+                    Circle()
+                        .stroke(Color.accent.opacity(0.45), lineWidth: 1.5)
+                        .frame(width: RadialMenuConfig.satelliteDiameter,
+                               height: RadialMenuConfig.satelliteDiameter)
+                    
+                    // B. Linearly growing progress circle
+                    Circle()
+                        .fill(Color.accent.opacity(0.22))
+                        .frame(width: RadialMenuConfig.satelliteDiameter * CGFloat(model.chargeProgress),
+                               height: RadialMenuConfig.satelliteDiameter * CGFloat(model.chargeProgress))
+                }
+                
                 // Scaled central toggle Icon/Menu
                 Image("Icon/Menu")
                     .resizable()

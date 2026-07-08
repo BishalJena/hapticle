@@ -85,7 +85,7 @@ enum RadialMenuConfig {
     /// appears from nothing; the dot is their spatial origin).
     static let satelliteStartScale: CGFloat = 0.5
     /// Scale applied to the satellite the finger is hovering (magnetize).
-    static let hoverScale: CGFloat = 1.18
+    static let hoverScale: CGFloat = 1.25
     /// Scale applied to non-hovered siblings while another is hovered (recede).
     static let siblingScale: CGFloat = 0.9
     /// Chosen node flares to this scale as it commits (hero into the screen).
