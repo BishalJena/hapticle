@@ -42,7 +42,7 @@ final class TicketModel: ObservableObject {
     private let leftPerforationAnchor = UnitPoint(x: 0.08, y: 0)
     private let rightPerforationAnchor = UnitPoint(x: 0.92, y: 0)
     
-    private let tearThreshold: CGFloat = 25.0
+    private let tearThreshold: CGFloat = 0.5
     private let angularDeadzone: Double = 15.0
     private let autoTearRotationThreshold: Double = 20.0
     
@@ -109,7 +109,7 @@ final class TicketModel: ObservableObject {
         let currentRotation = abs(computeDynamicRotation(rawTranslation: translation))
         let tearState = determineKinematicState(translation: translation)
         
-        // --- CONTINUOUS ODOMETER LOGIC (Syncs Haptics & Audio) ---
+        // --- CONTINUOUS ODOMETER LOGIC ---
         let deltaX = abs(translation.width - previousDragTranslation.width)
         let deltaY = abs(translation.height - previousDragTranslation.height)
         let activeDelta = tearState == .straight ? deltaY : deltaX
@@ -117,34 +117,30 @@ final class TicketModel: ObservableObject {
         hapticOdometer += activeDelta
         previousDragTranslation = translation
         
-        // Ticks are closer for granular side-tearing (zipper effect)
         let tickInterval: CGFloat = tearState == .straight ? 35.0 : 20.0
         
         if hapticOdometer >= tickInterval {
             hapticOdometer -= tickInterval
             
-            // Firing both actuators simultaneously for frame-perfect sync
-            if tearState == .straight {
-                // Explosive, blunt tear
-                HapticsManager.shared.playClick(intensity: 2.0, sharpness: 0.3)
-            } else {
-                // Granular, crisp zipper tear
-                HapticsManager.shared.playClick(intensity: 1.0, sharpness: 0.8)
+            // Only play "Zipper" feedback for diagonal (hinge) tears.
+            // Straight down drags are silent until the final snap.
+            if tearState != .straight {
+                HapticsManager.shared.playClick(intensity: 2.5, sharpness: 1.0)
+                SoundManager.shared.playSystemClick()
             }
-            
-            // The pop sound is triggered exactly with the haptic event
-            SoundManager.shared.playSystemClick()
         }
         // --------------------------------------------------------
         
+        // AUTO-RIP LOGIC:
+        // This threshold check triggers the severance automatically
+        // the moment you hit the limit, no lift required.
         if hardLimitY >= tearThreshold || currentRotation >= autoTearRotationThreshold {
             hasSeveredCurrentDrag = true
-            executeSeveranceProtocol(dampenedY: hardLimitY, rawTranslation: translation)
+            executeSeveranceProtocol(dampenedY: hardLimitY, rawTranslation: translation, isStraightTear: tearState == .straight)
         }
     }
     
     func processDragEnded(translation: CGSize) {
-        // Tension hum removed; no stopOscillator needed here.
         previousDragTranslation = .zero
         hapticOdometer = 0
         
@@ -153,8 +149,9 @@ final class TicketModel: ObservableObject {
             return
         }
         
+        // If they lift finger before auto-rip threshold, treat as manual tear
         if translation.height > 10 {
-            executeSeveranceProtocol(dampenedY: draggedOffset.height, rawTranslation: translation)
+            executeSeveranceProtocol(dampenedY: draggedOffset.height, rawTranslation: translation, isStraightTear: false)
         } else {
             withAnimation(.spring(response: 0.45, dampingFraction: 0.75)) {
                 draggedOffset = .zero
@@ -163,10 +160,25 @@ final class TicketModel: ObservableObject {
         }
     }
     
-    private func executeSeveranceProtocol(dampenedY: CGFloat, rawTranslation: CGSize) {
-        // Trigger high-intensity final snap
-        HapticsManager.shared.playClick(intensity: 3.0, sharpness: 0.5)
-        SoundManager.shared.playSystemClick()
+    private func executeSeveranceProtocol(dampenedY: CGFloat, rawTranslation: CGSize, isStraightTear: Bool = false) {
+        if isStraightTear {
+            // --- EXPLOSIVE BURST LOGIC ---
+            // Chain 3 haptics tightly to create a "crackle" effect
+            for i in 0..<3 {
+                DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.03) {
+                    // Slightly decaying intensity gives the burst a "natural" energy falloff
+                    let decay = Double(i) * 0.2
+                    HapticsManager.shared.playClick(intensity: 3.0 - decay, sharpness: 1.0)
+                }
+            }
+            // Anchor the 3 haptics with one clean, physical sound pop
+            SoundManager.shared.playSystemClick()
+            // ----------------------------
+        } else {
+            // Standard snappy hinge tear (Single pop)
+            HapticsManager.shared.playClick(intensity: 2.0, sharpness: 0.5)
+            SoundManager.shared.playSystemClick()
+        }
         
         let terminalTicketBaseY = restOffset + CGFloat(activeSequence.count - 1) * ticketHeight
         let exactDetachmentY = terminalTicketBaseY + dampenedY

@@ -17,6 +17,57 @@ struct TicketHeightKey: PreferenceKey {
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
 }
 
+/// A standalone component rendering the full ticket visual asset stack.
+struct Ticket: View {
+    var body: some View {
+        Image("Ticket")
+            .renderingMode(.template)
+            .foregroundStyle(Color.accent)
+            .background(
+                GeometryReader { geo in
+                    Color.clear.preference(key: TicketHeightKey.self, value: geo.size.height)
+                }
+            )
+            .overlay {
+                ZStack {
+                    Image("TicketInnerSquare")
+                        .renderingMode(.template)
+                        .foregroundStyle(Color.accent)
+                        .shadow(color: Color.accentHighlight, radius: 6, x: -6, y: -6)
+                        .shadow(color: .accentShadow, radius: 6, x: 6, y: 6)
+                    
+                    Image("TicketText")
+                        .renderingMode(.template)
+                        .foregroundStyle(Color.accent)
+                        .shadow(color: Color.accentHighlight.opacity(0.5), radius: 6, x: -3, y: -3)
+                        .shadow(color: .accentShadow.opacity(1.0), radius: 3, x: 3, y: 3)
+                        .padding(.leading, 10)
+                    
+                    Image("TicketAdmitText")
+                        .renderingMode(.template)
+                        .foregroundStyle(Color.accent)
+                        .shadow(color: Color.accentHighlight.opacity(0.5), radius: 3, x: -1, y: -1)
+                        .shadow(color: .accentShadow.opacity(1.0), radius: 1.5, x: 1, y: 1)
+                        .padding(.trailing, 80)
+                    
+                    Image("TicketHapticleText")
+                        .renderingMode(.template)
+                        .foregroundStyle(Color.accent)
+                        .shadow(color: Color.accentHighlight.opacity(0.5), radius: 5, x: -1, y: -1)
+                        .shadow(color: .accentShadow.opacity(1.0), radius: 1.5, x: 1, y: 1)
+                        .padding(.leading, 135)
+                    
+                    Image("TicketNumberText")
+                        .renderingMode(.template)
+                        .foregroundStyle(Color.accent)
+                        .shadow(color: Color.accentHighlight.opacity(0.5), radius: 3, x: -1, y: -1)
+                        .shadow(color: .accentShadow.opacity(1.0), radius: 1.5, x: 1, y: 1)
+                        .padding(.trailing, 135)
+                }
+            }
+    }
+}
+
 extension View {
     /// Applies a customizable inner shadow effect using an overlay and mask combination.
     func innerShadowShift<Mask: View>(
@@ -57,7 +108,7 @@ struct TicketView: View {
                             Color.clear.frame(height: max(0, model.revealBoundaryY))
                             Color.white
                         }
-                        .ignoresSafeArea()
+                            .ignoresSafeArea()
                     )
             }
             .ignoresSafeArea()
@@ -138,7 +189,7 @@ struct TicketView: View {
         Image("MachineOverhang")
             .renderingMode(.template)
             .foregroundStyle(Color.fidgetPrimary)
-            .shadow(color: Color.highlight.opacity(0.25), radius: 6, x: -3, y: -3)
+            .shadow(color: Color.highlight.opacity(1.0), radius: 6, x: -3, y: -3)
             .shadow(color: .shadow.opacity(0.25), radius: 3, x: 3, y: 3)
     }
     
@@ -146,7 +197,7 @@ struct TicketView: View {
         Image("MachineHole")
             .renderingMode(.template)
             .foregroundStyle(Color.fidgetPrimary)
-            .innerShadowShift(mask: Image("MachineHole"), color: Color.shadow.opacity(0.25), blur: 3, x: 0, y: -3)
+            .innerShadowShift(mask: Image("MachineHole"), color: Color.shadow.opacity(0.50), blur: 3, x: 0, y: -3)
             .innerShadowShift(mask: Image("MachineHole"), color: Color.highlight.opacity(0.25), blur: 5, x: 0, y: 7)
     }
 }
@@ -165,12 +216,7 @@ struct AutoReplenishingTicketRoll: View {
                 ForEach(Array(model.activeSequence.enumerated()), id: \.element) { index, _ in
                     let isActiveTerminalTicket = index == model.activeSequence.count - 1
                     
-                    Image("Ticket")
-                        .background(
-                            GeometryReader { geo in
-                                Color.clear.preference(key: TicketHeightKey.self, value: geo.size.height)
-                            }
-                        )
+                    Ticket()
                         .offset(x: 0, y: isActiveTerminalTicket ? model.draggedOffset.height : 0)
                         .rotationEffect(
                             isActiveTerminalTicket ? .degrees(model.computeDynamicRotation(rawTranslation: model.activeDragTranslation)) : .zero,
@@ -203,7 +249,7 @@ struct FallingTicketView: View {
     @State private var rotationShift: Double = 0.0
     
     var body: some View {
-        Image("Ticket")
+        Ticket()
             .offset(
                 x: ticket.initialOffset.width + fallDriftX,
                 y: ticket.initialOffset.height + fallDropY
