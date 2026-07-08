@@ -11,8 +11,8 @@ class DialModel: ObservableObject {
     @Published var isPressed: Bool = false
     
     // MARK: - Tunable Physics Parameters (Exposed to Debug View)
-    @Published var mass: Double = 0.2                     // Dial Mass (controls inertia)
-    @Published var damping: Double = 3.0                  // Damping Coefficient (friction)
+    @Published var mass: Double = 2.0                     // Dial Mass (controls inertia)
+    @Published var damping: Double = 1.5                 // Damping Coefficient (friction)
     @Published var springConstant: Double = 350.0          // Touch spring coupling constant
     @Published var detentTorqueStrength: Double = 25.0     // Potential energy well depth
     @Published var detentCount: Int = 24                  // Number of teeth (ticks) on the gear
@@ -214,8 +214,8 @@ class DialModel: ObservableObject {
             let alpha = min(max((f_rep - 16.0) / 12.0, 0.0), 1.0)
             
             if alpha < 1.0 {
-                // Synthesize transient click
-                let intensity = baseHapticIntensity * (1.0 - alpha)
+                // Synthesize transient click with a gentler quadratic fade-out
+                let intensity = baseHapticIntensity * (1.0 - alpha * alpha)
                 HapticsManager.shared.playClick(intensity: intensity, sharpness: baseHapticSharpness)
                 SoundManager.shared.playSystemClick()
             }
@@ -230,7 +230,8 @@ class DialModel: ObservableObject {
             // Modulate continuous haptic rumble (surface friction + whirr intensity)
             // Even at slow speeds, we want a base surface friction rumble (intensity ~0.15)
             let frictionIntensity = min((speed / 15.0) * 0.2 + 0.15, 0.4)
-            let intensity = frictionIntensity + (speed / 10.0) * alpha * 0.6
+            // Use sqrt(alpha) for a rapid, early fade-in of the whirr to bridge the transition zone
+            let intensity = frictionIntensity + (speed / 10.0) * sqrt(alpha) * 0.6
             let sharpness = baseHapticSharpness + 0.4 * alpha
             HapticsManager.shared.startContinuousFeedback(intensity: min(intensity, 1.0), sharpness: min(sharpness, 1.0))
             
