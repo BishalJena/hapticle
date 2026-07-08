@@ -53,6 +53,8 @@ enum RadialMenuConfig {
     static let ringDiameter: CGFloat = 64
     /// Diameter of each satellite node.
     static let satelliteDiameter: CGFloat = 46
+    /// Diameter of charge indicator
+    static let chargeIndicatorDiameter: CGFloat = 64
     /// Distance from ring center to each satellite center when fully bloomed.
     static let bloomRadius: CGFloat = 100
     /// How far above the bottom safe area the ring center sits.

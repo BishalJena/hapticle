@@ -16,6 +16,7 @@ struct RadialMenuView: View {
 
     @State private var model = RadialMenuModel()
     @State private var breathe = false
+    @State private var textRotation = 0.0
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private static let space = "radialMenu"
@@ -37,6 +38,9 @@ struct RadialMenuView: View {
         .onAppear {
             model.onSelect = onSelect
             breathe = true
+            withAnimation(.linear(duration: 4.0).repeatForever(autoreverses: false)) {
+                textRotation = 360.0
+            }
         }
     }
 
@@ -141,15 +145,18 @@ struct RadialMenuView: View {
                 if model.isCharging || model.isOpen {
                     // A. Static target boundary ring
                     Circle()
-                        .stroke(Color.accent.opacity(0.45), lineWidth: 1.5)
-                        .frame(width: RadialMenuConfig.satelliteDiameter,
-                               height: RadialMenuConfig.satelliteDiameter)
+                        .stroke(Color.accent, lineWidth: 1.5)
+                        .frame(width: RadialMenuConfig.chargeIndicatorDiameter,
+                               height: RadialMenuConfig.chargeIndicatorDiameter)
                     
                     // B. Linearly growing progress circle
                     Circle()
-                        .fill(Color.accent.opacity(0.22))
-                        .frame(width: RadialMenuConfig.satelliteDiameter * CGFloat(model.chargeProgress),
-                               height: RadialMenuConfig.satelliteDiameter * CGFloat(model.chargeProgress))
+                        .fill(Color.accent)
+                        .frame(width: RadialMenuConfig.chargeIndicatorDiameter * CGFloat(model.chargeProgress),
+                               height: RadialMenuConfig.chargeIndicatorDiameter * CGFloat(model.chargeProgress))
+                    
+                    // C. Rotating Circular Instruction Text
+                    CircularTextView(rotation: textRotation)
                 }
                 
                 // Scaled central toggle Icon/Menu
@@ -201,3 +208,28 @@ struct RadialMenuView: View {
         RadialMenuView(onSelect: { print("selected \($0.label)") })
     }
 }
+
+/// Helper view that displays text characters evenly distributed along a circular boundary,
+/// rotating continuously to indicate the hold-to-charge action.
+struct CircularTextView: View {
+    private let characters = Array("HOLD FOR MENU · HOLD FOR MENU · ") // 32 characters total
+    private let radius: CGFloat = 34.5                                // Fits outside the 46x46 boundary
+    let rotation: Double
+    
+    var body: some View {
+        ZStack {
+            ForEach(0..<characters.count, id: \.self) { index in
+                let char = String(characters[index])
+                let angle = Double(index) * (360.0 / Double(characters.count))
+                
+                Text(char)
+                    .font(.system(size: 7.2, weight: .black, design: .monospaced))
+                    .foregroundColor(Color.accent)
+                    .offset(y: -radius)
+                    .rotationEffect(.degrees(angle))
+            }
+        }
+        .rotationEffect(.degrees(rotation))
+    }
+}
+
