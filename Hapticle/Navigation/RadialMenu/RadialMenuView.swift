@@ -16,7 +16,6 @@ struct RadialMenuView: View {
 
     @State private var model = RadialMenuModel()
     @State private var breathe = false
-    @State private var textRotation: Double = 0.0
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private static let space = "radialMenu"
@@ -38,11 +37,6 @@ struct RadialMenuView: View {
         .onAppear {
             model.onSelect = onSelect
             breathe = true
-            DispatchQueue.main.async {
-                withAnimation(.linear(duration: 4.0).repeatForever(autoreverses: false)) {
-                    textRotation = 360
-                }
-            }
         }
     }
 
@@ -158,7 +152,7 @@ struct RadialMenuView: View {
                                height: RadialMenuConfig.chargeIndicatorDiameter * CGFloat(model.chargeProgress))
                     
                     // C. Rotating Circular Instruction Text
-                    CircularTextView(rotation: Double(textRotation))
+                    CircularTextView()
                 }
                 
                 // Scaled central toggle Icon/Menu
@@ -213,15 +207,11 @@ struct RadialMenuView: View {
 
 /// Helper view that displays text characters evenly distributed along a circular boundary,
 /// rotating continuously to indicate the hold-to-charge action.
-struct CircularTextView: View, Animatable {
+struct CircularTextView: View {
     private let characters = Array("HOLD FOR MENU · HOLD FOR MENU · ") // 32 characters total
     private let radius: CGFloat = (RadialMenuConfig.chargeIndicatorDiameter/2)+12                          // Fits outside the 46x46 boundary
-    var rotation: Double
     
-    var animatableData: Double {
-        get { rotation }
-        set { rotation = newValue }
-    }
+    @State private var rotation: Double = 0.0
     
     var body: some View {
         ZStack {
@@ -237,6 +227,12 @@ struct CircularTextView: View, Animatable {
             }
         }
         .rotationEffect(.degrees(rotation))
+        .onAppear {
+            // Animate local state for a smooth continuous 0.25 rev/sec rotation
+            withAnimation(.linear(duration: 4.0).repeatForever(autoreverses: false)) {
+                rotation = 360.0
+            }
+        }
     }
 }
 
