@@ -9,7 +9,7 @@ struct DialView: View {
     #endif
     
     var body: some View {
-        ZStack {
+        ZStack(alignment: .topTrailing) {
             // Background Canvas (adapts to primary light or dark theme background)
             Color.fidgetPrimary
                 .ignoresSafeArea()
@@ -96,6 +96,24 @@ struct DialView: View {
                 Spacer()
             }
             .frame(width: 402, height: 874)
+            
+            // 3. Settings Gear Button - Aligned top-right and padded safely
+            #if DEBUG
+            Button(action: {
+                withAnimation(.spring(duration: 0.32, bounce: 0.12)) {
+                    showDebugPanel.toggle()
+                }
+            }) {
+                Image(systemName: "gearshape.fill")
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(.secondary.opacity(0.8))
+                    .padding(12)
+                    .background(Circle().fill(.thinMaterial))
+                    .shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 1)
+            }
+            .padding(.trailing, 24)
+            .padding(.top, 16)
+            #endif
             
             #if DEBUG
             // Debug Tuning Panel Overlay - completely excluded from release builds
@@ -216,62 +234,10 @@ struct DialView: View {
         .onChange(of: model.isDragging) { newValue in
             onInteractionChange?(newValue || abs(model.angularVelocity) > 0.05)
         }
-        #if DEBUG
-        // Toggle the debug panel via a 2-finger triple tap
-        .onMultiTouchTap(taps: 3, touches: 2) {
-            withAnimation(.spring(duration: 0.35, bounce: 0.15)) {
-                showDebugPanel.toggle()
-            }
-        }
-        #endif
     }
 }
 
 #if DEBUG
-// MARK: - MultiTouch Tap Gesture Recognizer Bridge
-
-struct MultiTouchTapGesture: UIViewRepresentable {
-    var taps: Int = 3
-    var touches: Int = 2
-    var action: () -> Void
-
-    func makeUIView(context: Context) -> UIView {
-        let view = UIView()
-        view.backgroundColor = .clear
-        
-        let gesture = UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handleTap))
-        gesture.numberOfTapsRequired = taps
-        gesture.numberOfTouchesRequired = touches
-        view.addGestureRecognizer(gesture)
-        
-        return view
-    }
-
-    func updateUIView(_ uiView: UIView, context: Context) {}
-
-    func makeCoordinator() -> Coordinator {
-        Coordinator(action: action)
-    }
-
-    class Coordinator: NSObject {
-        var action: () -> Void
-
-        init(action: @escaping () -> Void) {
-            self.action = action
-        }
-
-        @objc func handleTap() {
-            action()
-        }
-    }
-}
-
-extension View {
-    func onMultiTouchTap(taps: Int = 3, touches: Int = 2, action: @escaping () -> Void) -> some View {
-        self.background(MultiTouchTapGesture(taps: taps, touches: touches, action: action))
-    }
-}
-
 // MARK: - Tuning Slider Helper Component
 
 struct TuningSlider: View {
