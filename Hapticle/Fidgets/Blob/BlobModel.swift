@@ -534,15 +534,22 @@ class BlobModel: ObservableObject {
         guard n >= 3 else { return }
         let rest = BlobEntity.restRing(radius: blob.radius, count: n)
 
+        // Deformation is proportional to size: what reads as gentle breathing
+        // on a big blob is a huge fraction of a droplet's radius, so small
+        // blobs get proportionally calmer wobble and lag to stay recognisably
+        // round.
+        let sizeScale = min(blob.radius / refRadius, 1.0)
+
         // Inertia: ring offsets live in center-relative space, so when the
         // center moves the body should lag behind in world space and spring
         // back — that lag IS the gooey deformation of a moving blob.
-        var lagX = -centerDelta.dx * inertiaLag
-        var lagY = -centerDelta.dy * inertiaLag
+        var lagX = -centerDelta.dx * inertiaLag * (0.4 + 0.6 * sizeScale)
+        var lagY = -centerDelta.dy * inertiaLag * (0.4 + 0.6 * sizeScale)
+        let lagCap = min(inertiaLagMaxStep, blob.radius * 0.4)
         let lagMag = hypot(lagX, lagY)
-        if lagMag > inertiaLagMaxStep {
-            lagX *= inertiaLagMaxStep / lagMag
-            lagY *= inertiaLagMaxStep / lagMag
+        if lagMag > lagCap {
+            lagX *= lagCap / lagMag
+            lagY *= lagCap / lagMag
         }
 
         var grabTargets: [CGVector]? = nil
@@ -574,7 +581,7 @@ class BlobModel: ObservableObject {
                 let noise = sin(time * 1.3 + phase) + 0.55 * sin(time * 2.17 + phase * 1.7)
                 let mag = hypot(rest[i].dx, rest[i].dy)
                 if mag > 0 {
-                    let push = idleAmplitude * CGFloat(noise) * dt
+                    let push = idleAmplitude * sizeScale * CGFloat(noise) * dt
                     vx += rest[i].dx / mag * push
                     vy += rest[i].dy / mag * push
                 }
