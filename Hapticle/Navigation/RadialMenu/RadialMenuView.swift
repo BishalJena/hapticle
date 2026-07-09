@@ -193,15 +193,6 @@ struct RadialMenuView: View {
             .contentShape(Circle())
             .gesture(drag(ringCenter: center))
             .position(center)
-            
-            // Breathing animation applies strictly to the AFK prompt
-            .scaleEffect(model.isResting && breathe && isIdleState && !reduceMotion
-                         ? RadialMenuConfig.breathScale : 1)
-            .animation(.easeInOut(duration: RadialMenuConfig.breathPeriod)
-                        .repeatForever(autoreverses: true),
-                       value: breathe)
-            
-            // Physical charge deboss maps to the user's pressure/time
             .animation(.spring(RadialMenuConfig.hoverSpring), value: model.chargeProgress)
         }
     
@@ -251,7 +242,6 @@ struct CircularTextView: View {
     private let radius: CGFloat = (RadialMenuConfig.chargeIndicatorDiameter/2)+12                          // Fits outside the 46x46 boundary
 
     @State private var rotation: Double = 0.0
-    
     /// accentShadow disappears against the dark background; use the highlight there.
     private var textColor: Color {
         colorScheme == .dark ? Color.accentHighlight : Color.accentShadow
