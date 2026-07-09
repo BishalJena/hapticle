@@ -9,7 +9,7 @@ struct DialView: View {
     #endif
     
     var body: some View {
-        ZStack(alignment: .topTrailing) {
+        ZStack {
             // Background Canvas (adapts to primary light or dark theme background)
             Color.fidgetPrimary
                 .ignoresSafeArea()
@@ -95,7 +95,6 @@ struct DialView: View {
                 
                 Spacer()
             }
-            .frame(width: 402, height: 874)
             
             // 3. Settings Gear Button - Aligned top-right and padded safely
             #if DEBUG
@@ -113,6 +112,7 @@ struct DialView: View {
             }
             .padding(.trailing, 24)
             .padding(.top, 16)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
             #endif
             
             #if DEBUG

@@ -48,7 +48,7 @@ struct RadialMenuView: View {
     }
     
     // MARK: Bottom scrim — grounds the menu pop-up without dimming the whole screen
-
+    
     /// Only the menu's own section dims: strongest at the bottom edge, easing
     /// to clear before it reaches the fidget. Rises and falls with exactly the
     /// states in which the ring visuals are on screen.
@@ -78,7 +78,7 @@ struct RadialMenuView: View {
                    : .easeOut(duration: visible ? 0.35 : 0.2),
                    value: visible)
     }
-
+    
     // MARK: Backdrop — subtle frosted blur while open (masks the swap, focuses the fan)
     
     private var backdrop: some View {
@@ -148,60 +148,61 @@ struct RadialMenuView: View {
         }
         return .spring(RadialMenuConfig.closeSpring)
     }
-
+    
     // MARK: Home ring + charge arc
-
-        private func ringButton(at center: CGPoint) -> some View {
-            // Active state covers both the charging wind-up AND the fully open menu.
-            let isActiveState = model.isCharging || model.isOpen
-            // Idle state only triggers if the global tracker fires AND no one is actively holding the button.
-            let isIdleState = idleTracker.isIdleAFK && model.isResting
-            
-            return ZStack {
-                // 1. The Omnipresent Geometric Anchor
-                // Remains structurally identical and always captures gestural input.
-                Circle()
-                    .fill(Color.white.opacity(0.001))
-                    .frame(width: RadialMenuConfig.chargeIndicatorDiameter,
-                           height: RadialMenuConfig.chargeIndicatorDiameter)
-
-                // 2. The Shared Base (Stroke & Text)
-                // Visible if the user is charging, the menu is open, OR the app is in AFK mode.
-                ZStack {
-                    Circle()
-                        .stroke(Color.accent, lineWidth: 1.5)
-                    
-                    CircularTextView(characters: holdMenuText)
-                }
+    
+    private func ringButton(at center: CGPoint) -> some View {
+        // Active state covers both the charging wind-up AND the fully open menu.
+        let isActiveState = model.isCharging || model.isOpen
+        // Idle state only triggers if the global tracker fires AND no one is actively holding the button.
+        let isIdleState = idleTracker.isIdleAFK && model.isResting
+        
+        return ZStack {
+            // 1. The Omnipresent Geometric Anchor
+            // Remains structurally identical and always captures gestural input.
+            Circle()
+                .fill(Color.white.opacity(0.001))
                 .frame(width: RadialMenuConfig.chargeIndicatorDiameter,
                        height: RadialMenuConfig.chargeIndicatorDiameter)
-                .opacity(isActiveState || isIdleState ? 1.0 : 0.0)
-                .animation(.easeOut(duration: 0.2), value: isActiveState || isIdleState)
-                
-                // 3. The Active Fill
-                // Stays visible when `model.isOpen` is true.
+            
+            // 2. The Shared Base (Stroke & Text)
+            // Visible if the user is charging, the menu is open, OR the app is in AFK mode.
+            ZStack {
                 Circle()
-                    .fill(Color.accent)
-                    .frame(width: RadialMenuConfig.chargeIndicatorDiameter * CGFloat(model.chargeProgress),
-                           height: RadialMenuConfig.chargeIndicatorDiameter * CGFloat(model.chargeProgress))
-                    .opacity(isActiveState ? 1.0 : 0.0)
-                    .animation(.easeOut(duration: 0.2), value: isActiveState)
-
+                    .stroke(Color.accent, lineWidth: 1.5)
+                
+                CircularTextView(characters: holdMenuText)
             }
-            .frame(width: RadialMenuConfig.satelliteDiameter,
-                   height: RadialMenuConfig.satelliteDiameter)
-            .contentShape(Circle())
-            .gesture(drag(ringCenter: center))
-            .position(center)
-            .animation(.spring(RadialMenuConfig.hoverSpring), value: model.chargeProgress)
+            .frame(width: RadialMenuConfig.chargeIndicatorDiameter,
+                   height: RadialMenuConfig.chargeIndicatorDiameter)
+            .opacity(isActiveState || isIdleState ? 1.0 : 0.0)
+            .animation(.easeOut(duration: 0.2), value: isActiveState || isIdleState)
+            
+            // 3. The Active Fill
+            // Stays visible when `model.isOpen` is true.
+            Circle()
+                .fill(Color.accent)
+                .frame(width: RadialMenuConfig.chargeIndicatorDiameter * CGFloat(model.chargeProgress),
+                       height: RadialMenuConfig.chargeIndicatorDiameter * CGFloat(model.chargeProgress))
+                .opacity(isActiveState ? 1.0 : 0.0)
+                .animation(.easeOut(duration: 0.2), value: isActiveState)
+            
         }
+        // Appending a generous 60-point buffer to the invisible container catches off-center thumb presses
+        .frame(width: RadialMenuConfig.satelliteDiameter + 150,
+               height: RadialMenuConfig.satelliteDiameter + 150)
+        .contentShape(Circle())
+        .gesture(drag(ringCenter: center))
+        .position(center)
+        .animation(.spring(RadialMenuConfig.hoverSpring), value: model.chargeProgress)
+    }
     
     // MARK: Gesture — one continuous press → charge → drag → release
     
     private func drag(ringCenter: CGPoint) -> some Gesture {
         DragGesture(minimumDistance: 0, coordinateSpace: .named(Self.space))
             .onChanged { value in
-                                
+                
                 if !isMenuVisible {
                     withAnimation(.easeInOut(duration: 0.2)) {
                         isMenuVisible = true
@@ -209,10 +210,11 @@ struct RadialMenuView: View {
                 }
                 
                 if model.isResting {
-                    // Only begin charging if the touch started on the ring.
                     let d = hypot(value.startLocation.x - ringCenter.x,
                                   value.startLocation.y - ringCenter.y)
-                    if d <= RadialMenuConfig.ringDiameter { model.touchDown() }
+                    
+                    // Injecting a 40-point positional slop into the distance check validates adjacent screen taps
+                    if d <= RadialMenuConfig.ringDiameter + 40 { model.touchDown() }
                 }
                 let local = CGPoint(x: value.location.x - ringCenter.x,
                                     y: value.location.y - ringCenter.y)
@@ -220,7 +222,6 @@ struct RadialMenuView: View {
             }
             .onEnded { _ in
                 model.touchUp()
-                // Re-engage the countdown the precise millisecond the screen is relinquished
             }
     }
 }
@@ -237,22 +238,22 @@ struct RadialMenuView: View {
 /// rotating continuously to indicate the hold-to-charge action.
 struct CircularTextView: View {
     @Environment(\.colorScheme) var colorScheme
-
+    
     let characters: [Character] // 32 characters total
     private let radius: CGFloat = (RadialMenuConfig.chargeIndicatorDiameter/2)+12                          // Fits outside the 46x46 boundary
-
+    
     @State private var rotation: Double = 0.0
     /// accentShadow disappears against the dark background; use the highlight there.
     private var textColor: Color {
         colorScheme == .dark ? Color.accentHighlight : Color.accentShadow
     }
-
+    
     var body: some View {
         ZStack {
             ForEach(0..<characters.count, id: \.self) { index in
                 let char = String(characters[index])
                 let angle = Double(index) * (360.0 / Double(characters.count))
-
+                
                 Text(char)
                     .font(.system(size: 14, weight: .medium, design: .monospaced))
                     .foregroundStyle(colorScheme == .dark ? Color.accentHighlight : Color.accentShadow)
