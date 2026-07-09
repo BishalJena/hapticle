@@ -60,10 +60,11 @@ struct ContentView: View {
             
             // 2. Global Bottom-Anchored Radial Selector
             RadialMenuView(isMenuVisible: $isMenuVisible) { selectedFidget in
-                withAnimation(.spring(duration: 0.32, bounce: 0.12)) {
+                withAnimation(.spring(duration: 0.32, bounce: 0)) {
                     activeFidget = selectedFidget
                 }
             }
+            .ignoresSafeArea() // 👈 Add this directly to the instance!
         }
         // 2. Inject into the environment for RadialMenuView to read
         .environment(idleTracker)
