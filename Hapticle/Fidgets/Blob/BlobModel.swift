@@ -18,6 +18,8 @@ struct BlobEntity: Identifiable {
     var radius: CGFloat = 33
     var velocityX: CGFloat = 0        // free-motion / recoil velocity (pt/s)
     var velocityY: CGFloat = 0
+    /// Per-blob random phase so idle wobble is unsynchronized across blobs.
+    var wobbleSeed: Double = .random(in: 0..<(2 * .pi))
 
     /// Perimeter particle offsets from `center` (current + previous frame).
     var ring: [CGVector] = []
@@ -577,8 +579,14 @@ class BlobModel: ObservableObject {
             var vy = (cur.dy - prev.dy) * vertexDamping + lagY
 
             if grabTargets == nil {
-                let phase = Double(i) * 0.55
-                let noise = sin(time * 1.3 + phase) + 0.55 * sin(time * 2.17 + phase * 1.7)
+                // Standing waves, not traveling ones: the spatial lobes stay
+                // put and only pulse in amplitude, so the wobble reads as
+                // breathing slime rather than the ring rotating. Per-blob
+                // seed keeps blobs out of sync with each other.
+                let angle = Double(i) / Double(n) * 2 * .pi
+                let seed = blob.wobbleSeed
+                let noise = sin(angle * 2 + seed) * sin(time * 1.1 + seed)
+                          + 0.6 * sin(angle * 3 + seed * 1.7) * cos(time * 1.9 + seed * 2.3)
                 let mag = hypot(rest[i].dx, rest[i].dy)
                 if mag > 0 {
                     let push = idleAmplitude * sizeScale * CGFloat(noise) * dt
