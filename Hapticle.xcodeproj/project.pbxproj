@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		00298BC92FFF483F00BB5186 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 00298BC82FFF483F00BB5186 /* Localizable.xcstrings */; };
 		12D5C50D2622A5256F6F622E /* (null) in Sources */ = {isa = PBXBuildFile; };
 		1CFEC7F3605656F740904989 /* (null) in Sources */ = {isa = PBXBuildFile; };
 		4AF3D342E60335C5AC727B8C /* (null) in Sources */ = {isa = PBXBuildFile; };
@@ -42,6 +43,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		00298BC82FFF483F00BB5186 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		003195E52FF5F39900A7163E /* Hapticle.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Hapticle.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		FA94B9FA2FFBE56E00A5B768 /* Color+Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Theme.swift"; sourceTree = "<group>"; };
 		FA94B9FC2FFBE56E00A5B768 /* BlobModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlobModel.swift; sourceTree = "<group>"; };
@@ -87,6 +89,7 @@
 		003195DC2FF5F39900A7163E = {
 			isa = PBXGroup;
 			children = (
+				00298BC82FFF483F00BB5186 /* Localizable.xcstrings */,
 				003195E72FF5F39900A7163E /* Hapticle */,
 				FA94B9F92FFBE56E00A5B768 /* Frameworks */,
 				003195E62FF5F39900A7163E /* Products */,
@@ -244,6 +247,16 @@
 			knownRegions = (
 				en,
 				Base,
+				id,
+				es,
+				de,
+				ja,
+				"zh-Hans",
+				"or-IN",
+				hi,
+				"sw-KE",
+				ms,
+				ko,
 			);
 			mainGroup = 003195DC2FF5F39900A7163E;
 			minimizedProjectReferenceProxies = 1;
@@ -262,6 +275,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				00298BC92FFF483F00BB5186 /* Localizable.xcstrings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -354,6 +368,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
@@ -408,6 +423,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
 			};
 			name = Release;
 		};

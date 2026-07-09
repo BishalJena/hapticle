@@ -22,7 +22,9 @@ struct RadialMenuView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     
     private static let space = "radialMenu"
-    let holdMenuText = Array("HOLD FOR MENU · HOLD FOR MENU · ")
+    var holdMenuText: [Character] {
+        Array(String(localized: "HOLD FOR MENU · HOLD FOR MENU · "))
+    }
     
     var body: some View {
         GeometryReader { geo in
@@ -167,7 +169,6 @@ struct RadialMenuView: View {
                        value: breathe)
             
             // Physical charge deboss maps to the user's pressure/time
-            .scaleEffect(model.isCharging ? 1 + CGFloat(model.chargeProgress) * 0.08 : 1)
             .animation(.spring(RadialMenuConfig.hoverSpring), value: model.chargeProgress)
         }
     
@@ -205,11 +206,14 @@ struct RadialMenuView: View {
         Color.fidgetPrimary.ignoresSafeArea()
         RadialMenuView(isMenuVisible: .constant(true), onSelect: { print("selected \($0.label)") })
     }
+    .environment(IdleTracker())
 }
 
 /// Helper view that displays text characters evenly distributed along a circular boundary,
 /// rotating continuously to indicate the hold-to-charge action.
 struct CircularTextView: View {
+    @Environment(\.colorScheme) var colorScheme
+
     let characters: [Character] // 32 characters total
     private let radius: CGFloat = (RadialMenuConfig.chargeIndicatorDiameter/2)+12                          // Fits outside the 46x46 boundary
     
@@ -223,7 +227,7 @@ struct CircularTextView: View {
                 
                 Text(char)
                     .font(.system(size: 14, weight: .medium, design: .monospaced))
-                    .foregroundColor(Color.accentShadow)
+                    .foregroundStyle(colorScheme == .dark ? Color.accentHighlight : Color.accentShadow)
                     .offset(y: -radius)
                     .rotationEffect(.degrees(angle))
             }
