@@ -5,12 +5,17 @@ struct MagnetView: View {
     @Environment(\.colorScheme) private var colorScheme
     var onInteractionChange: ((Bool) -> Void)? = nil
 
-    @State private var dragStartFingerPosition: CGPoint = .zero
+    /// True while a drag that began too far from the knob is being ignored,
+    /// so sweeping past the knob mid-gesture doesn't suddenly grab it.
+    @State private var dragRejected = false
 
     private let ringOuterDiameter: CGFloat = 291   // 145.5 * 2, from the mid-fi bezel
     private let ringInnerDiameter: CGFloat = 272   // 136 * 2, the recessed track
     private let ringStrokeWidth: CGFloat = 19
     private let knobDiameter: CGFloat = 56
+    /// Touches within this distance of the knob center grab it (~2× its radius,
+    /// so it's thumb-friendly and forgiving mid-play).
+    private let grabRadius: CGFloat = 56
 
     var body: some View {
         GeometryReader { geo in
@@ -39,9 +44,10 @@ struct MagnetView: View {
                         x: geo.size.width / 2 + model.position.x,
                         y: geo.size.height / 2 + model.position.y
                     )
-                    .contentShape(Circle())
-                    .gesture(dragGesture(in: geo))
+                    .allowsHitTesting(false) // the canvas-wide gesture below owns all touches
             }
+            .contentShape(Rectangle()) // entire canvas receives touch events
+            .gesture(dragGesture(in: geo))
             .onAppear { model.configure(canvasSize: geo.size) }
             .onChange(of: geo.size) { newSize in
                 model.configure(canvasSize: newSize)
@@ -72,16 +78,18 @@ struct MagnetView: View {
                 .frame(width: knobDiameter, height: knobDiameter)
                 .overlay(Circle().stroke(Color.black.opacity(0.15), lineWidth: 1))
                 .shadow(
-                    color: Color.shadow.opacity(model.couplingState == .attached ? 0.6 : 0.35),
-                    radius: model.couplingState == .attached ? 4 : 8,
-                    x: model.couplingState == .attached ? 3 : 6,
-                    y: model.couplingState == .attached ? 3 : 6
+                    color: Color.shadow.opacity(model.isOnRing ? 0.6 : 0.35),
+                    radius: model.isOnRing ? 4 : 8,
+                    x: model.isOnRing ? 3 : 6,
+                    y: model.isOnRing ? 3 : 6
                 )
 
             poleMarker
         }
-        .scaleEffect(model.isPressed ? 0.94 : 1.0)
+        // Lifted off the glass while free, settling back down when it seats.
+        .scaleEffect(model.isPressed ? 0.94 : (model.isOnRing ? 1.0 : 1.06))
         .animation(.spring(response: 0.25, dampingFraction: 0.7), value: model.isPressed)
+        .animation(.spring(response: 0.3, dampingFraction: 0.55), value: model.isOnRing)
     }
 
     /// The red "polarity" marker: an open ring in light mode, a filled dot in dark mode,
@@ -116,27 +124,33 @@ struct MagnetView: View {
 
     // MARK: - Drag Gesture
 
-    /// Tracks translation from the knob's own position at drag-start rather than
-    /// raw gesture-local coordinates, so the model always receives finger position
-    /// in the same absolute canvas space as `ringCenter`.
+    /// Canvas-wide gesture: grabs the knob only if the touch begins within
+    /// `grabRadius` of it, then tracks the finger in canvas coordinates.
     private func dragGesture(in geo: GeometryProxy) -> some Gesture {
         DragGesture(minimumDistance: 0)
             .onChanged { value in
-                if !model.isDragging {
-                    dragStartFingerPosition = CGPoint(
+                if model.isDragging {
+                    model.handleDragUpdated(to: value.location)
+                } else if !dragRejected {
+                    let knobCenter = CGPoint(
                         x: geo.size.width / 2 + model.position.x,
                         y: geo.size.height / 2 + model.position.y
                     )
-                    model.handleDragStarted(at: dragStartFingerPosition)
+                    let distance = hypot(value.startLocation.x - knobCenter.x,
+                                         value.startLocation.y - knobCenter.y)
+                    if distance <= grabRadius {
+                        model.handleDragStarted(at: value.startLocation)
+                        model.handleDragUpdated(to: value.location)
+                    } else {
+                        dragRejected = true
+                    }
                 }
-                let updated = CGPoint(
-                    x: dragStartFingerPosition.x + value.translation.width,
-                    y: dragStartFingerPosition.y + value.translation.height
-                )
-                model.handleDragUpdated(to: updated)
             }
             .onEnded { _ in
-                model.handleDragEnded()
+                dragRejected = false
+                if model.isDragging {
+                    model.handleDragEnded()
+                }
             }
     }
 }
