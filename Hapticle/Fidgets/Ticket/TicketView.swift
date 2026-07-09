@@ -23,6 +23,7 @@ struct Ticket: View {
         Image("Ticket")
             .renderingMode(.template)
             .foregroundStyle(Color.accent)
+            .shadow(color: .black.opacity(0.25), radius: 3, x: 8, y: 8)
             .background(
                 GeometryReader { geo in
                     Color.clear.preference(key: TicketHeightKey.self, value: geo.size.height)
@@ -70,6 +71,7 @@ struct Ticket: View {
 
 struct TicketView: View {
     @StateObject private var model = TicketModel()
+    @Environment(\.colorScheme) private var colorScheme
     
     var body: some View {
         ZStack {
@@ -109,7 +111,7 @@ struct TicketView: View {
             Image("Machine")
                 .renderingMode(.template)
                 .foregroundStyle(Color.fidgetPrimary)
-                .shadow(color: Color.highlight.opacity(0.4), radius: 6, x: -6, y: -6)
+                .shadow(color: Color.highlight.opacity(colorScheme == .dark ? 0.4 : 0.7), radius: 3, x: -6, y: -6)
                 .shadow(color: .shadow, radius: 6, x: 6, y: 6)
                 .overlay {
                     VStack {
@@ -161,15 +163,15 @@ struct TicketView: View {
         Image("MachineBolt")
             .renderingMode(.template)
             .foregroundStyle(Color.fidgetPrimary)
-            .shadow(color: Color.highlight, radius: 6, x: -3, y: -3)
-            .shadow(color: .shadow, radius: 6, x: 3, y: 3)
+            .shadow(color: Color.highlight, radius: colorScheme == .dark ? 6 : 4, x: -3, y: -3)
+            .shadow(color: .shadow, radius: colorScheme == .dark ? 6 : 4, x: 3, y: 3)
     }
     
     private var overhang: some View {
         Image("MachineOverhang")
             .renderingMode(.template)
             .foregroundStyle(Color.fidgetPrimary)
-            .shadow(color: Color.highlight.opacity(0.4), radius: 6, x: -3, y: -3)
+            .shadow(color: Color.highlight.opacity(colorScheme == .dark ? 0.3 : 1.0), radius: 4, x: -3, y: -3)
             .shadow(color: .shadow.opacity(0.25), radius: 3, x: 3, y: 3)
     }
     
@@ -177,11 +179,12 @@ struct TicketView: View {
         Image("MachineHole")
             .renderingMode(.template)
             .foregroundStyle(Color.fidgetPrimary)
-            .innerShadowShift(mask: Image("MachineHole"), color: Color.shadow.opacity(0.50), blur: 3, x: 0, y: -3)
-            .innerShadowShift(mask: Image("MachineHole"), color: Color.highlight.opacity(0.25), blur: 5, x: 0, y: 7)
+            .innerShadowShift(mask: Image("MachineHole"), color: Color.shadow.opacity(colorScheme == .dark ? 0.4 : 1.0), blur: 3, x: 0, y: -3)
+            .innerShadowShift(mask: Image("MachineHole"), color: Color.highlight.opacity(colorScheme == .dark ? 0.4 : 1.0), blur: 5, x: 0, y: 7)
     }
 }
 
+/// Orchestrates the physical dispenser simulation while retaining strict dimensional boundaries.
 /// Orchestrates the physical dispenser simulation while retaining strict dimensional boundaries.
 struct AutoReplenishingTicketRoll: View {
     @ObservedObject var model: TicketModel
@@ -200,7 +203,8 @@ struct AutoReplenishingTicketRoll: View {
                         .offset(x: 0, y: isActiveTerminalTicket ? model.draggedOffset.height : 0)
                         .rotationEffect(
                             isActiveTerminalTicket ? .degrees(model.computeDynamicRotation(rawTranslation: model.activeDragTranslation)) : .zero,
-                            anchor: isActiveTerminalTicket ? model.computeTearAnchor(rawTranslation: model.activeDragTranslation) : .top
+                            // FIX: computeTearAnchor() now takes exactly zero arguments!
+                            anchor: isActiveTerminalTicket ? model.computeTearAnchor() : .top
                         )
                 }
             }
