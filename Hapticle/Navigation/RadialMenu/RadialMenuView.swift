@@ -222,8 +222,8 @@ struct CircularTextView: View {
                 let angle = Double(index) * (360.0 / Double(characters.count))
                 
                 Text(char)
-                    .font(.system(size: 12, weight: .medium, design: .monospaced))
-                    .foregroundColor(Color.accent)
+                    .font(.system(size: 14, weight: .medium, design: .monospaced))
+                    .foregroundColor(Color.accentShadow)
                     .offset(y: -radius)
                     .rotationEffect(.degrees(angle))
             }
