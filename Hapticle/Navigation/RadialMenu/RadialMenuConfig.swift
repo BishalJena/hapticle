@@ -52,11 +52,11 @@ enum RadialMenuConfig {
     /// Diameter of the resting/home ring button.
     static let ringDiameter: CGFloat = 64
     /// Diameter of each satellite node.
-    static let satelliteDiameter: CGFloat = 46
+    static let satelliteDiameter: CGFloat = 64
     /// Diameter of charge indicator
     static let chargeIndicatorDiameter: CGFloat = 72
     /// Distance from ring center to each satellite center when fully bloomed.
-    static let bloomRadius: CGFloat = 100
+    static let bloomRadius: CGFloat = 128
     /// How far above the bottom safe area the ring center sits.
     static let bottomInset: CGFloat = 96
     /// A drag point within this distance of a node's center counts as hovering it.
