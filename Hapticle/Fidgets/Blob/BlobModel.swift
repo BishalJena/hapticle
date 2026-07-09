@@ -130,17 +130,17 @@ class BlobModel: ObservableObject {
 
     // MARK: - Tunable Parameters — Soft Body
 
-    private let shapeStiffness: CGFloat = 0.055
-    private let smoothStiffness: CGFloat = 0.17
+    private let shapeStiffness: CGFloat = 0.07
+    private let smoothStiffness: CGFloat = 0.2
     private let vertexDamping: CGFloat = 0.93
     private let grabStiffness: CGFloat = 0.5
     private let grabFocus: CGFloat = 1.6
     private let constraintIterations: Int = 2
-    private let idleAmplitude: CGFloat = 0.8
+    private let idleAmplitude: CGFloat = 0.64
     /// How much of the center's per-frame motion the ring lags behind — this is
     /// what makes a moving blob deform (teardrop trails, wall-bounce squash)
     /// instead of translating as a rigid circle.
-    private let inertiaLag: CGFloat = 0.45
+    private let inertiaLag: CGFloat = 0.36
     /// Cap on the per-frame center displacement fed into the ring, so a whip
     /// crossing the screen can't fling the soft body inside-out.
     private let inertiaLagMaxStep: CGFloat = 20
