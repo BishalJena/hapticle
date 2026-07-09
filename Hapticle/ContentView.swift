@@ -6,6 +6,8 @@ struct ContentView: View {
     @State private var menuHideTimer: Timer?
     @State private var isDialActive = false
     
+    @State private var idleTracker = IdleTracker()
+    
     var body: some View {
         ZStack {
             // Background Canvas
@@ -55,6 +57,12 @@ struct ContentView: View {
                 }
             }
         }
+        // 2. Inject into the environment for RadialMenuView to read
+        .environment(idleTracker)
+        // 3. Start the AFK countdown when the app first launches
+        .onAppear {
+            idleTracker.restartTimer()
+        }
     }
     
     private func triggerInteraction() {
@@ -65,6 +73,7 @@ struct ContentView: View {
                 isMenuVisible = false
             }
         }
+        idleTracker.userInteracted()
     }
     
     private func endInteraction() {
@@ -74,6 +83,7 @@ struct ContentView: View {
                 isMenuVisible = true
             }
         }
+        idleTracker.restartTimer()
     }
 }
 
