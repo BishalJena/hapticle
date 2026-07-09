@@ -69,7 +69,7 @@ enum RadialMenuConfig {
     
     // MARK: Timing
     /// Hold duration required to fully charge and open the menu.
-    static let holdDuration: TimeInterval = 0.5
+    static let holdDuration: TimeInterval = 0.4
     /// Delay between each satellite launching, for the staggered fan.
     static let bloomStagger: TimeInterval = 0.03
     /// Number of accelerating "wind-up" ticks felt during the charge.
