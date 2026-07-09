@@ -5,6 +5,7 @@ struct ContentView: View {
     @State private var isMenuVisible = true
     @State private var menuHideTimer: Timer?
     @State private var isDialActive = false
+    @State private var isMagnetActive = false
     
     var body: some View {
         ZStack {
@@ -29,7 +30,14 @@ struct ContentView: View {
                 case .ticket:
                     TicketView()
                 case .magnet:
-                    MagnetView()
+                    MagnetView(onInteractionChange: { active in
+                        isMagnetActive = active
+                        if active {
+                            triggerInteraction()
+                        } else {
+                            endInteraction()
+                        }
+                    })
                 case .blob:
                     BlobView()
                 }
@@ -41,8 +49,8 @@ struct ContentView: View {
                         triggerInteraction()
                     }
                     .onEnded { _ in
-                        // Only schedule menu to reappear if the dial itself isn't still actively spinning
-                        if !isDialActive {
+                        // Only schedule menu to reappear if the dial/magnet isn't still actively moving
+                        if !isDialActive && !isMagnetActive {
                             endInteraction()
                         }
                     }
