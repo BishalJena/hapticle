@@ -12,9 +12,9 @@ import SwiftUI
 
 enum FidgetID: Int, CaseIterable, Identifiable {
     case pen, dial, ticket, magnet, blob
-
+    
     var id: Int { rawValue }
-
+    
     /// Asset name shown inside the satellite.
     var assetName: String {
         switch self {
@@ -25,7 +25,7 @@ enum FidgetID: Int, CaseIterable, Identifiable {
         case .blob: "Icon/Blob"
         }
     }
-
+    
     /// Display label.
     var label: String {
         switch self {
@@ -36,7 +36,7 @@ enum FidgetID: Int, CaseIterable, Identifiable {
         case .blob: "Blob"
         }
     }
-
+    
     /// Angle (degrees, standard math convention: 0° = right, CCW positive) at
     /// which this node sits on the dome. Evenly spaced every 45° across 180°,
     /// so every node lands above the home ring: Pen=180 (left) … Blob=0 (right).
@@ -47,29 +47,29 @@ enum FidgetID: Int, CaseIterable, Identifiable {
 
 /// Layout, timing, motion, and haptic parameters. One source of truth for tuning.
 enum RadialMenuConfig {
-
+    
     // MARK: Layout
     /// Diameter of the resting/home ring button.
     static let ringDiameter: CGFloat = 64
     /// Diameter of each satellite node.
-    static let satelliteDiameter: CGFloat = 46
+    static let satelliteDiameter: CGFloat = 64
     /// Diameter of charge indicator
-    static let chargeIndicatorDiameter: CGFloat = 64
+    static let chargeIndicatorDiameter: CGFloat = 72
     /// Distance from ring center to each satellite center when fully bloomed.
-    static let bloomRadius: CGFloat = 100
+    static let bloomRadius: CGFloat = 128
     /// How far above the bottom safe area the ring center sits.
     static let bottomInset: CGFloat = 96
     /// A drag point within this distance of a node's center counts as hovering it.
     static let hitRadius: CGFloat = 36
-
+    
     // MARK: Timing
     /// Hold duration required to fully charge and open the menu.
-    static let holdDuration: TimeInterval = 0.8
+    static let holdDuration: TimeInterval = 0.5
     /// Delay between each satellite launching, for the staggered fan.
     static let bloomStagger: TimeInterval = 0.03
     /// Number of accelerating "wind-up" ticks felt during the charge.
     static let chargeTickCount = 8
-
+    
     // MARK: Motion (Apple-style springs: duration + subtle bounce)
     // Asymmetric by design — the deliberate open is lively; the exits snap.
     /// Fan opening: lively, small overshoot.
@@ -82,7 +82,7 @@ enum RadialMenuConfig {
     static let commitSpring = SpringParams(duration: 0.34, bounce: 0.18)
     /// Demo screen swap on commit.
     static let collapseSpring = SpringParams(duration: 0.32, bounce: 0.12)
-
+    
     /// Satellites emerge from the dot at this scale (never from 0 — nothing
     /// appears from nothing; the dot is their spatial origin).
     static let satelliteStartScale: CGFloat = 0.5
@@ -98,11 +98,11 @@ enum RadialMenuConfig {
     static let siblingFallDrift: CGFloat = 22
     /// How long the commit confirm plays before the menu resets.
     static let commitBeat: TimeInterval = 0.30
-
+    
     // MARK: Idle breathing (subtle — a constantly-visible decorative motion)
     static let breathScale: CGFloat = 1.025
     static let breathPeriod: TimeInterval = 3.0
-
+    
     // MARK: Haptic score  (intensity, sharpness) — see design spec §7
     static let hapticPress = HapticBeat(intensity: 0.4, sharpness: 0.5)
     static let hapticChargeTick = HapticBeat(intensity: 0.2, sharpness: 0.6)
@@ -147,6 +147,26 @@ extension Animation {
     /// Convert our `SpringParams` into a SwiftUI spring (duration + bounce).
     static func spring(_ p: SpringParams) -> Animation {
         .spring(duration: p.duration, bounce: p.bounce)
+    }
+}
+
+extension View {
+    /// Applies a customizable inner shadow effect using an overlay and mask combination.
+    func innerShadowShift<Mask: View>(
+        mask maskView: Mask,
+        color: Color,
+        blur: CGFloat = 8,
+        x: CGFloat = 0,
+        y: CGFloat = 0
+    ) -> some View {
+        self.overlay(
+            Rectangle()
+                .fill(color)
+                .mask(maskView)
+                .blur(radius: blur)
+                .offset(x: x, y: y)
+                .mask(maskView)
+        )
     }
 }
 

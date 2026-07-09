@@ -13,6 +13,8 @@ class SoundManager {
     private var sampleRate: Double = 44100.0
     private var isOscillatorRunning = false
     private var phase: Float = 0.0
+    private var carrierPhase: Float = 0.0
+    private var shaftPhase: Float = 0.0
     
     init() {
         configureAudioSession()
@@ -37,35 +39,80 @@ class SoundManager {
         audioEngine = engine
         sampleRate = engine.mainMixerNode.outputFormat(forBus: 0).sampleRate
         
-        // 1. Create the procedural synthesizer node with correct channel-first loop nesting
+        // 1. Create the procedural synthesizer node to simulate physical mechanical clicks (casing resonance)
         sourceNode = AVAudioSourceNode { [weak self] _, _, frameCount, audioBufferList in
             guard let self = self else { return noErr }
             
             let ablPointer = UnsafeMutableAudioBufferListPointer(audioBufferList)
-            let freq = self.currentFrequency
+            let freq = self.currentFrequency // repetition frequency of detent crossings
             let vol = self.currentVolume
+            
+            // Detent crossing phase step
             let step = (2.0 * Float.pi * freq) / Float(self.sampleRate)
+            
+            // Mechanical casing resonance frequency (e.g. 1600 Hz)
+            let carrierFreq: Float = 1600.0
+            let carrierStep = (2.0 * Float.pi * carrierFreq) / Float(self.sampleRate)
+            
+            // Shaft rotation rate LFO frequency (repetition rate divided by detent count of 24)
+            let shaftFreq = freq / 24.0
+            let shaftStep = (2.0 * Float.pi * shaftFreq) / Float(self.sampleRate)
             
             // Loop over channels first to handle multi-channel layouts correctly
             for channel in 0..<ablPointer.count {
                 let buffer = ablPointer[channel]
                 guard let buf = buffer.mData?.assumingMemoryBound(to: Float.self) else { continue }
                 
-                // Track channel-specific phase to keep channels in sync
                 var channelPhase = self.phase
+                var channelCarrierPhase = self.carrierPhase
+                var channelShaftPhase = self.shaftPhase
+                
                 for frame in 0..<Int(frameCount) {
-                    buf[frame] = sin(channelPhase) * vol
+                    // Exponential decay envelope from 1.0 to near 0.0 inside the detent cycle [0, 2pi]
+                    let progress = channelPhase / (2.0 * Float.pi)
+                    let envelope = exp(-12.0 * progress)
+                    
+                    // LFO representing shaft rotation eccentricity (subtle 30% amplitude modulation)
+                    let lfo = 1.0 + 0.30 * sin(channelShaftPhase)
+                    
+                    // Add random micro-friction grit to mimic plastic/metallic teeth roughness
+                    let grit = Float.random(in: -0.15...0.15)
+                    let signal = sin(channelCarrierPhase) + grit
+                    
+                    // Synthesize final mechanical casing impact with LFO and texture grit
+                    buf[frame] = signal * envelope * lfo * vol
+                    
                     channelPhase += step
                     if channelPhase >= 2.0 * Float.pi {
                         channelPhase -= 2.0 * Float.pi
                     }
+                    
+                    channelCarrierPhase += carrierStep
+                    if channelCarrierPhase >= 2.0 * Float.pi {
+                        channelCarrierPhase -= 2.0 * Float.pi
+                    }
+                    
+                    channelShaftPhase += shaftStep
+                    if channelShaftPhase >= 2.0 * Float.pi {
+                        channelShaftPhase -= 2.0 * Float.pi
+                    }
                 }
             }
             
-            // Update master phase once after processing all channels
+            // Update master phases once after processing all channels
             self.phase += step * Float(frameCount)
             while self.phase >= 2.0 * Float.pi {
                 self.phase -= 2.0 * Float.pi
+            }
+            
+            self.carrierPhase += carrierStep * Float(frameCount)
+            while self.carrierPhase >= 2.0 * Float.pi {
+                self.carrierPhase -= 2.0 * Float.pi
+            }
+            
+            self.shaftPhase += shaftStep * Float(frameCount)
+            while self.shaftPhase >= 2.0 * Float.pi {
+                self.shaftPhase -= 2.0 * Float.pi
             }
             
             return noErr

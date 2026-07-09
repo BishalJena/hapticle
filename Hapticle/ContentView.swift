@@ -5,6 +5,9 @@ struct ContentView: View {
     @State private var isMenuVisible = true
     @State private var menuHideTimer: Timer?
     @State private var isDialActive = false
+    @State private var isMagnetActive = false
+    
+    @State private var idleTracker = IdleTracker()
     
     var body: some View {
         ZStack {
@@ -29,7 +32,14 @@ struct ContentView: View {
                 case .ticket:
                     TicketView()
                 case .magnet:
-                    MagnetView()
+                    MagnetView(onInteractionChange: { active in
+                        isMagnetActive = active
+                        if active {
+                            triggerInteraction()
+                        } else {
+                            endInteraction()
+                        }
+                    })
                 case .blob:
                     BlobView()
                 }
@@ -41,22 +51,25 @@ struct ContentView: View {
                         triggerInteraction()
                     }
                     .onEnded { _ in
-                        // Only schedule menu to reappear if the dial itself isn't still actively spinning
-                        if !isDialActive {
+                        // Only schedule menu to reappear if the dial/magnet isn't still actively moving
+                        if !isDialActive && !isMagnetActive {
                             endInteraction()
                         }
                     }
             )
             
             // 2. Global Bottom-Anchored Radial Selector
-            if isMenuVisible {
-                RadialMenuView { selectedFidget in
-                    withAnimation(.spring(duration: 0.32, bounce: 0.12)) {
-                        activeFidget = selectedFidget
-                    }
+            RadialMenuView(isMenuVisible: $isMenuVisible) { selectedFidget in
+                withAnimation(.spring(duration: 0.32, bounce: 0.12)) {
+                    activeFidget = selectedFidget
                 }
-                .transition(.move(edge: .bottom).combined(with: .opacity))
             }
+        }
+        // 2. Inject into the environment for RadialMenuView to read
+        .environment(idleTracker)
+        // 3. Start the AFK countdown when the app first launches
+        .onAppear {
+            idleTracker.restartTimer()
         }
     }
     
@@ -68,6 +81,7 @@ struct ContentView: View {
                 isMenuVisible = false
             }
         }
+        idleTracker.userInteracted()
     }
     
     private func endInteraction() {
@@ -77,9 +91,24 @@ struct ContentView: View {
                 isMenuVisible = true
             }
         }
+        idleTracker.restartTimer()
     }
 }
 
-#Preview {
+#Preview ("English") {
     ContentView()
+        .environment(\.locale, Locale(identifier: "en"))
+
+}
+
+#Preview ("Indo") {
+    ContentView()
+        .environment(\.locale, Locale(identifier: "id"))
+
+}
+
+#Preview ("japanese") {
+    ContentView()
+        .environment(\.locale, Locale(identifier: "ja"))
+
 }

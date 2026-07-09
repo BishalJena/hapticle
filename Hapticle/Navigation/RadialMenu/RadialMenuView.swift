@@ -11,16 +11,21 @@
 import SwiftUI
 
 struct RadialMenuView: View {
+    @Binding var isMenuVisible: Bool
     /// Fired on commit with the chosen fidget.
     var onSelect: (FidgetID) -> Void
-
+    
+    @Environment(IdleTracker.self) private var idleTracker
+    
     @State private var model = RadialMenuModel()
     @State private var breathe = false
-    @State private var textRotation = 0.0
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
+    
     private static let space = "radialMenu"
-
+    var holdMenuText: [Character] {
+        Array(String(localized: "HOLD FOR MENU · HOLD FOR MENU · "))
+    }
+    
     var body: some View {
         GeometryReader { geo in
             let ringCenter = CGPoint(x: geo.size.width / 2,
@@ -38,34 +43,31 @@ struct RadialMenuView: View {
         .onAppear {
             model.onSelect = onSelect
             breathe = true
-            withAnimation(.linear(duration: 4.0).repeatForever(autoreverses: false)) {
-                textRotation = 360.0
-            }
         }
     }
-
+    
     // MARK: Backdrop — subtle frosted blur while open (masks the swap, focuses the fan)
-
+    
     private var backdrop: some View {
         Rectangle()
             .fill(.ultraThinMaterial)
-            .opacity(model.isOpen ? 1 : 0)
+            .opacity(model.isOpen && isMenuVisible ? 1 : 0)
             .ignoresSafeArea()
             .allowsHitTesting(false)
-            // Ease-out both ways, but exit is quicker than enter (asymmetric).
+        // Ease-out both ways, but exit is quicker than enter (asymmetric).
             .animation(reduceMotion ? .easeOut(duration: 0.15)
                        : .easeOut(duration: model.isOpen ? 0.28 : 0.16),
                        value: model.isOpen)
     }
-
+    
     // MARK: A satellite (bloom, fan-swing, and commit choreography driven here)
-
+    
     private func satellite(_ id: FidgetID, ringCenter: CGPoint) -> some View {
         let o = model.offset(for: id)
         let target = CGPoint(x: ringCenter.x + o.width, y: ringCenter.y + o.height)
         let isChosen = model.committingID == id
         let committing = model.committingID != nil
-
+        
         return SatelliteNode(
             assetName: id.assetName,
             isHovered: model.hoveredID == id,
@@ -73,12 +75,13 @@ struct RadialMenuView: View {
         )
         .rotationEffect(.degrees(fanSwing(for: id)))          // hand-fan swing-in
         .scaleEffect(satelliteScale(id))
-        .opacity(model.isOpen && !committing ? 1 : 0)         // chosen dissolves as it flares
+        .opacity(model.isOpen && !committing && isMenuVisible ? 1 : 0)         // chosen dissolves as it flares
+        .disabled(!isMenuVisible)
         .position(committing && !isChosen ? siblingFallPosition(o, from: ringCenter)
                   : (model.isOpen ? target : ringCenter))    // emerge from / return to the dot
         .animation(satelliteAnimation(id), value: model.phase)
     }
-
+    
     /// Bloom scale: emerge from the dot, flare on commit, else full size.
     private func satelliteScale(_ id: FidgetID) -> CGFloat {
         guard model.isOpen else { return RadialMenuConfig.satelliteStartScale }
@@ -86,14 +89,14 @@ struct RadialMenuView: View {
         if model.committingID != nil { return RadialMenuConfig.siblingScale }
         return 1
     }
-
+    
     /// Outward tilt when closed that swings to 0 as the fan opens (hand-fan feel).
     private func fanSwing(for id: FidgetID) -> Double {
         guard !reduceMotion, !model.isOpen else { return 0 }   // upright once open
         let side = (90 - id.domeAngleDegrees) / 90             // A(180)→−1 … E(0)→+1
         return side * RadialMenuConfig.fanSwingDegrees
     }
-
+    
     /// Unchosen nodes drift a little further out as they fall away on commit.
     private func siblingFallPosition(_ o: CGSize, from ringCenter: CGPoint) -> CGPoint {
         let len = max((o.width * o.width + o.height * o.height).squareRoot(), 1)
@@ -101,7 +104,7 @@ struct RadialMenuView: View {
         return CGPoint(x: ringCenter.x + o.width / len * reach,
                        y: ringCenter.y + o.height / len * reach)
     }
-
+    
     /// Per-node animation: staggered lively open, snappy close, spring flare on commit.
     private func satelliteAnimation(_ id: FidgetID) -> Animation {
         if reduceMotion { return .easeOut(duration: 0.15) }
@@ -115,80 +118,72 @@ struct RadialMenuView: View {
 
     // MARK: Home ring + charge arc
 
-    private func ringButton(at center: CGPoint) -> some View {
-        ZStack {
-            // Liquid Glass Toggle Button - exactly 46x46
-            ZStack {
-                // Glass Base
-//                Circle()
-//                    .fill(.thinMaterial)
-//                    
-//                // Inner Shadow (recessed peephole look)
-//                Circle()
-//                    .stroke(Color.black.opacity(0.18), lineWidth: 3)
-//                    .blur(radius: 2)
-//                    .offset(x: 1.5, y: 1.5)
-//                    .mask(Circle())
-//                
-//                // Outer Bezel Stroke
-//                Circle()
-//                    .stroke(
-//                        LinearGradient(
-//                            colors: [.white.opacity(0.55), .clear, .black.opacity(0.15)],
-//                            startPoint: .topLeading,
-//                            endPoint: .bottomTrailing
-//                        ),
-//                        lineWidth: 1.0
-//                    )
-                
-                // Red Charge Indicators (Behind Menu Image)
-                if model.isCharging || model.isOpen {
-                    // A. Static target boundary ring
+        private func ringButton(at center: CGPoint) -> some View {
+            // Active state covers both the charging wind-up AND the fully open menu.
+            let isActiveState = model.isCharging || model.isOpen
+            // Idle state only triggers if the global tracker fires AND no one is actively holding the button.
+            let isIdleState = idleTracker.isIdleAFK && model.isResting
+            
+            return ZStack {
+                // 1. The Omnipresent Geometric Anchor
+                // Remains structurally identical and always captures gestural input.
+                Circle()
+                    .fill(Color.white.opacity(0.001))
+                    .frame(width: RadialMenuConfig.chargeIndicatorDiameter,
+                           height: RadialMenuConfig.chargeIndicatorDiameter)
+
+                // 2. The Shared Base (Stroke & Text)
+                // Visible if the user is charging, the menu is open, OR the app is in AFK mode.
+                ZStack {
                     Circle()
                         .stroke(Color.accent, lineWidth: 1.5)
-                        .frame(width: RadialMenuConfig.chargeIndicatorDiameter,
-                               height: RadialMenuConfig.chargeIndicatorDiameter)
                     
-                    // B. Linearly growing progress circle
-                    Circle()
-                        .fill(Color.accent)
-                        .frame(width: RadialMenuConfig.chargeIndicatorDiameter * CGFloat(model.chargeProgress),
-                               height: RadialMenuConfig.chargeIndicatorDiameter * CGFloat(model.chargeProgress))
-                    
-                    // C. Rotating Circular Instruction Text
-                    CircularTextView()
-                        .rotationEffect(.degrees(textRotation))
+                    CircularTextView(characters: holdMenuText)
                 }
+                .frame(width: RadialMenuConfig.chargeIndicatorDiameter,
+                       height: RadialMenuConfig.chargeIndicatorDiameter)
+                .opacity(isActiveState || isIdleState ? 1.0 : 0.0)
+                .animation(.easeOut(duration: 0.2), value: isActiveState || isIdleState)
                 
-                // Scaled central toggle Icon/Menu
-                Image("Icon/Menu")
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 24, height: 24)
+                // 3. The Active Fill
+                // Stays visible when `model.isOpen` is true.
+                Circle()
+                    .fill(Color.accent)
+                    .frame(width: RadialMenuConfig.chargeIndicatorDiameter * CGFloat(model.chargeProgress),
+                           height: RadialMenuConfig.chargeIndicatorDiameter * CGFloat(model.chargeProgress))
+                    .opacity(isActiveState ? 1.0 : 0.0)
+                    .animation(.easeOut(duration: 0.2), value: isActiveState)
+
             }
             .frame(width: RadialMenuConfig.satelliteDiameter,
                    height: RadialMenuConfig.satelliteDiameter)
-            // Idle breathing — subtle, and skipped under Reduce Motion.
-            .scaleEffect(model.isResting && breathe && !reduceMotion
+            .contentShape(Circle())
+            .gesture(drag(ringCenter: center))
+            .position(center)
+            
+            // Breathing animation applies strictly to the AFK prompt
+            .scaleEffect(model.isResting && breathe && isIdleState && !reduceMotion
                          ? RadialMenuConfig.breathScale : 1)
             .animation(.easeInOut(duration: RadialMenuConfig.breathPeriod)
                         .repeatForever(autoreverses: true),
                        value: breathe)
-            // Charge feedback: the dot presses in (deboss above) and
-            // swells slightly while held. No colored progress ring.
-            .scaleEffect(model.isCharging ? 1 + CGFloat(model.chargeProgress) * 0.08 : 1)
+            
+            // Physical charge deboss maps to the user's pressure/time
             .animation(.spring(RadialMenuConfig.hoverSpring), value: model.chargeProgress)
         }
-        .contentShape(Circle())
-        .gesture(drag(ringCenter: center))
-        .position(center)
-    }
-
+    
     // MARK: Gesture — one continuous press → charge → drag → release
-
+    
     private func drag(ringCenter: CGPoint) -> some Gesture {
         DragGesture(minimumDistance: 0, coordinateSpace: .named(Self.space))
             .onChanged { value in
+                                
+                if !isMenuVisible {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        isMenuVisible = true
+                    }
+                }
+                
                 if model.isResting {
                     // Only begin charging if the touch started on the ring.
                     let d = hypot(value.startLocation.x - ringCenter.x,
@@ -199,22 +194,30 @@ struct RadialMenuView: View {
                                     y: value.location.y - ringCenter.y)
                 model.dragChanged(to: local)
             }
-            .onEnded { _ in model.touchUp() }
+            .onEnded { _ in
+                model.touchUp()
+                // Re-engage the countdown the precise millisecond the screen is relinquished
+            }
     }
 }
 
 #Preview {
     ZStack {
         Color.fidgetPrimary.ignoresSafeArea()
-        RadialMenuView(onSelect: { print("selected \($0.label)") })
+        RadialMenuView(isMenuVisible: .constant(true), onSelect: { print("selected \($0.label)") })
     }
+    .environment(IdleTracker())
 }
 
 /// Helper view that displays text characters evenly distributed along a circular boundary,
-/// indicating the hold-to-charge action.
+/// rotating continuously to indicate the hold-to-charge action.
 struct CircularTextView: View {
-    private let characters = Array("HOLD FOR MENU · HOLD FOR MENU · ") // 32 characters total
-    private let radius: CGFloat = 42.0                                // Stays 12px above the 46x46 indicator (radius 23 + 12 + font offset)
+    @Environment(\.colorScheme) var colorScheme
+
+    let characters: [Character] // 32 characters total
+    private let radius: CGFloat = (RadialMenuConfig.chargeIndicatorDiameter/2)+12                          // Fits outside the 46x46 boundary
+    
+    @State private var rotation: Double = 0.0
     
     var body: some View {
         ZStack {
@@ -223,10 +226,17 @@ struct CircularTextView: View {
                 let angle = Double(index) * (360.0 / Double(characters.count))
                 
                 Text(char)
-                    .font(.system(size: 9.5, weight: .bold, design: .monospaced))
-                    .foregroundColor(Color.accent)
+                    .font(.system(size: 14, weight: .medium, design: .monospaced))
+                    .foregroundStyle(colorScheme == .dark ? Color.accentHighlight : Color.accentShadow)
                     .offset(y: -radius)
                     .rotationEffect(.degrees(angle))
+            }
+        }
+        .rotationEffect(.degrees(rotation))
+        .onAppear {
+            // Animate local state for a smooth continuous 0.1 rev/sec rotation
+            withAnimation(.linear(duration:10.0).repeatForever(autoreverses: false)) {
+                rotation = 360.0
             }
         }
     }

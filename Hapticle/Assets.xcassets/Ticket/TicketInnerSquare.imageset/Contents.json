@@ -1,7 +1,7 @@
 {
   "images" : [
     {
-      "filename" : "Screenshot 2026-07-02 at 10.39.29.png",
+      "filename" : "Rectangle 11.svg",
       "idiom" : "universal",
       "scale" : "1x"
     },
@@ -17,5 +17,8 @@
   "info" : {
     "author" : "xcode",
     "version" : 1
+  },
+  "properties" : {
+    "template-rendering-intent" : "template"
   }
 }
