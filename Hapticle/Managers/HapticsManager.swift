@@ -122,7 +122,7 @@ class HapticsManager {
                 updateContinuousFeedback(intensity: intensity, sharpness: sharpness)
                 return
             }
-            
+
             let intensityParam = CHHapticEventParameter(parameterID: .hapticIntensity, value: Float(intensity))
             let sharpnessParam = CHHapticEventParameter(parameterID: .hapticSharpness, value: Float(sharpness))
             
@@ -137,7 +137,8 @@ class HapticsManager {
     
     func updateContinuousFeedback(intensity: Double, sharpness: Double) {
         guard isEngineSupported, let player = continuousPlayer else { return }
-        
+        let intensity = intensity.clampedToUnit
+        let sharpness = sharpness.clampedToUnit
         do {
             let intensityParam = CHHapticDynamicParameter(parameterID: .hapticIntensityControl, value: Float(intensity), relativeTime: 0)
             let sharpnessParam = CHHapticDynamicParameter(parameterID: .hapticSharpnessControl, value: Float(sharpness), relativeTime: 0)
@@ -153,4 +154,10 @@ class HapticsManager {
         try? continuousPlayer?.stop(atTime: CHHapticTimeImmediate)
         continuousPlayer = nil
     }
+}
+
+private extension Double {
+    /// Core Haptics intensity/sharpness must be within 0…1; clamp defensively
+    /// so an out-of-range tuning value degrades gracefully instead of failing.
+    var clampedToUnit: Double { Swift.max(0, Swift.min(1, self)) }
 }

@@ -18,6 +18,8 @@ struct BlobEntity: Identifiable {
     var radius: CGFloat = 33
     var velocityX: CGFloat = 0        // free-motion / recoil velocity (pt/s)
     var velocityY: CGFloat = 0
+    /// Per-blob random phase so idle wobble is unsynchronized across blobs.
+    var wobbleSeed: Double = .random(in: 0..<(2 * .pi))
 
     /// Perimeter particle offsets from `center` (current + previous frame).
     var ring: [CGVector] = []
@@ -103,10 +105,12 @@ class BlobModel: ObservableObject {
 
     // MARK: - Tunable Parameters — Shedding
 
-    /// Recoil speed of a shed droplet (scaled up for smaller droplets).
-    private let baseFlingSpeed: CGFloat = 150
-    /// Minimum seconds between two sheds within one drag.
-    private let shedCooldownDuration: CFTimeInterval = 0.10
+    /// Recoil speed of a shed droplet (scaled up for smaller droplets). Kept
+    /// gentle so droplets settle near the drag path — a breadcrumb trail —
+    /// rather than scattering across the screen.
+    private let baseFlingSpeed: CGFloat = 80
+    /// Minimum seconds between two sheds within one drag (trail spacing).
+    private let shedCooldownDuration: CFTimeInterval = 0.16
 
     // MARK: - Tunable Parameters — Walls
 
@@ -122,18 +126,26 @@ class BlobModel: ObservableObject {
     private let collectMaxSpeed: CGFloat = 900
 
     /// Tension (finger↔center lag, pt) needed to shed, scaled by size:
-    /// a big blob resists; a small one lets go easily.
-    private func shedThreshold(_ r: CGFloat) -> CGFloat { max(r * 1.9, 58) }
+    /// a big blob resists; a small one lets go easily. Low enough that a
+    /// brisk drag sheds a trail without needing a violent whip.
+    private func shedThreshold(_ r: CGFloat) -> CGFloat { max(r * 1.3, 44) }
 
     // MARK: - Tunable Parameters — Soft Body
 
-    private let shapeStiffness: CGFloat = 0.09
-    private let smoothStiffness: CGFloat = 0.24
-    private let vertexDamping: CGFloat = 0.90
+    private let shapeStiffness: CGFloat = 0.07
+    private let smoothStiffness: CGFloat = 0.2
+    private let vertexDamping: CGFloat = 0.93
     private let grabStiffness: CGFloat = 0.5
     private let grabFocus: CGFloat = 1.6
     private let constraintIterations: Int = 2
-    private let idleAmplitude: CGFloat = 0.22
+    private let idleAmplitude: CGFloat = 0.64
+    /// How much of the center's per-frame motion the ring lags behind — this is
+    /// what makes a moving blob deform (teardrop trails, wall-bounce squash)
+    /// instead of translating as a rigid circle.
+    private let inertiaLag: CGFloat = 0.36
+    /// Cap on the per-frame center displacement fed into the ring, so a whip
+    /// crossing the screen can't fling the soft body inside-out.
+    private let inertiaLagMaxStep: CGFloat = 20
 
     // MARK: - Tunable Parameters — Haptics
 
@@ -238,8 +250,9 @@ class BlobModel: ObservableObject {
         guard d > 0.5 else { return false }
         ux = dx / d; uy = dy / d
 
-        // Droplet takes ~45% of the parent's radius; enforce both floors.
-        let dropletR = min(max(parent.radius * 0.45, rMin), parent.radius * 0.85)
+        // Droplet takes ~30% of the parent's radius — small enough that a drag
+        // leaves a trail of several before the parent runs dry.
+        let dropletR = min(max(parent.radius * 0.3, rMin), parent.radius * 0.85)
         let newParentR = sqrt(max(parent.radius * parent.radius - dropletR * dropletR, 0))
         guard dropletR >= rMin, newParentR >= rMin else { return false }
 
@@ -309,10 +322,10 @@ class BlobModel: ObservableObject {
             for j in blobs.indices where blobs[j].id != id {
                 // Don't vacuum up a droplet that's still flying away from a fresh
                 // shed — only settled puddles get collected.
-                if hypot(blobs[j].velocityX, blobs[j].velocityY) > 90 { continue }
+                if hypot(blobs[j].velocityX, blobs[j].velocityY) > 200 { continue }
                 let dist = hypot(blobs[j].center.x - dragged.center.x,
                                  blobs[j].center.y - dragged.center.y)
-                if dist < (dragged.radius + blobs[j].radius) * 0.7 { target = j; break }
+                if dist < (dragged.radius + blobs[j].radius) * 0.85 { target = j; break }
             }
             guard let j = target else { return }
 
@@ -409,6 +422,7 @@ class BlobModel: ObservableObject {
 
         for i in blobs.indices {
             let isDragged = isDragging && blobs[i].id == dragBlobID
+            let centerBefore = blobs[i].center
 
             if isDragged {
                 // Elastic tether: spring the center toward the finger, mass-scaled.
@@ -442,12 +456,16 @@ class BlobModel: ObservableObject {
             // Keep the blob on-screen — bounce off the walls.
             containWithinWalls(&blobs[i], isDragged: isDragged)
 
-            // Soft-body ring update.
+            // Soft-body ring update, fed the frame's center motion so the body
+            // visibly lags/deforms rather than sliding around as a rigid disc.
             let fingerOffset: CGVector? = isDragged
                 ? CGVector(dx: fingerPosition.x - blobs[i].center.x,
                            dy: fingerPosition.y - blobs[i].center.y)
                 : nil
-            stepRing(&blobs[i], dt: dtScale, time: now, fingerOffset: fingerOffset)
+            let centerDelta = CGVector(dx: blobs[i].center.x - centerBefore.x,
+                                       dy: blobs[i].center.y - centerBefore.y)
+            stepRing(&blobs[i], dt: dtScale, time: now,
+                     fingerOffset: fingerOffset, centerDelta: centerDelta)
         }
 
         // Drive the drag haptics (rumble + crackle), then either shed (fast
@@ -513,10 +531,28 @@ class BlobModel: ObservableObject {
     // MARK: - Soft-Body Ring
 
     private func stepRing(_ blob: inout BlobEntity, dt: CGFloat, time: CFTimeInterval,
-                          fingerOffset: CGVector?) {
+                          fingerOffset: CGVector?, centerDelta: CGVector = .zero) {
         let n = blob.ring.count
         guard n >= 3 else { return }
         let rest = BlobEntity.restRing(radius: blob.radius, count: n)
+
+        // Deformation is proportional to size: what reads as gentle breathing
+        // on a big blob is a huge fraction of a droplet's radius, so small
+        // blobs get proportionally calmer wobble and lag to stay recognisably
+        // round.
+        let sizeScale = min(blob.radius / refRadius, 1.0)
+
+        // Inertia: ring offsets live in center-relative space, so when the
+        // center moves the body should lag behind in world space and spring
+        // back — that lag IS the gooey deformation of a moving blob.
+        var lagX = -centerDelta.dx * inertiaLag * (0.4 + 0.6 * sizeScale)
+        var lagY = -centerDelta.dy * inertiaLag * (0.4 + 0.6 * sizeScale)
+        let lagCap = min(inertiaLagMaxStep, blob.radius * 0.4)
+        let lagMag = hypot(lagX, lagY)
+        if lagMag > lagCap {
+            lagX *= lagCap / lagMag
+            lagY *= lagCap / lagMag
+        }
 
         var grabTargets: [CGVector]? = nil
         if let f = fingerOffset {
@@ -539,15 +575,21 @@ class BlobModel: ObservableObject {
         for i in 0..<n {
             let cur = blob.ring[i]
             let prev = blob.ringPrev[i]
-            var vx = (cur.dx - prev.dx) * vertexDamping
-            var vy = (cur.dy - prev.dy) * vertexDamping
+            var vx = (cur.dx - prev.dx) * vertexDamping + lagX
+            var vy = (cur.dy - prev.dy) * vertexDamping + lagY
 
             if grabTargets == nil {
-                let phase = Double(i) * 0.55
-                let noise = sin(time * 1.3 + phase) + 0.55 * sin(time * 2.17 + phase * 1.7)
+                // Standing waves, not traveling ones: the spatial lobes stay
+                // put and only pulse in amplitude, so the wobble reads as
+                // breathing slime rather than the ring rotating. Per-blob
+                // seed keeps blobs out of sync with each other.
+                let angle = Double(i) / Double(n) * 2 * .pi
+                let seed = blob.wobbleSeed
+                let noise = sin(angle * 2 + seed) * sin(time * 1.1 + seed)
+                          + 0.6 * sin(angle * 3 + seed * 1.7) * cos(time * 1.9 + seed * 2.3)
                 let mag = hypot(rest[i].dx, rest[i].dy)
                 if mag > 0 {
-                    let push = idleAmplitude * CGFloat(noise) * dt
+                    let push = idleAmplitude * sizeScale * CGFloat(noise) * dt
                     vx += rest[i].dx / mag * push
                     vy += rest[i].dy / mag * push
                 }
