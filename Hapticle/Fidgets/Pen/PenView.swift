@@ -81,11 +81,11 @@ struct PenView: View {
                 Image("PenBody")
                     .renderingMode(.template)
                     .foregroundColor(Color.fidgetPrimary)
-                    .shadow(color: Color.highlight, radius: 6, x: -7, y: -6)
+                    .shadow(color: Color.highlight.opacity(0.2), radius: 6, x: -7, y: -6)
                     .shadow(color: Color.shadow, radius: 6, x: 7, y: 6)
                     .innerShadowShift(
                         mask: Image("PenBody"),
-                        color: Color.shadow,
+                        color: Color.shadow.opacity(1.0),
                         blur: 20,
                         x: 55, y: 0
                     )
@@ -103,14 +103,14 @@ struct PenView: View {
             VStack {
                 Image("PenCrown")
                     .renderingMode(.template)
-                        .foregroundColor(Color.shadow)
-                    .shadow(color: Color.shadow, radius: 3, x: 3, y: 3)
-                    .shadow(color: Color.highlight, radius: 3, x: -3, y: -3)
+                    .foregroundColor(Color.shadow)
+                        .shadow(color: Color.shadow, radius: 3, x: 3, y: 3)
+                    .shadow(color: Color.highlight.opacity(0.2), radius: 3, x: -3, y: -3)
                     .innerShadowShift(
                         mask: Image("PenCrown"),
                         color: Color.fidgetPrimary,
-                        blur: 4.9,
-                        x: -13, y: 0
+                        blur: 5.0,
+                        x: -10, y: -0.8
                     )
                     .scaledToFit()
                     .frame(width: 150, height: 150)
@@ -126,7 +126,7 @@ struct PenView: View {
                 Image("PenClip")
                     .renderingMode(.template)
                         .foregroundColor(Color.fidgetPrimary)
-                    .shadow(color: Color.highlight, radius: 3, x: -3, y: -3)
+                        .shadow(color: Color.highlight.opacity(0.4), radius: 3, x: -3, y: -3)
                     .shadow(color: Color.shadow, radius: 3, x: 3, y: 3)
                     .innerShadowShift(
                         mask: Image("PenClip"),
@@ -146,7 +146,7 @@ struct PenView: View {
                 Image("HapticleText")
                     .renderingMode(.template)
                         .foregroundColor(Color.fidgetPrimary)
-                    .shadow(color: Color.highlight, radius: 1, x: -1, y: -1)
+                    .shadow(color: Color.highlight.opacity(0.4), radius: 1, x: -1, y: -1)
                     .shadow(color: Color.shadow, radius: 1, x: 1, y: 1)
                     .scaledToFit()
                     .padding(.top, 350)
