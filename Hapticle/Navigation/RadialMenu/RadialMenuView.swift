@@ -251,8 +251,7 @@ struct CircularTextView: View {
     private let radius: CGFloat = (RadialMenuConfig.chargeIndicatorDiameter/2)+12                          // Fits outside the 46x46 boundary
 
     @State private var rotation: Double = 0.0
-    @Environment(\.colorScheme) private var colorScheme
-
+    
     /// accentShadow disappears against the dark background; use the highlight there.
     private var textColor: Color {
         colorScheme == .dark ? Color.accentHighlight : Color.accentShadow

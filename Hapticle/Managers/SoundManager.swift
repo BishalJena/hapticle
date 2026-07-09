@@ -16,7 +16,7 @@ class SoundManager {
     private var carrierPhase: Float = 0.0
     private var shaftPhase: Float = 0.0
     
-    // MARK: - Tearing Synth (Ticket fidget: perforation noise-burst texture)
+    // MARK: - TICKET Tearing Synth (Ticket fidget: perforation noise-burst texture)
     
     private var tearSourceNode: AVAudioSourceNode?
     private var currentTearRate: Float = 0.0       // perforation crossings per second
@@ -25,6 +25,19 @@ class SoundManager {
     private var tearLP1: Float = 0.0               // wider lowpass (bandpass upper corner)
     private var tearLP2: Float = 0.0               // narrower lowpass (bandpass lower corner)
     private var isTearingActive = false
+    
+    // MARK: - Pen Click Synth (Procedural Percussion)
+    
+    private var penSourceNode: AVAudioSourceNode?
+    private var penPhase: Float = 1.0 // 1.0 = silent/finished
+    // MARK: - Pen Click Synth state (replace the tone/noise vars with these)
+    private var penElapsed: Float = 999.0
+    private var penFilterLow: Float = 0.0    // SVF integrator state
+    private var penFilterBand: Float = 0.0   // SVF resonant output (this IS the click)
+    private var penIntensity: Float = 0.0
+    private var penSharpness: Float = 0.0
+    private var penIsRelease: Bool = false
+    
     
     init() {
         configureAudioSession()
@@ -134,6 +147,9 @@ class SoundManager {
         let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1)!
         engine.connect(sourceNode, to: engine.mainMixerNode, format: format)
         
+        // PEN
+        setupPenNode()
+        
         do {
             try engine.start()
         } catch {
@@ -184,6 +200,16 @@ class SoundManager {
             let vol = self.currentTearVolume
             let step = (2.0 * Float.pi * rate) / Float(self.sampleRate)
             
+            // Bandpass corners in real Hz — tune these directly to change the
+            // overall "pitch" of the tearing sound. Lower both = deeper/duller
+            // tear (thicker cardstock); raise both = thinner/crisper (tissue paper).
+            let bandpassHighHz: Float = 1000.0   // upper corner (was hardcoded via 0.5)
+            let bandpassLowHz: Float = 50.0     // lower corner (was hardcoded via 0.02)
+            
+            // Convert Hz -> one-pole leaky-integrator coefficients
+            let highCoeff = 1.0 - exp(-2.0 * Float.pi * bandpassHighHz / Float(self.sampleRate))
+            let lowCoeff  = 1.0 - exp(-2.0 * Float.pi * bandpassLowHz / Float(self.sampleRate))
+            
             for channel in 0..<ablPointer.count {
                 let buffer = ablPointer[channel]
                 guard let buf = buffer.mData?.assumingMemoryBound(to: Float.self) else { continue }
@@ -193,21 +219,15 @@ class SoundManager {
                 var lp2 = self.tearLP2
                 
                 for frame in 0..<Int(frameCount) {
-                    // Sharp decaying envelope per "perforation snap" — snappier than the
-                    // dial's resonance decay since a fiber snap is nearly instantaneous.
                     let progress = phase / (2.0 * Float.pi)
                     let envelope = exp(-12 * progress)
                     
-                    // Raw broadband noise = the actual "tearing" source material
                     let whiteNoise = Float.random(in: -1...1)
                     
-                    // Cascaded leaky-integrator lowpasses -> difference = crude bandpass,
-                    // shaped to sit in the papery/crinkly mid-high range rather than full hiss.
-                    lp1 += 0.5 * (whiteNoise - lp1)
-                    lp2 += 0.02 * (whiteNoise - lp2)
+                    lp1 += highCoeff * (whiteNoise - lp1)
+                    lp2 += lowCoeff  * (whiteNoise - lp2)
                     let bandpassed = (lp1 - lp2) * 2.2
                     
-                    // Sparse sharp impulses = individual fiber strands snapping ("crackle")
                     var crackle: Float = 0
                     if Float.random(in: 0...1) < 0.015 {
                         crackle = Float.random(in: -1...1) * 0.7
@@ -258,5 +278,102 @@ class SoundManager {
     /// Play a heavy, resonant pop for the final ticket severance.
     func playTearSnap() {
         AudioServicesPlaySystemSound(1520)
+    }
+    
+    // PEN
+    
+    private func setupPenNode() {
+        guard let engine = audioEngine, penSourceNode == nil else { return }
+        
+        let node = AVAudioSourceNode { [weak self] _, _, frameCount, audioBufferList in
+            guard let self = self else { return noErr }
+            let ablPointer = UnsafeMutableAudioBufferListPointer(audioBufferList)
+            
+            var elapsed = self.penElapsed
+            var low = self.penFilterLow
+            var band = self.penFilterBand
+            let intensity = self.penIntensity
+            let sharpness = self.penSharpness
+            let isRelease = self.penIsRelease
+            
+            let dt = 1.0 / Float(self.sampleRate)
+            let totalDuration: Float = 0.05
+            
+            // Resonant frequency = the material's "pitch" when struck (fixed, does NOT sweep).
+            // Press hits a smaller/lighter part (higher pitch); release hits a heavier latch (lower).
+            let resonantFreq: Float = isRelease ? 6000.0 : (6500.0 + sharpness * 300.0)
+            
+            // Q = how long/tonal the ring is. Lower Q = short percussive "tock".
+            // Higher Q = longer, more musical "ring". Real plastic clicks sit low (3–7).
+            let q: Float = isRelease ? 7.0 : 4.5
+            
+            let f = 2.0 * sin(Float.pi * resonantFreq / Float(self.sampleRate))
+            let qInv = 1.0 / q
+            
+            for channel in 0..<ablPointer.count {
+                let buffer = ablPointer[channel]
+                guard let buf = buffer.mData?.assumingMemoryBound(to: Float.self) else { continue }
+                
+                var localElapsed = elapsed
+                var localLow = low
+                var localBand = band
+                
+                for frame in 0..<Int(frameCount) {
+                    if localElapsed >= totalDuration {
+                        buf[frame] = 0.0
+                        continue
+                    }
+                    
+                    // Excitation: a very brief noise burst — this is the "strike," not the sound itself.
+                    // Short burst = crisp click; longer burst = scrapey/buzzier.
+                    let burstEnv = exp(-500.0 * localElapsed)
+                    let excitation = Float.random(in: -1...1) * burstEnv
+                    
+                    // Chamberlin state-variable filter — "band" output naturally rings and
+                    // decays at resonantFreq without ever sweeping pitch.
+                    localLow += f * localBand
+                    let high = excitation - localLow - qInv * localBand
+                    localBand += f * high
+                    
+                    // Extra overall decay so the tail is guaranteed fully dead by totalDuration,
+                    // independent of the filter's own damping.
+                    let outEnv = exp(-70.0 * localElapsed)
+                    
+                    let sample = localBand * outEnv * intensity
+                    buf[frame] = max(-1.0, min(1.0, sample)) // clip guard
+                    
+                    localElapsed += dt
+                }
+                
+                if channel == 0 {
+                    elapsed = localElapsed
+                    low = localLow
+                    band = localBand
+                }
+            }
+            
+            self.penElapsed = elapsed
+            self.penFilterLow = low
+            self.penFilterBand = band
+            return noErr
+        }
+        
+        engine.attach(node)
+        let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1)!
+        engine.connect(node, to: engine.mainMixerNode, format: format)
+        penSourceNode = node
+    }
+    
+    func playPenClick(intensity: Double, sharpness: Double, isRelease: Bool) {
+        self.penIntensity = Float(intensity)
+        self.penSharpness = Float(sharpness)
+        self.penIsRelease = isRelease
+        self.penElapsed = 0.0
+        self.penFilterLow = 0.0
+        self.penFilterBand = 0.0 // reset filter each trigger so clicks don't bleed into each other
+        
+        if let engine = audioEngine, !engine.isRunning {
+            try? engine.start()
+        }
     }
 }

@@ -58,6 +58,8 @@ final class TicketModel: ObservableObject {
     private var smoothedVelocity: Double = 0.0
     private var hapticPhase: Double = 0.0
     
+    private var tearGeneration: Int = 0
+    
     // NEW: Intent Lock prevents the anchor point from fluttering mid-drag
     private var lockedTearState: TearKinematics? = nil
     private var activeTearState: TearKinematics = .straight
@@ -110,6 +112,7 @@ final class TicketModel: ObservableObject {
         lastTearDistance = 0.0
         smoothedVelocity = 0.0
         hapticPhase = 0.0
+        tearGeneration += 1   // NEW: a fresh drag invalidates any pending stop-timers from before
         
         let link = CADisplayLink(target: self, selector: #selector(stepPhysics))
         link.add(to: .main, forMode: .common)
@@ -222,12 +225,11 @@ final class TicketModel: ObservableObject {
     }
     
     func executeSeveranceProtocol(dampenedY: CGFloat, rawTranslation: CGSize, isStraightTear: Bool = false) {
-        // Guarantee continuous audio halts immediately
         stopDisplayLink()
+        tearGeneration += 1                 // NEW: this severance's own generation
+        let myGeneration = tearGeneration   // NEW: snapshot for the closure below
         
         if isStraightTear {
-            // A straight pull snaps all remaining perforations at once.
-            // We use a much shorter 0.05s burst instead of 0.18s, ending with a heavy thud.
             for i in 0..<3 {
                 DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.03) {
                     let decay = Double(i) * 0.2
@@ -237,12 +239,14 @@ final class TicketModel: ObservableObject {
             SoundManager.shared.startTearing(rate: 60.0, volume: 1.0)
             
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                // NEW: only stop/snap if nothing newer has grabbed the tearing
+                // audio in the meantime. If tearGeneration moved on, a later
+                // rip already owns the sound — leave it alone.
+                guard self.tearGeneration == myGeneration else { return }
                 SoundManager.shared.stopTearing()
                 SoundManager.shared.playTearSnap()
             }
         } else {
-            // HINGE TEAR: There is only a tiny corner of fibers left to break!
-            // No continuous "BRRRT" allowed. Just one heavy, final haptic and audio snap.
             HapticsManager.shared.playClick(intensity: 2.5, sharpness: 0.8)
             SoundManager.shared.playTearSnap()
         }
