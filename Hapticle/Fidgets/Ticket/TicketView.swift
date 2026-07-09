@@ -109,7 +109,7 @@ struct TicketView: View {
             Image("Machine")
                 .renderingMode(.template)
                 .foregroundStyle(Color.fidgetPrimary)
-                .shadow(color: Color.highlight, radius: 6, x: -6, y: -6)
+                .shadow(color: Color.highlight.opacity(0.4), radius: 6, x: -6, y: -6)
                 .shadow(color: .shadow, radius: 6, x: 6, y: 6)
                 .overlay {
                     VStack {
@@ -169,7 +169,7 @@ struct TicketView: View {
         Image("MachineOverhang")
             .renderingMode(.template)
             .foregroundStyle(Color.fidgetPrimary)
-            .shadow(color: Color.highlight.opacity(1.0), radius: 6, x: -3, y: -3)
+            .shadow(color: Color.highlight.opacity(0.4), radius: 6, x: -3, y: -3)
             .shadow(color: .shadow.opacity(0.25), radius: 3, x: 3, y: 3)
     }
     

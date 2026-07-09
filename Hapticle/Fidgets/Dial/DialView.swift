@@ -32,7 +32,8 @@ struct DialView: View {
                             y: 5.0
                         )
                         .shadow(
-                            color: Color.highlight.opacity(0.9),
+                            // highlight reduced - sam
+                            color: Color.highlight.opacity(0.4),
                             radius: 5.0,
                             x: -5.0,
                             y: -5.0
