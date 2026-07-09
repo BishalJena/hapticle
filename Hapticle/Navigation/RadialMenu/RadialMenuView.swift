@@ -29,6 +29,7 @@ struct RadialMenuView: View {
             let ringCenter = CGPoint(x: geo.size.width / 2,
                                      y: geo.size.height - RadialMenuConfig.bottomInset)
             ZStack {
+                bottomScrim
                 backdrop
                 ForEach(FidgetID.allCases) { id in
                     satellite(id, ringCenter: ringCenter)
@@ -44,6 +45,38 @@ struct RadialMenuView: View {
         }
     }
     
+    // MARK: Bottom scrim — grounds the menu pop-up without dimming the whole screen
+
+    /// Only the menu's own section dims: strongest at the bottom edge, easing
+    /// to clear before it reaches the fidget. Rises and falls with exactly the
+    /// states in which the ring visuals are on screen.
+    private var bottomScrim: some View {
+        let visible = (model.isCharging || model.isOpen
+                       || (idleTracker.isIdleAFK && model.isResting)) && isMenuVisible
+        let dim = RadialMenuConfig.scrimMaxOpacity
+        // Multi-stop quadratic falloff so the top edge dissolves without a band.
+        return LinearGradient(
+            stops: [
+                .init(color: Color.shadow.opacity(dim), location: 0),
+                .init(color: Color.shadow.opacity(dim * 0.62), location: 0.3),
+                .init(color: Color.shadow.opacity(dim * 0.28), location: 0.55),
+                .init(color: Color.shadow.opacity(dim * 0.09), location: 0.8),
+                .init(color: Color.shadow.opacity(0), location: 1)
+            ],
+            startPoint: .bottom,
+            endPoint: .top
+        )
+        .frame(height: RadialMenuConfig.scrimHeight)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+        .ignoresSafeArea()
+        .allowsHitTesting(false)
+        .opacity(visible ? 1 : 0)
+        // Same asymmetric ease-out language as the backdrop: gentle in, quick out.
+        .animation(reduceMotion ? .easeOut(duration: 0.15)
+                   : .easeOut(duration: visible ? 0.35 : 0.2),
+                   value: visible)
+    }
+
     // MARK: Backdrop — subtle frosted blur while open (masks the swap, focuses the fan)
     
     private var backdrop: some View {
@@ -212,18 +245,24 @@ struct RadialMenuView: View {
 struct CircularTextView: View {
     let characters: [Character] // 32 characters total
     private let radius: CGFloat = (RadialMenuConfig.chargeIndicatorDiameter/2)+12                          // Fits outside the 46x46 boundary
-    
+
     @State private var rotation: Double = 0.0
-    
+    @Environment(\.colorScheme) private var colorScheme
+
+    /// accentShadow disappears against the dark background; use the highlight there.
+    private var textColor: Color {
+        colorScheme == .dark ? Color.accentHighlight : Color.accentShadow
+    }
+
     var body: some View {
         ZStack {
             ForEach(0..<characters.count, id: \.self) { index in
                 let char = String(characters[index])
                 let angle = Double(index) * (360.0 / Double(characters.count))
-                
+
                 Text(char)
                     .font(.system(size: 14, weight: .medium, design: .monospaced))
-                    .foregroundColor(Color.accentShadow)
+                    .foregroundColor(textColor)
                     .offset(y: -radius)
                     .rotationEffect(.degrees(angle))
             }

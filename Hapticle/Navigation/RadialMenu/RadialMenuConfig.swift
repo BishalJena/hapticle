@@ -61,6 +61,11 @@ enum RadialMenuConfig {
     static let bottomInset: CGFloat = 96
     /// A drag point within this distance of a node's center counts as hovering it.
     static let hitRadius: CGFloat = 36
+    /// Height of the bottom gradient scrim behind the menu — covers the ring
+    /// (96pt up) plus the bloom reach (128 + 32pt satellite radius), with headroom.
+    static let scrimHeight: CGFloat = 280
+    /// Scrim dim at the very bottom edge; it eases out to clear at the top.
+    static let scrimMaxOpacity: Double = 0.32
     
     // MARK: Timing
     /// Hold duration required to fully charge and open the menu.
