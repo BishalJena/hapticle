@@ -478,7 +478,10 @@ The current implementation of the dial in the codebase under [Hapticle/Fidgets/D
 *   **Torque Calculations:**
     *   **Torsion Spring Touch Link:** If dragging, calculates rotation difference $(\theta_{finger} - \theta)$ normalized to $[-\pi, \pi]$ and multiplies by `springConstant` (default: 350.0).
     *   **Sinusoidal Potential Wells:** Calculates restoring detent torque pulling to the nearest index step using $-T_{detent} \cdot \sin(N_{detents} \cdot \theta)$ (default $T_{detent} = 25.0$).
-    *   **Friction Damping:** Applies continuous damping opposing the speed: $-c \cdot \omega$ (default $c = 3.0$).
+    *   **Friction Damping (Localized Detent Damping):** Rather than a flat damping coefficient, we apply a cosine proximity window to selectively damp oscillations when the dial settles inside detent valleys, while maintaining low friction for free-spinning momentum:
+        $$\text{Window} = \frac{1.0 + \cos(N_{detents} \cdot \theta)}{2.0}$$
+        $$\text{activeDamping} = \text{damping} + \text{detentDamping} \cdot \text{Window}$$
+        $$\tau_{damping} = -\text{activeDamping} \cdot \omega$$
 *   **Newton Integration:** Computes acceleration $\alpha = \frac{\tau_{net}}{I}$ using Moment of Inertia $I = 0.5 \cdot m$ (default mass $m = 0.2$).
 *   **Self-Termination:** If the user releases the dial, the loop runs until velocity falls below $0.01$ and the angle settles in a potential well, automatically calling `.invalidate()` to save battery.
 

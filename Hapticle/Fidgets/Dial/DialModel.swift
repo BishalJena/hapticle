@@ -13,6 +13,7 @@ class DialModel: ObservableObject {
     // MARK: - Tunable Physics Parameters (Exposed to Debug View)
     @Published var mass: Double = 2.0                     // Dial Mass (controls inertia)
     @Published var damping: Double = 1.5                 // Damping Coefficient (friction)
+    @Published var detentDamping: Double = 6.0           // Detent localized oscillation damping
     @Published var springConstant: Double = 350.0          // Touch spring coupling constant
     @Published var detentTorqueStrength: Double = 25.0     // Potential energy well depth
     @Published var detentCount: Int = 24                  // Number of teeth (ticks) on the gear
@@ -164,8 +165,12 @@ class DialModel: ObservableObject {
         // 1. Calculate Torques (Newton's 2nd Law for Rotation: τ = I * α)
         
         let rInner = 40.0
+        let n = Double(detentCount)
         var touchTorque = 0.0
-        var activeDamping = damping
+        
+        // Detent-specific localized damping window (maximized at the bottom of the potential wells)
+        let detentWindow = (1.0 + cos(n * rotationAngle)) / 2.0
+        var activeDamping = damping + detentDamping * detentWindow
         
         if isDragging {
             if touchRadius >= rInner {
@@ -176,7 +181,7 @@ class DialModel: ObservableObject {
             } else {
                 // In Deadzone: Temporarily act as finger-up (no spring torque)
                 // and apply heavy damping (braking) to rotation
-                activeDamping = damping * 4.0
+                activeDamping = (damping + detentDamping * detentWindow) * 4.0
             }
         }
         

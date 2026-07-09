@@ -143,6 +143,7 @@ struct DialView: View {
                             VStack(spacing: 16) {
                                 TuningSlider(title: "Mass (Inertia)", value: $model.mass, range: 0.01...2.0, format: "%.2f")
                                 TuningSlider(title: "Damping (Friction)", value: $model.damping, range: 0.0...10.0, format: "%.2f")
+                                TuningSlider(title: "Detent Damping (Oscillation Damping)", value: $model.detentDamping, range: 0.0...25.0, format: "%.1f")
                                 TuningSlider(title: "Spring Coupling Strength", value: $model.springConstant, range: 10.0...1000.0, format: "%.0f")
                                 TuningSlider(title: "Detent Torque Wells", value: $model.detentTorqueStrength, range: 0.0...100.0, format: "%.1f")
                                 
@@ -176,6 +177,7 @@ struct DialView: View {
                                 Dial Settings:
                                 Mass: \(String(format: "%.2f", model.mass))
                                 Damping: \(String(format: "%.2f", model.damping))
+                                Detent Damping: \(String(format: "%.1f", model.detentDamping))
                                 Spring Constant: \(String(format: "%.0f", model.springConstant))
                                 Detent Torque: \(String(format: "%.1f", model.detentTorqueStrength))
                                 Detent Count: \(model.detentCount)
@@ -199,6 +201,7 @@ struct DialView: View {
                             Button(action: {
                                 model.mass = 0.2
                                 model.damping = 3.0
+                                model.detentDamping = 6.0
                                 model.springConstant = 350.0
                                 model.detentTorqueStrength = 25.0
                                 model.detentCount = 24
