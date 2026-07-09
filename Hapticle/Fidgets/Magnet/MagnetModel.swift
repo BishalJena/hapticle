@@ -50,7 +50,7 @@ class MagnetModel: ObservableObject {
     /// magnet home in a second or two rather than strand it mid-glide.
     @Published var fieldGain: Double = 2_200_000.0
     @Published var fieldSoftening: Double = 8.0
-    @Published var fieldFloor: Double = 300.0
+    @Published var fieldFloor: Double = 450.0
     @Published var fieldMax: Double = 35_000.0
 
     /// Radius around the ring's exact center where the field fades to zero —
@@ -60,7 +60,9 @@ class MagnetModel: ObservableObject {
 
     /// Seat/release hysteresis on |d| so contact transients don't chatter.
     @Published var contactDistance: Double = 10.0
-    @Published var releaseDistance: Double = 24.0
+    /// How far the finger must stretch from the band before a seated knob
+    /// breaks free — a deliberate pull, so nothing unseats by accident.
+    @Published var releaseDistance: Double = 48.0
 
     @Published var bezelRepelDistance: Double = 32.0
     @Published var bezelRepelGain: Double = 900.0
@@ -148,8 +150,12 @@ class MagnetModel: ObservableObject {
             }
             let friction = isDragging ? dragDamping : damping
             force += CGVector(dx: -friction * velocity.dx, dy: -friction * velocity.dy)
+            if !isOnRing { force += approachRadialDamping() }
             integrate(force: force, dt: dt)
             clampToScreen()
+            // Seated = bead on a wire: the band holds the knob exactly, so
+            // orbits are perfect circles and there is nothing left to vibrate.
+            if isOnRing { seatOnBand() }
         }
 
         updateSeatState()
@@ -197,6 +203,41 @@ class MagnetModel: ObservableObject {
         fx = max(-maxForce, min(maxForce, fx))
         fy = max(-maxForce, min(maxForce, fy))
         return CGVector(dx: fx, dy: fy)
+    }
+
+    /// Near-critical damping of the radial velocity component as the knob
+    /// nears the band. The inverse-square field is a very stiff spring there;
+    /// without this the arrival rings at ~30 Hz instead of clacking once.
+    private func approachRadialDamping() -> CGVector {
+        let r = hypot(position.x, position.y)
+        guard r > 0.001 else { return .zero }
+        let d = abs(r - ringRadius)
+        guard d < 48 else { return .zero }
+
+        let kLocal = 2 * fieldGain / max(d * d * d, pow(fieldSoftening, 3))
+        let cR = min(2 * (mass * kLocal).squareRoot(), 60)
+        let er = CGVector(dx: position.x / r, dy: position.y / r)
+        let radialSpeed = velocity.dx * er.dx + velocity.dy * er.dy
+        return CGVector(dx: -cR * radialSpeed * er.dx, dy: -cR * radialSpeed * er.dy)
+    }
+
+    /// Hard constraint while seated: project onto the band and strip the
+    /// radial velocity, keeping the tangential component for orbits.
+    private func seatOnBand() {
+        let r = hypot(position.x, position.y)
+        guard r > 0.001 else { return }
+        let er = CGVector(dx: position.x / r, dy: position.y / r)
+        position = CGPoint(x: er.dx * ringRadius, y: er.dy * ringRadius)
+        let radialSpeed = velocity.dx * er.dx + velocity.dy * er.dy
+        velocity.dx -= er.dx * radialSpeed
+        velocity.dy -= er.dy * radialSpeed
+    }
+
+    /// Signed distance of the *finger* from the band — the escape gauge while seated.
+    private func fingerBandStretch() -> Double {
+        let fx = fingerPosition.x - ringCenter.x
+        let fy = fingerPosition.y - ringCenter.y
+        return hypot(fx, fy) - ringRadius
     }
 
     // MARK: - Integration & Containment
@@ -264,24 +305,23 @@ class MagnetModel: ObservableObject {
     // MARK: - Seat / Release Transients
 
     private func updateSeatState() {
-        let d = abs(hypot(position.x, position.y) - ringRadius)
-
-        if !isOnRing, d < contactDistance {
-            isOnRing = true
-
-            // Inelastic capture: the clack absorbs the radial energy (this is
-            // also what stops the stiff near-band field from ringing).
-            let r = max(hypot(position.x, position.y), 0.0001)
-            let er = CGVector(dx: position.x / r, dy: position.y / r)
-            let radialSpeed = velocity.dx * er.dx + velocity.dy * er.dy
-            velocity.dx -= er.dx * radialSpeed
-            velocity.dy -= er.dy * radialSpeed
-
-            HapticsManager.shared.playClick(intensity: 0.9, sharpness: 0.55)
-            SoundManager.shared.playSystemClick()
-        } else if isOnRing, d > releaseDistance {
+        if isOnRing {
+            // Seated is stable: only a deliberate drag past the escape
+            // stretch unseats it — nothing bounces off on its own.
+            guard isDragging, abs(fingerBandStretch()) > releaseDistance else { return }
             isOnRing = false
             HapticsManager.shared.playClick(intensity: 0.7, sharpness: 0.9)
+            SoundManager.shared.playSystemClick()
+        } else {
+            let d = abs(hypot(position.x, position.y) - ringRadius)
+            guard d < contactDistance else { return }
+            // Don't re-latch while the finger is still holding it past the
+            // escape stretch (i.e. the instant after a breakaway).
+            if isDragging, abs(fingerBandStretch()) > releaseDistance { return }
+
+            isOnRing = true
+            seatOnBand() // inelastic capture: the clack absorbs the radial energy
+            HapticsManager.shared.playClick(intensity: 0.9, sharpness: 0.55)
             SoundManager.shared.playSystemClick()
         }
     }
@@ -295,16 +335,36 @@ class MagnetModel: ObservableObject {
         let speed = hypot(velocity.dx, velocity.dy)
 
         if isOnRing {
-            guard speed > 8 else {
+            // Slide friction hum, pitch and strength tracking tangential speed.
+            let slideIntensity = speed > 8 ? min(speed / 900.0, 1.0) * 0.45 : 0
+
+            // Peel-off strain: the knob is pinned to the band, so the tension
+            // you feel is how far the *finger* has stretched from it.
+            var strainIntensity = 0.0
+            var strainSharpness = 0.0
+            if isDragging {
+                let stretch = min(abs(fingerBandStretch()) / max(releaseDistance, 1), 1.0)
+                if stretch > 0.12 {
+                    strainIntensity = 0.1 + 0.5 * stretch
+                    strainSharpness = 0.3 + 0.45 * stretch
+                }
+            }
+
+            guard slideIntensity > 0 || strainIntensity > 0 else {
                 HapticsManager.shared.stopContinuousFeedback()
                 SoundManager.shared.stopOscillator()
                 return
             }
-            // Slide friction hum, pitch and strength tracking tangential speed.
-            let intensity = min(speed / 900.0, 1.0) * 0.45
-            HapticsManager.shared.startContinuousFeedback(intensity: intensity, sharpness: 0.5)
-            SoundManager.shared.startOscillator(frequency: Float(40 + speed * 0.12),
-                                                volume: Float(intensity * 0.05))
+            if strainIntensity >= slideIntensity {
+                HapticsManager.shared.startContinuousFeedback(intensity: strainIntensity,
+                                                              sharpness: strainSharpness)
+                SoundManager.shared.startOscillator(frequency: Float(70 + strainIntensity * 100),
+                                                    volume: Float(strainIntensity * 0.04))
+            } else {
+                HapticsManager.shared.startContinuousFeedback(intensity: slideIntensity, sharpness: 0.5)
+                SoundManager.shared.startOscillator(frequency: Float(40 + speed * 0.12),
+                                                    volume: Float(slideIntensity * 0.05))
+            }
             return
         }
 
