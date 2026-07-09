@@ -16,6 +16,16 @@ class SoundManager {
     private var carrierPhase: Float = 0.0
     private var shaftPhase: Float = 0.0
     
+    // MARK: - Tearing Synth (Ticket fidget: perforation noise-burst texture)
+    
+    private var tearSourceNode: AVAudioSourceNode?
+    private var currentTearRate: Float = 0.0       // perforation crossings per second
+    private var currentTearVolume: Float = 0.0
+    private var tearPhase: Float = 0.0
+    private var tearLP1: Float = 0.0               // wider lowpass (bandpass upper corner)
+    private var tearLP2: Float = 0.0               // narrower lowpass (bandpass lower corner)
+    private var isTearingActive = false
+    
     init() {
         configureAudioSession()
         setupAudioEngine()
@@ -161,5 +171,92 @@ class SoundManager {
     func stopOscillator() {
         currentVolume = 0.0
         isOscillatorRunning = false
+    }
+    
+    private func setupTearNode() {
+        guard let engine = audioEngine, tearSourceNode == nil else { return }
+        
+        let node = AVAudioSourceNode { [weak self] _, _, frameCount, audioBufferList in
+            guard let self = self else { return noErr }
+            let ablPointer = UnsafeMutableAudioBufferListPointer(audioBufferList)
+            
+            let rate = max(self.currentTearRate, 0.001)
+            let vol = self.currentTearVolume
+            let step = (2.0 * Float.pi * rate) / Float(self.sampleRate)
+            
+            for channel in 0..<ablPointer.count {
+                let buffer = ablPointer[channel]
+                guard let buf = buffer.mData?.assumingMemoryBound(to: Float.self) else { continue }
+                
+                var phase = self.tearPhase
+                var lp1 = self.tearLP1
+                var lp2 = self.tearLP2
+                
+                for frame in 0..<Int(frameCount) {
+                    // Sharp decaying envelope per "perforation snap" — snappier than the
+                    // dial's resonance decay since a fiber snap is nearly instantaneous.
+                    let progress = phase / (2.0 * Float.pi)
+                    let envelope = exp(-12 * progress)
+                    
+                    // Raw broadband noise = the actual "tearing" source material
+                    let whiteNoise = Float.random(in: -1...1)
+                    
+                    // Cascaded leaky-integrator lowpasses -> difference = crude bandpass,
+                    // shaped to sit in the papery/crinkly mid-high range rather than full hiss.
+                    lp1 += 0.5 * (whiteNoise - lp1)
+                    lp2 += 0.02 * (whiteNoise - lp2)
+                    let bandpassed = (lp1 - lp2) * 2.2
+                    
+                    // Sparse sharp impulses = individual fiber strands snapping ("crackle")
+                    var crackle: Float = 0
+                    if Float.random(in: 0...1) < 0.015 {
+                        crackle = Float.random(in: -1...1) * 0.7
+                    }
+                    
+                    buf[frame] = (bandpassed + crackle) * envelope * vol
+                    
+                    phase += step
+                    if phase >= 2.0 * Float.pi { phase -= 2.0 * Float.pi }
+                }
+                
+                self.tearPhase = phase
+                self.tearLP1 = lp1
+                self.tearLP2 = lp2
+            }
+            
+            return noErr
+        }
+        
+        engine.attach(node)
+        let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1)!
+        engine.connect(node, to: engine.mainMixerNode, format: format)
+        tearSourceNode = node
+    }
+    
+    /// Start/refresh the continuous tearing texture.
+    /// `rate` = perforation crossings per second (higher = faster "BRRRT").
+    func startTearing(rate: Float, volume: Float) {
+        setupTearNode()
+        currentTearRate = rate
+        currentTearVolume = volume
+        if !isTearingActive {
+            isTearingActive = true
+            if let engine = audioEngine, !engine.isRunning { try? engine.start() }
+        }
+    }
+    
+    func updateTearing(rate: Float, volume: Float) {
+        currentTearRate = rate
+        currentTearVolume = volume
+    }
+    
+    func stopTearing() {
+        currentTearVolume = 0.0
+        isTearingActive = false
+    }
+    
+    /// Play a heavy, resonant pop for the final ticket severance.
+    func playTearSnap() {
+        AudioServicesPlaySystemSound(1520)
     }
 }
