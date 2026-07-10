@@ -107,10 +107,9 @@ struct DialView: View {
             }) {
                 Image(systemName: "gearshape.fill")
                     .font(.system(size: 20, weight: .bold))
-                    .foregroundColor(.secondary.opacity(0.8))
                     .padding(12)
                     .background(Circle().fill(.thinMaterial))
-                    .shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 1)
+                    .opacity(0.0)
             }
             .padding(.trailing, 24)
             .padding(.top, 16)
