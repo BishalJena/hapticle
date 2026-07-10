@@ -108,8 +108,8 @@ class PenModel: ObservableObject {
             
             let speed = min(abs(velocity.height) / 400.0, 1.0)
             
-            let intensity = 0.3 + (speed * 0.7)
-            let sharpness = 0.2 + (speed * 0.8)
+            let intensity = 2.0 + (speed * 0.7)
+            let sharpness = 1.8 + (speed * 0.8)
             
             HapticsManager.shared.playClick(intensity: Double(intensity), sharpness: Double(sharpness))
             
@@ -126,8 +126,8 @@ class PenModel: ObservableObject {
         
         let heldFactor = min(pressDuration / 0.5, 1.0)
         
-        let intensity = 0.8 - (heldFactor * 0.5)
-        let sharpness = 0.7 - (heldFactor * 0.4)
+        let intensity = 3.0 - (heldFactor * 0.5)
+        let sharpness = 2.5 - (heldFactor * 0.4)
         
         HapticsManager.shared.playClick(intensity: Double(intensity), sharpness: Double(sharpness))
         

@@ -4,9 +4,9 @@ struct DialView: View {
     @StateObject private var model = DialModel()
     var onInteractionChange: ((Bool) -> Void)? = nil
     
-    #if DEBUG
+#if DEBUG
     @State private var showDebugPanel = false
-    #endif
+#endif
     
     var body: some View {
         ZStack {
@@ -20,24 +20,26 @@ struct DialView: View {
                 
                 // Circle Dial Container (310px x 310px)
                 ZStack {
-                    
+                
                     // 1. Static Embossed Bezel Ring (Outer Circular Rim/Well Border) - Does not spin
                     Circle()
                         .stroke(Color.fidgetPrimary, lineWidth: 25)
                         .frame(width: 300, height: 300)
                         .shadow(
-                            color: Color.shadow.opacity(0.8),
-                            radius: 5.0,
-                            x: 5.0,
-                            y: 5.0
+                            color: Color.shadow.opacity(model.isPressed ? 0.6 : 0.8),
+                            radius: model.isPressed ? 4.0 : 5.0,
+                            x: model.isPressed ? 4.0 : 5.0,
+                            y: model.isPressed ? 4.0 : 5.0
                         )
                         .shadow(
                             // highlight reduced - sam
-                            color: Color.highlight.opacity(0.4),
-                            radius: 5.0,
-                            x: -5.0,
-                            y: -5.0
+                            color: Color.highlight.opacity(model.isPressed ? 0.3 : 0.4),
+                            radius: model.isPressed ? 3.5 : 5.0,
+                            x: model.isPressed ? -4.0 : -5.0,
+                            y: model.isPressed ? -4.0 : -5.0
                         )
+                        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: model.isPressed)
+                    
                     
                     // 2. Rotating Foreground Markings (Only the ticks and Red Dot spin)
                     ZStack {
@@ -47,14 +49,14 @@ struct DialView: View {
                             
                             Rectangle()
                                 .fill(LinearGradient(
-                                    colors: [Color(red: 210/255, green: 213/255, blue: 218/255), 
+                                    colors: [Color(red: 210/255, green: 213/255, blue: 218/255),
                                              Color(red: 148/255, green: 152/255, blue: 160/255)],
                                     startPoint: .top,
                                     endPoint: .bottom
                                 ))
                                 .frame(width: 3, height: 12)
                                 .cornerRadius(2)
-                                // Place ticks on the border of the 310px rim
+                            // Place ticks on the border of the 310px rim
                                 .offset(y: -149)
                                 .rotationEffect(.degrees(angle))
                         }
@@ -63,7 +65,7 @@ struct DialView: View {
                         Circle()
                             .fill(Color.accent)
                             .frame(width: 20, height: 20)
-                            // Inset shadow recreating: inset 2px 3px 4px rgba(0, 0, 0, 0.4)
+                        // Inset shadow recreating: inset 2px 3px 4px rgba(0, 0, 0, 0.4)
                             .overlay(
                                 Circle()
                                     .stroke(Color.black.opacity(0.4), lineWidth: 2)
@@ -97,7 +99,7 @@ struct DialView: View {
             }
             
             // 3. Settings Gear Button - Aligned top-right and padded safely
-            #if DEBUG
+#if DEBUG
             Button(action: {
                 withAnimation(.spring(duration: 0.32, bounce: 0.12)) {
                     showDebugPanel.toggle()
@@ -113,9 +115,9 @@ struct DialView: View {
             .padding(.trailing, 24)
             .padding(.top, 16)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
-            #endif
+#endif
             
-            #if DEBUG
+#if DEBUG
             // Debug Tuning Panel Overlay - completely excluded from release builds
             if showDebugPanel {
                 VStack {
@@ -225,7 +227,7 @@ struct DialView: View {
                 }
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
-            #endif
+#endif
         }
         .onReceive(model.$rotationAngle) { _ in
             let isActive = model.isDragging || abs(model.angularVelocity) > 0.05
