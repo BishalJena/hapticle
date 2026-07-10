@@ -80,6 +80,7 @@ class MagnetModel: ObservableObject {
 
     private var displayLink: CADisplayLink?
     private var lastFrameTimestamp: CFTimeInterval = 0
+    private var slideDistanceSinceTick: Double = 0
 
     /// The near-band field is stiff (dF/dd is huge at contact), so a single
     /// 60 Hz Euler step can overshoot and jitter. Sub-stepping keeps the
@@ -159,7 +160,7 @@ class MagnetModel: ObservableObject {
         }
 
         updateSeatState()
-        updateContinuousHaptics()
+        driveHaptics(dt: frameDt)
         maybeSleep()
     }
 
@@ -310,7 +311,7 @@ class MagnetModel: ObservableObject {
             // stretch unseats it — nothing bounces off on its own.
             guard isDragging, abs(fingerBandStretch()) > releaseDistance else { return }
             isOnRing = false
-            HapticsManager.shared.playClick(intensity: 0.7, sharpness: 0.9)
+            HapticsManager.shared.playClick(intensity: 0.85, sharpness: 1.0)
             SoundManager.shared.playSystemClick()
         } else {
             let d = abs(hypot(position.x, position.y) - ringRadius)
@@ -321,22 +322,36 @@ class MagnetModel: ObservableObject {
 
             isOnRing = true
             seatOnBand() // inelastic capture: the clack absorbs the radial energy
-            HapticsManager.shared.playClick(intensity: 0.9, sharpness: 0.55)
+            // Double-tap clack: full thunk plus a crisp little rebound.
+            HapticsManager.shared.playClick(intensity: 1.0, sharpness: 0.5)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.045) {
+                HapticsManager.shared.playClick(intensity: 0.35, sharpness: 0.85)
+            }
             SoundManager.shared.playSystemClick()
         }
     }
 
     // MARK: - Continuous Haptics (the field map)
 
-    /// Seated, the magnet is "happy" — you only feel the slide. Off the band,
-    /// rumble intensity is the local field strength under your finger: faint
-    /// mid-screen, swelling toward the band, rising again near a bezel.
-    private func updateContinuousHaptics() {
+    /// The Taptic Engine speaks clearest in transients, so every physical
+    /// quantity is voiced primarily as a tick train — slide ripple on the band,
+    /// Geiger-style crackle whose *rate* encodes field strength off it, and a
+    /// creak ramp before breakaway — with the continuous rumble demoted to a
+    /// supporting layer underneath.
+    private func driveHaptics(dt: Double) {
         let speed = hypot(velocity.dx, velocity.dy)
 
         if isOnRing {
-            // Slide friction hum, pitch and strength tracking tangential speed.
-            let slideIntensity = speed > 8 ? min(speed / 900.0, 1.0) * 0.45 : 0
+            // Polarity-ripple ticks: one per ~14pt of arc, blurring into a
+            // buzz at fast orbits.
+            slideDistanceSinceTick += speed * dt
+            if speed > 8, slideDistanceSinceTick >= 14 {
+                slideDistanceSinceTick = 0
+                HapticsManager.shared.playClick(intensity: min(0.12 + speed / 1500, 0.4),
+                                                sharpness: 0.7)
+            }
+
+            let slideIntensity = speed > 8 ? min(speed / 700.0, 1.0) * 0.5 : 0
 
             // Peel-off strain: the knob is pinned to the band, so the tension
             // you feel is how far the *finger* has stretched from it.
@@ -347,6 +362,11 @@ class MagnetModel: ObservableObject {
                 if stretch > 0.12 {
                     strainIntensity = 0.1 + 0.5 * stretch
                     strainSharpness = 0.3 + 0.45 * stretch
+                    // Creak: tearing ticks accelerating toward the escape threshold.
+                    if Double.random(in: 0...1) < 25 * stretch * stretch * dt {
+                        HapticsManager.shared.playClick(intensity: 0.2 + 0.3 * stretch,
+                                                        sharpness: 0.85)
+                    }
                 }
             }
 
@@ -378,8 +398,16 @@ class MagnetModel: ObservableObject {
         let strength = min(hypot(field.dx, field.dy) / fieldMax, 1.0)
         let perceived = pow(strength, 0.4) // perceptual curve: keep the faint far field feelable
 
-        let intensity = 0.05 + 0.65 * perceived
-        let sharpness = 0.2 + 0.4 * perceived
+        // Geiger-counter crackle: tick *rate* encodes field strength — countable
+        // and far more legible than rumble amplitude.
+        let crackleRate = 2.0 + 33.0 * pow(perceived, 0.6)
+        if Double.random(in: 0...1) < crackleRate * dt {
+            HapticsManager.shared.playClick(intensity: 0.1 + 0.3 * perceived,
+                                            sharpness: 0.5 + 0.4 * perceived)
+        }
+
+        let intensity = 0.1 + 0.7 * perceived
+        let sharpness = 0.25 + 0.45 * perceived
         HapticsManager.shared.startContinuousFeedback(intensity: intensity, sharpness: sharpness)
         SoundManager.shared.startOscillator(frequency: Float(55 + perceived * 90),
                                             volume: Float(intensity * 0.04))
