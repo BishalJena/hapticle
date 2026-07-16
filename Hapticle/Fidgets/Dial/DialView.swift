@@ -4,6 +4,8 @@ struct DialView: View {
     @StateObject private var model = DialModel()
     var onInteractionChange: ((Bool) -> Void)? = nil
     
+    @Environment(IdleTracker.self) private var idleTracker
+    
 #if DEBUG
     @State private var showDebugPanel = false
 #endif
@@ -228,12 +230,14 @@ struct DialView: View {
             }
 #endif
         }
-        .onReceive(model.$rotationAngle) { _ in
-            let isActive = model.isDragging || abs(model.angularVelocity) > 0.05
-            onInteractionChange?(isActive)
-        }
         .onChange(of: model.isDragging) { oldValue, newValue in
-            onInteractionChange?(newValue || abs(model.angularVelocity) > 0.05)
+            if newValue {
+                // Finger is on the dial
+                idleTracker.userInteracted()
+            } else {
+                // Finger lifted off the dial
+                idleTracker.restartTimer()
+            }
         }
     }
 }
@@ -273,11 +277,14 @@ struct DialView_Previews: PreviewProvider {
             DialView()
                 .preferredColorScheme(.light)
                 .previewDisplayName("Light Mode")
+                .environment(IdleTracker())
             
             // Dark Mode Preview
             DialView()
                 .preferredColorScheme(.dark)
                 .previewDisplayName("Dark Mode")
+                .environment(IdleTracker())
+
         }
     }
 }

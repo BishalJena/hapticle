@@ -72,6 +72,7 @@ struct Ticket: View {
 struct TicketView: View {
     @StateObject private var model = TicketModel()
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(IdleTracker.self) private var idleTracker
     
     var body: some View {
         ZStack {
@@ -83,7 +84,7 @@ struct TicketView: View {
             
             // LAYER 2: Autonomous, Auto-Replenishing Ticket Sequence
             GeometryReader { geometry in
-                AutoReplenishingTicketRoll(model: model)
+                AutoReplenishingTicketRoll(model: model, idleTracker: idleTracker)
                     .frame(width: geometry.size.width, height: geometry.size.height)
                     .mask(
                         VStack(spacing: 0) {
@@ -188,6 +189,7 @@ struct TicketView: View {
 /// Orchestrates the physical dispenser simulation while retaining strict dimensional boundaries.
 struct AutoReplenishingTicketRoll: View {
     @ObservedObject var model: TicketModel
+    var idleTracker: IdleTracker
     
     var body: some View {
         ZStack(alignment: .top) {
@@ -215,8 +217,16 @@ struct AutoReplenishingTicketRoll: View {
         .contentShape(Rectangle())
         .gesture(
             DragGesture()
-                .onChanged { gesture in model.processDragChanged(translation: gesture.translation) }
-                .onEnded { gesture in model.processDragEnded(translation: gesture.translation) }
+                .onChanged { gesture in
+                    // 4. Trigger interaction on touch
+                    idleTracker.userInteracted()
+                    model.processDragChanged(translation: gesture.translation)
+                }
+                .onEnded { gesture in
+                    // 5. Restart AFK timer on release
+                    idleTracker.restartTimer()
+                    model.processDragEnded(translation: gesture.translation)
+                }
         )
         .onPreferenceChange(TicketHeightKey.self) { height in
             if model.ticketHeight == 0 { model.ticketHeight = height }
@@ -268,10 +278,14 @@ struct TicketView_Previews: PreviewProvider {
             TicketView()
                 .preferredColorScheme(.light)
                 .previewDisplayName("Light Mode")
+                .environment(IdleTracker())
+
             
             TicketView()
                 .preferredColorScheme(.dark)
                 .previewDisplayName("Dark Mode")
+                .environment(IdleTracker())
+
         }
     }
 }

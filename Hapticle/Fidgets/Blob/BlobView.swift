@@ -3,18 +3,19 @@ import SwiftUI
 struct BlobView: View {
     @StateObject private var model = BlobModel()
     @Environment(\.colorScheme) private var colorScheme
-
+    @Environment(IdleTracker.self) private var idleTracker
+    
     var body: some View {
         GeometryReader { geo in
             ZStack {
                 // ── 1. Full-screen background ────────────────────────────────
                 Color.fidgetPrimary
                     .ignoresSafeArea()
-
+                
                 // ── 2. Neumorphic tile grid ──────────────────────────────────
                 BlobBackgroundGrid(size: geo.size, colorScheme: colorScheme)
                     .allowsHitTesting(false)
-
+                
                 // ── 3. Soft-body jelly blobs ─────────────────────────────────
                 //  Each blob is a Verlet ring simulated in BlobModel; the view
                 //  just draws whatever perimeter the physics produces. The ring
@@ -30,12 +31,15 @@ struct BlobView: View {
             .onDisappear { model.deactivate() }
         }
     }
-
+    
     // MARK: - Drag Gesture
-
+    
     private var dragGesture: some Gesture {
         DragGesture(minimumDistance: 0)
             .onChanged { value in
+                // 2. Trigger interaction on touch (dragging the jelly)
+                idleTracker.userInteracted()
+                
                 // Guard against multi-touch hijack mid-drag.
                 if !model.isDragging {
                     model.handleDragStart(at: value.startLocation)
@@ -44,6 +48,8 @@ struct BlobView: View {
                 }
             }
             .onEnded { _ in
+                // 3. Restart AFK timer on release, even while jelly is still jiggling
+                idleTracker.restartTimer()
                 model.handleDragEnd()
             }
     }
@@ -56,17 +62,17 @@ struct BlobView: View {
 /// slightly translucent piece of jelly rather than a flat sticker.
 private struct JellyBlobRender: View {
     let points: [CGPoint]
-
+    
     var body: some View {
         let shape = JellyBlobShape(points: points)
         shape
             .fill(Color.accent)
-            // Top-left highlight → lower-right shadow gives the blob weight.
+        // Top-left highlight → lower-right shadow gives the blob weight.
             .shadow(color: Color.white.opacity(0.28), radius: 4, x: -2, y: -2)
             .shadow(color: Color(red: 0.537, green: 0.141, blue: 0.141).opacity(0.50),
                     radius: 7, x: 3, y: 4)
-            // Soft glossy rim — a faint bright edge that catches the light and
-            // sells the wet, gelatinous surface as the outline flexes.
+        // Soft glossy rim — a faint bright edge that catches the light and
+        // sells the wet, gelatinous surface as the outline flexes.
             .overlay {
                 shape.stroke(Color.white.opacity(0.22), lineWidth: 2)
                     .blur(radius: 1.5)
@@ -86,40 +92,40 @@ private struct JellyBlobRender: View {
 struct BlobBackgroundGrid: View {
     let size: CGSize
     let colorScheme: ColorScheme
-
+    
     // Grid geometry — mirrors the Figma SVG exactly.
     private let cols: Int = 5
     private let tileSize: CGFloat = 66
     private let step: CGFloat = 76          // tile + 10pt gap
     private let cornerRadius: CGFloat = 15
-
+    
     private var startX: CGFloat { colorScheme == .dark ? 17 : 16 }
     private var startY: CGFloat { colorScheme == .dark ? 17 : 15 }
-
+    
     /// Compute enough rows to fill any iPhone screen height.
     private var rows: Int {
         Int(ceil((size.height - startY) / step)) + 2
     }
-
+    
     // ── Shadow palette (from Figma filter nodes) ─────────────────────────────
     // Light: white highlight top-left, #A3B1C6 shadow bottom-right
     // Dark:  very subtle inversion, lower opacity on both channels.
-
+    
     private var highlightColor: Color {
         colorScheme == .dark
-            ? Color(white: 0.851).opacity(0.10)
-            : Color.white
+        ? Color(white: 0.851).opacity(0.10)
+        : Color.white
     }
     private var shadowColor: Color {
         colorScheme == .dark
-            ? Color.black.opacity(0.15)
-            : Color(red: 0.639, green: 0.694, blue: 0.776)
+        ? Color.black.opacity(0.15)
+        : Color(red: 0.639, green: 0.694, blue: 0.776)
     }
     private var highlightX: CGFloat { colorScheme == .dark ? -5 : -3 }
     private var highlightY: CGFloat { colorScheme == .dark ? -5 : -3 }
     private var shadowX:    CGFloat { colorScheme == .dark ?  5 :  3 }
     private var shadowY:    CGFloat { colorScheme == .dark ?  5 :  3 }
-
+    
     var body: some View {
         ZStack {
             ForEach(0..<rows, id: \.self) { row in
@@ -143,7 +149,7 @@ struct BlobBackgroundGrid: View {
         .frame(width: size.width, height: size.height, alignment: .topLeading)
         .opacity(0.5)
         .drawingGroup()     // flatten the grid to a single Metal texture — avoids
-                            // 60+ individual shadow composites on every frame.
+        // 60+ individual shadow composites on every frame.
     }
 }
 
@@ -155,9 +161,13 @@ struct BlobView_Previews: PreviewProvider {
             BlobView()
                 .preferredColorScheme(.light)
                 .previewDisplayName("Blob — Light")
+                .environment(IdleTracker())
+
             BlobView()
                 .preferredColorScheme(.dark)
                 .previewDisplayName("Blob — Dark")
+                .environment(IdleTracker())
+
         }
     }
 }
