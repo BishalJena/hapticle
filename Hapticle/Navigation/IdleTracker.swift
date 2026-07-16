@@ -14,7 +14,7 @@ final class IdleTracker {
     var isIdleAFK: Bool = false
     
     private var afkTask: Task<Void, Never>?
-    private let idleThresholdSeconds: Double = 1.5
+    private let idleThresholdSeconds: Double = 0.75
     
     /// Called whenever ANY touch event occurs globally.
     func userInteracted() {

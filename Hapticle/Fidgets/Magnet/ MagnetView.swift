@@ -16,6 +16,8 @@ struct MagnetView: View {
     /// Touches within this distance of the knob center grab it (~2× its radius,
     /// so it's thumb-friendly and forgiving mid-play).
     private let grabRadius: CGFloat = 56
+    
+    @Environment(IdleTracker.self) private var idleTracker
 
     var body: some View {
         GeometryReader { geo in
@@ -53,17 +55,19 @@ struct MagnetView: View {
                 model.configure(canvasSize: newSize)
             }
         }
-        .onReceive(model.$position) { _ in
-            let isActive = model.isDragging || hypot(model.velocity.dx, model.velocity.dy) > 2
-            onInteractionChange?(isActive)
-        }
-        .onChange(of: model.isDragging) { newValue in
-            onInteractionChange?(newValue || hypot(model.velocity.dx, model.velocity.dy) > 2)
+        .onChange(of: model.isDragging) { oldValue, newValue in
+            if newValue {
+                // Finger is actively dragging the magnet
+                idleTracker.userInteracted()
+            } else {
+                // Finger let go (even if the magnet is still sliding/snapping)
+                idleTracker.restartTimer()
+            }
         }
     }
-
+    
     // MARK: - Knob
-
+    
     private var knobView: some View {
         ZStack {
             Circle()
@@ -163,10 +167,14 @@ struct MagnetView_Previews: PreviewProvider {
             MagnetView()
                 .preferredColorScheme(.light)
                 .previewDisplayName("Light Mode")
+                .environment(IdleTracker())
+
 
             MagnetView()
                 .preferredColorScheme(.dark)
                 .previewDisplayName("Dark Mode")
+                .environment(IdleTracker())
+
         }
     }
 }

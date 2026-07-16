@@ -28,6 +28,7 @@ import SwiftUI
 struct PenView: View {
     @StateObject private var model = PenModel()
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(IdleTracker.self) private var idleTracker
     
 //    // Opacity multipliers — only reduced in dark mode; full strength in light mode.
 //    private var highlightOpacity: Double { colorScheme == .dark ? 0.25 : 1.0 }
@@ -162,8 +163,16 @@ struct PenView: View {
         .contentShape(Rectangle())
         .gesture(
             DragGesture(minimumDistance: 0)
-                .onChanged { value in model.onTouchDown(velocity: value.velocity) }
-                .onEnded { _ in model.onTouchUp() }
+                .onChanged { value in
+                    // Finger is on the screen, holding the pen down
+                    idleTracker.userInteracted()
+                    model.onTouchDown(velocity: value.velocity)
+                }
+                .onEnded { _ in
+                    // Finger released, pen snaps back, restart AFK timer
+                    idleTracker.restartTimer()
+                    model.onTouchUp()
+                }
         )
     }
 }
@@ -175,11 +184,15 @@ struct PenView_Previews: PreviewProvider {
             PenView()
                 .preferredColorScheme(.light)
                 .previewDisplayName("Light Mode")
+                .environment(IdleTracker())
+
             
             // Dark Mode Preview
             PenView()
                 .preferredColorScheme(.dark)
                 .previewDisplayName("Dark Mode")
+                .environment(IdleTracker())
+
         }
     }
 }
